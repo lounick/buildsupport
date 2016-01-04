@@ -1,0 +1,9 @@
+This directory contains templates for RTDS projects.
+
+These templates are included in buildsupport binary and customized when needed, to cope with actual RTDS subsystems names/paths.
+
+If you need to modify them, use the bin2header tool to create a .h file, and move this file to buildsupport/include directory, in place of the original one.
+
+
+
+

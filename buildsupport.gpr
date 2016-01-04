@@ -1,0 +1,40 @@
+with "ocarina";
+
+project BuildSupport is
+
+   for Source_Dirs use ("ada", "c", "include");
+
+   for Object_Dir use "tmpBuild";
+   for Exec_Dir use ".";
+   for Main use ("buildsupport.adb");
+   for Languages use ("Ada", "C");
+
+   for Source_Files use ("c_backend.c", "sdl_gateway.c", "my_types.h",
+   "build_sdl_glue.c", "imported_routines.ads", "buildsupport.adb",
+   "buildsupport_utils.ads", "buildsupport_utils.adb",
+   "simulink_gateway.c");
+
+   package Builder is
+      for Default_Switches ("ada") use ("-m");
+   end Builder;
+
+   package binder is
+     for default_switches ("Ada") use ("-E", "-t", "-static");
+   end binder;		 
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-g",
+         "-gnat05",
+         "-gnatf",
+         "-gnaty",
+	 -- "-gnatwa",
+         "-gnatoa",
+	 "-gnatg",
+         "-fstack-check");
+
+      for Default_Switches ("C") use ("-g");
+   end Compiler;
+
+end BuildSupport;
+
