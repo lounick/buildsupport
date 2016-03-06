@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* preprocessing_backend.c
@@ -13,7 +13,8 @@
   3) For each PRO/UNPRO RI of each FV,
      attach the RI to the calling thread (SPO/Cyclic FV)
   4) If some nodes use timers, generate the code for a timer
-     manager (one per partition). 
+     manager (one per partition).
+  5) Set the "ignore_params" flag on interfaces that run on the same node
  */
 
 
@@ -199,61 +200,68 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                        timer,
                        fv->name,
                        timer);
+
         /* Add sporadic PI - corresponding to the timer expiration */
         expire = NULL;
         Create_Interface (&expire);
-        expire->name = make_string (timer);
-        expire->distant_name = make_string ("%s_%s", fv->name, timer);
-        expire->distant_fv = make_string (timer_manager->name);
-        expire->direction = PI;
-        expire->synchronism = asynch;
-        expire->rcm = sporadic;
-        expire->period = 100;
-        expire->parent_fv = fv;
-        expire->wcet_high = 10;
-        expire->wcet_low = 10;
-        expire->wcet_low_unit = make_string ("ms");
+        expire->name           = make_string (timer);
+        expire->distant_name   = make_string ("%s_%s", fv->name, timer);
+        expire->distant_fv     = make_string (timer_manager->name);
+        expire->direction      = PI;
+        expire->synchronism    = asynch;
+        expire->rcm            = sporadic;
+        expire->period         = 100;
+        expire->parent_fv      = fv;
+        expire->wcet_high      = 10;
+        expire->wcet_low       = 10;
+        expire->wcet_low_unit  = make_string ("ms");
         expire->wcet_high_unit = make_string ("ms");
         APPEND_TO_LIST (Interface, fv->interfaces, expire);
+
         /* Add corresponding RI in the timer manager */
         expire = Duplicate_Interface (RI, expire, timer_manager);
-        expire->name = expire->distant_name;
-        expire->distant_name = make_string (timer);
+        expire->name            = expire->distant_name;
+        expire->distant_name    = make_string (timer);
         free (expire->distant_fv);
-        expire->distant_fv = make_string (fv->name);
+        expire->distant_fv      = make_string (fv->name);
         APPEND_TO_LIST (Interface, timer_manager->interfaces, expire);
+
         /* Add Unpro PI "RESET_timer" to timer manager (no param) */
         reset_timer = Duplicate_Interface (PI, expire, timer_manager);
         free (reset_timer->name);
-        reset_timer->name = make_string ("RESET_%s", timer);
+        reset_timer->name         = make_string ("RESET_%s", timer);
         free (reset_timer->distant_name);
         reset_timer->distant_name = make_string (reset_timer->name);
-        reset_timer->rcm = unprotected;
-        reset_timer->synchronism = synch;
+        reset_timer->rcm          = unprotected;
+        reset_timer->synchronism  = synch;
         APPEND_TO_LIST (Interface, timer_manager->interfaces, reset_timer);
+
         /* Add corresponding RI in the user FV */
         reset_timer = Duplicate_Interface (RI, reset_timer, fv);
         free (reset_timer->distant_fv);
         reset_timer->distant_fv = make_string (timer_manager->name);
         APPEND_TO_LIST (Interface, fv->interfaces, reset_timer);
+
         /* Add Unpro PI "SET_timer(value)" in timer manager */
         set_timer = Duplicate_Interface (PI, reset_timer, timer_manager);
         free (set_timer->name);
-        set_timer->name = make_string ("SET_%s", timer);
+        set_timer->name         = make_string ("SET_%s", timer);
         free (set_timer->distant_name);
         set_timer->distant_name = make_string (set_timer->name);
+
         /* Add IN param holding the timer duration */
         Create_Parameter (&param);
-        param->name = make_string ("duration");
-        param->type = make_string ("T_UInt32");
-        param->encoding = native;
-        param->asn1_module = make_string ("taste_basictypes");
-        param->basic_type = integer;
-        param->asn1_filename = make_string ("taste-types.asn");
-        param->interface = set_timer;
+        param->name            = make_string ("duration");
+        param->type            = make_string ("T_UInt32");
+        param->encoding        = native;
+        param->asn1_module     = make_string ("taste_basictypes");
+        param->basic_type      = integer;
+        param->asn1_filename   = make_string ("taste-types.asn");
+        param->interface       = set_timer;
         param->param_direction = param_in;
         APPEND_TO_LIST (Parameter, set_timer->in, param);
         APPEND_TO_LIST (Interface, timer_manager->interfaces, set_timer);
+
         /* Add corresponding RI in the user FV */
         set_timer = Duplicate_Interface (RI, set_timer, fv);
         free (set_timer->distant_fv);
@@ -305,9 +313,9 @@ void Add_Artificial_Function (Interface *duplicate_pi,
    */
 
    duplicate_pi->parent_fv = new_fv;
-   duplicate_pi->rcm=pi_rcm;
+   duplicate_pi->rcm       = pi_rcm;
 
-   duplicate_ri =(Interface *) Duplicate_Interface (RI, duplicate_pi, new_fv);
+   duplicate_ri = (Interface *) Duplicate_Interface (RI, duplicate_pi, new_fv);
    duplicate_ri->rcm = ri_rcm;
    free(duplicate_ri->distant_fv);
    duplicate_ri->distant_fv = NULL;
@@ -338,7 +346,7 @@ void Add_Artificial_Function (Interface *duplicate_pi,
    /* 3) Create a file called "_hook" to add this function
     *    to the orchestrator work */
     path = make_string ("%s/%s", OUTPUT_PATH, new_fv->name);
-    new_fv->artificial = true;
+    new_fv->artificial    = true;
     new_fv->original_name = original_name;
 
     create_file (path, "_hook", &hook);
@@ -410,15 +418,16 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
             distant_RI = NULL;
 
             /* Find the corresponding interface in the caller */
-            FOREACH (interface, Interface, caller->interfaces, {
-                if (RI == interface->direction &&
-                    !strcmp (interface->distant_name, i->name) &&
-                    !strcmp (interface->distant_fv, i->parent_fv->name)) {
-                    distant_RI = interface;
-                }
-            });
+            distant_RI = FindCorrespondingRI(caller, i);
+//           FOREACH (interface, Interface, caller->interfaces, {
+//               if (RI == interface->direction &&
+//                   !strcmp (interface->distant_name, i->name) &&
+//                   !strcmp (interface->distant_fv, i->parent_fv->name)) {
+//                   distant_RI = interface;
+//               }
+//           });
 
-            if (NULL !=distant_RI
+            if (NULL != distant_RI
                 && strcmp(artificial_fv_name, distant_RI->parent_fv->name)) {
                 if (NULL != distant_RI->distant_fv) {
                     free(distant_RI->distant_fv);
@@ -452,7 +461,7 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
     i->synchronism = synch;
     free (interface_name);
 }
-/* 
+/*
  * 4th pre-processing:
  * check if a RI is not already present in a FV and if not, add it.
  * MP 27/07/2010 :
@@ -461,7 +470,7 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
  *  same synchronism) is not present.
  *  We can have the same RI name but one being asynchronous,
  *  the other synchronous.
- */
+*/
 void Add_RI_To_Thread (Interface *i, FV *fv)
 {
     bool check = false;
@@ -473,7 +482,7 @@ void Add_RI_To_Thread (Interface *i, FV *fv)
     build_string(&new_name, i->name, strlen(i->name));
     build_string(&new_name, "_vt", strlen("_vt"));
 
-    /* 
+    /*
      * Check if this RI was not already there 
      * Fixed (MP 27/07/2010) : now allows twice the same RI name
      * but with different synchronism
@@ -594,12 +603,12 @@ void Propagate_Calling_Thread(Interface *i, FV **fv)
 }
 
 
-/* 
+/*
   Set of preprocessing done for each FV independently
 */
 void Preprocess_FV (FV *fv)
 {
-   int  count_thread    = 0, 
+   int  count_thread    = 0,
         count_pro       = 0,
         count_unpro     = 0;
 
@@ -636,6 +645,7 @@ void Preprocess_FV (FV *fv)
          }
       }
    }
+
 /*
      preprocessing: FV containing more than one
      'active' PI (cyclic/sporadic, protected)
@@ -749,6 +759,30 @@ void Preprocess_timers (Process *node)
     Close_Timer_Files();
 }
 
+/* Look at all provided interfaces of a function and if some do
+ * not reside on the same node as any of their callers set the ignore_params
+ * flag to false. This enables some runtime optimisations wrt buffer copies.
+*/
+void Set_Ignore_Params(FV *fv)
+{
+    Interface *distant_RI = NULL;
+
+    FOREACH(i, Interface, fv->interfaces, {
+        if (PI == i->direction) {
+            FOREACH (remote, FV, Find_All_Calling_FV(i), {
+                if (strcmp(remote->process->name, fv->process->name)) {
+                    i->ignore_params = false;
+                    printf("set PI %s->ignore_params to FALSE", i->name);
+                    distant_RI = FindCorrespondingRI(remote, i);
+                    if (NULL != distant_RI) {
+                        distant_RI->ignore_params = false;
+                    printf("set RI %s->ignore_params to FALSE", i->name);
+                    }
+                }
+            });
+        }
+    });
+}
 
 /* External interface */
 void Preprocessing_Backend (System *s)
@@ -786,7 +820,7 @@ void Preprocessing_Backend (System *s)
         }
     });
 
-    /* 
+    /*
      * After the preprocessing, we must refine the system-level connections:
      * During AST construction, connections are only between threads
      * but since we transform some threads into (un)protected functions,
@@ -813,7 +847,7 @@ void Preprocessing_Backend (System *s)
         /* Find the FV of the caller */
         FOREACH (fv, FV, get_system_ast()->functions, {
             if (!strcmp (fv->name, cnt->dst_system)) caller = fv;
-        });
+         });
         assert (NULL != caller);
 
         /* Find the corresponding RI in the caller */
@@ -866,4 +900,11 @@ void Preprocessing_Backend (System *s)
 
     new_connections = NULL;
     connections_to_remove = NULL;
+
+    /* Once all AST transformations are done, set the ignore_params flags
+     * in all interfaces, if needed 
+     */
+    FOREACH (fv, FV, s->functions, {
+        Set_Ignore_Params(fv);
+    });
 }

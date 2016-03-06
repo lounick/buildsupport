@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 #ifndef __C_AST_CONSTRUCTION_H__
@@ -6,6 +6,7 @@
 
 
 Interface *FindInterface(FV *fv,char *interface_name);
+Interface *FindCorrespondingRI(FV *remote, Interface *pi);
 void CompareIFname(Interface *i,Interface **result);
 void CompareFVname(FV *fv_local,FV **result);
 void SetSearchName(char *name);

@@ -815,43 +815,51 @@ void Set_Interface_Queue_Size (const unsigned long long s)
 }
 
 /* New interface: set the name and distant FV to which it is connected */
-void New_Interface(char *name, size_t length, char *dist_fv,
-                   size_t distant_length, 
+void New_Interface(char *name,         size_t length,
+                   char *dist_fv,      size_t distant_length,
                    char *distant_name, size_t dist_name_length,
                    IF_type direction)
 {
     interface = NULL;
     Create_Interface(&interface);
-    if (NULL != interface) {
-        build_string(&(interface->name), name, length);
+    assert (NULL != interface);
 
-        /* RI can have a local identifier which may be different from
-         * the corresponding PI it is connected to. In that case we set
-         * the "distant_name" field of the interface to make sure that
-         *  the connection will be properly handled
-         */
-        if (NULL != distant_name) {
-            build_string (&(interface->distant_name),
-                          distant_name, dist_name_length);
-        }
+    build_string(&(interface->name), name, length);
 
-        /* Set the port name as the interface name, so that if later
-         * the interface name is changed, we still know to which port we
-         * have to connect it (in case of distributed systems */
-        build_string (&(interface->port_name), name, length);
-
-        if (distant_length > 0)
-            build_string (&(interface->distant_fv), dist_fv,
-                         distant_length);
-        else
-            interface->distant_fv = NULL;
-        interface->direction  = direction;
-        interface->wcet_low = 0;
-        interface->wcet_high = 0;
-        interface->wcet_low_unit = NULL;
-        interface->wcet_high_unit = NULL;
-        interface->queue_size = 1;
+    /* RI can have a local identifier which may be different from
+     * the corresponding PI it is connected to. In that case we set
+     * the "distant_name" field of the interface to make sure that
+     *  the connection will be properly handled
+     */
+    if (NULL != distant_name) {
+        build_string (&(interface->distant_name),
+                      distant_name, dist_name_length);
     }
+
+    /* Set the port name as the interface name, so that if later
+     * the interface name is changed, we still know to which port we
+     * have to connect it (in case of distributed systems */
+    build_string (&(interface->port_name), name, length);
+
+    if (distant_length > 0) {
+        build_string (&(interface->distant_fv), dist_fv, distant_length);
+    }
+    else {
+        interface->distant_fv = NULL;
+    }
+    interface->direction      = direction;
+    interface->wcet_low       = 0;
+    interface->wcet_high      = 0;
+    interface->wcet_low_unit  = NULL;
+    interface->wcet_high_unit = NULL;
+    interface->queue_size     = 1;
+
+    /* ignore params will be kept to true if all callers of a given PI
+     * are located in the same node (binary) - in that case the parameters
+     * will not be copied from the sender to the receiver through the orb
+     * but made available directly through global pointers.
+     */
+    interface->ignore_params = true;
 }
 
 /* New Provided interface */
@@ -872,21 +880,21 @@ void Add_RI(char *ri, size_t length,
             char *dist_fv, size_t distant_length,
             char *dist_name, size_t dist_name_length)
 {
-   size_t       tmp             = 0; 
-   char *local_name     = ri;
+   size_t tmp             = 0; 
+   char   *local_name     = ri;
 
    assert (NULL != ri);
    assert (NULL != dist_fv);
    assert (NULL != dist_name);
 
-   tmp = remove_objXXX_suffix (ri, length); 
+   tmp = remove_objXXX_suffix (ri, length);
    dist_name_length = remove_objXXX_suffix (dist_name, dist_name_length);
 
    /* If the first 3 characters of the local RI name are "obj" we suppose
     * it is a name generated randomly by TASTE-IV. In that case we replace
     * the local RI name with the name of the remote PI.
-    * Whenever TASTE-IV is fixed (after version 1.1.2)
-    * this should become obsolete */
+    * This is kept only for backward compatibility
+    */
    if (tmp >= 4 && !strncmp (ri, "obj", 3)) {
         local_name = dist_name;
         length = dist_name_length;
@@ -900,9 +908,9 @@ void Add_RI(char *ri, size_t length,
 }
 
 /* add an IN parameter to the list */
-void Add_In_Param(char *name, size_t l1, 
-                  char *type, size_t l2, 
-                  char *module, size_t l3,
+void Add_In_Param(char *name,     size_t l1,
+                  char *type,     size_t l2,
+                  char *module,   size_t l3,
                   char *filename, size_t l4)
 {
     type = asn2underscore(type, l2);
@@ -1038,13 +1046,15 @@ void CompareFVname(FV * fv_local, FV ** result)
     }
 }
 
+/* main function to be called */
 FV *FindFV(char *fv_name)
-{                               /* main function to be called */
+{
     FV *result_fv = NULL;
     SetSearchName(fv_name);
     FOREACH(f, FV, system_ast->functions, {
-            CompareFVname(f, &result_fv);})
-        SetSearchName(NULL);
+        CompareFVname(f, &result_fv);
+    });
+    SetSearchName(NULL);
 
     return result_fv;
 }
@@ -1074,9 +1084,24 @@ Interface *FindInterface(FV * function, char *interface_name)
     return result;
 }
 
+/* Given a PI (from any function) and a known caller, find the corresponding
+ * RI in the remote function
+*/
+Interface *FindCorrespondingRI(FV *remote, Interface *pi)
+{
+    FOREACH (i, Interface, remote->interfaces, {
+        if (RI == i->direction &&
+            !strcmp (i->distant_name, pi->name) &&
+            !strcmp (i->distant_fv, pi->parent_fv->name)) {
+            return i;
+        }
+    });
+    return NULL;
+}
+
 /* End Find Interface functions */
 
-/* Return the list of FV calling a given PI 
+/* Return the list of FV calling a given PI
    the conditions are, for each RI of each FV that :
         - RI's distant name = PI's name
         - RI's distant FV = PI's parent FV
@@ -1133,18 +1158,17 @@ void Delete_System_AST()
     Clear_System(system_ast);
 }
 
-/* Get dataview file name based (same as dataview.aadl 
- * passed with -d but replace with .asn extension */
+/* Get dataview file name based (same as dataview.aadl
+ * passed with -d but replace with .asn extension
+*/
 char *getASN1DataView()
 {
     char *p = strrchr (get_context()->dataview,'/');
     if (NULL == p) p = get_context()->dataview - 1;
 
-    return  make_string
-                ("%.*s.asn",
-                strlen (p + 1) - strlen (".aadl"),
-                p + 1);
+    return make_string ("%.*s.asn", strlen (p + 1) - strlen (".aadl"), p + 1);
 }
+
 /* Get dataView path */
 char *getDataViewPath()
 {
@@ -1190,11 +1214,12 @@ void Print_Interface(Interface * i)
     printf("\tperiod/miat = %lld\n", i->period);
     printf("\tdistant_fv = %s\n", i->distant_fv);
     printf("\tdistant_name = %s\n", i->distant_name);
-    printf("\twcet = %llu %s .. %llu %s\n\n",
+    printf("\twcet = %llu %s .. %llu %s\n",
            (unsigned long long) i->wcet_low,
            i->wcet_low_unit,
            (unsigned long long) i->wcet_high,
            i->wcet_high_unit);
+   printf("\tignore params = %s\n\n", i->ignore_params ? "true": "false");
 }
 
 void Dump_Interfaces(Interface_list * l)

@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* 
@@ -19,7 +19,9 @@
 #include "practical_functions.h"
 #include "c_ast_construction.h"
 
-static FILE *vm_if = NULL, *invoke_ri = NULL, *vm_if_h = NULL;
+static FILE *vm_if     = NULL,
+            *invoke_ri = NULL,
+            *vm_if_h   = NULL;
 
 static int count_calling_threads = 0;
 
@@ -45,13 +47,6 @@ void c_preamble(FV * fv)
             "extern \"C\" {\n" "#endif\n\n");
 
     fprintf(vm_if, "#include \"%s_vm_if.h\"\n\n", fv->name);
-
-    /* in case of native platform (linux) add string.h to get access to memset 
-     * REMOVED (MP 31 05 2012 : it is better to use ASN1Scc _Initialize() function rather than memset
-     * because memeset puts potentially wrong values (wrt. the ASN.1 type constraints) in the variable,
-     * and Ada functions may raise an exception). 
-     * fprintf(vm_if, "#ifdef __unix__\n#include <string.h>\n#endif\n\n");
-     */
 
     if (c == fv->language || cpp == fv->language) {
         fprintf(vm_if, "#include \"%s.h\"\n\n", fv->name);
@@ -91,60 +86,57 @@ void c_preamble(FV * fv)
      * EDIT (MP 19/11/12) Removed the barrier that prevented from calling
      * the init function of the remote FVs if the language was Ada.
      */
-    //if (ada != fv->language) {
-        fprintf(vm_if, "\tstatic int init = 0;\n");
-        fprintf(vm_if, "\n\tif (!init) {\n");
-        fprintf(vm_if, "\t\tinit = 1;\n");
+    fprintf(vm_if, "    static int init = 0;\n\n"
+                   "    if (!init) {\n"
+                   "        init = 1;\n");
 
-        /* Call the user-defined startup function (or GUI startup)
-         * Except for Ada functions - that have startup in elaboration */
-        if (ada != fv->language && qgenada != fv->language && qgenc != fv->language) {
-            fprintf(vm_if, "\t\t%s_startup();\n", fv->name);
+    /* Call the user-defined startup function (or GUI startup)
+     * Except for Ada functions - that have startup in elaboration */
+    if (ada != fv->language && qgenada != fv->language && qgenc != fv->language) {
+        fprintf(vm_if, "        %s_startup();\n", fv->name);
+    }
+
+    /* Add a call to QGen init function, if it exists in generated code*/
+    FOREACH(i, Interface, fv->interfaces, {
+        if ((RI == i->direction) && (i->distant_qgen != NULL)) {
+            if (NULL != i->distant_qgen->qgen_init)
+                fprintf(vm_if, "        %s;\n", i->distant_qgen->qgen_init);
         }
+    });
 
-        /* Add a call to QGen init function, if it exists in generated code*/
+    /*
+     * If this function is a thread and we are using Po-Hi-C, we
+     * must call the initialization function of all dependent
+     * synchronous functions. Several threads can be connected
+     * to a given sync function, but multiple execution of their
+     * startup() function is prevented by the "init" barrier
+     * (see just above).
+     */
+    /*
+     * Edit (MP 27/06/11):
+     * This must NOT be limited to threads - sync functions
+     * must also call the init function of their offsprings.
+     * (Auto-generated threads do not have any init_ function)
+     */
+    if (USE_PO_HI_C(fv)) {
+
         FOREACH(i, Interface, fv->interfaces, {
-            if ((RI == i->direction) && (i->distant_qgen != NULL)) {
-                if (NULL != i->distant_qgen->qgen_init)
-                    fprintf(vm_if, "\t\t%s;\n", i->distant_qgen->qgen_init);
-            }
-        });
+                if (RI == i->direction && synch == i->synchronism) {
+                    fprintf(vm_if,
+                        "        void init_%s();"
+                        "        init_%s();\n",
+                        i->distant_fv, 
+                        i->distant_fv);}
+                }
+        );
+    }
 
-        /*
-         * If this function is a thread and we are using Po-Hi-C, we
-         * must call the initialization function of all dependent 
-         * synchronous functions. Several threads can be connected
-         * to a given sync function, but multiple execution of their
-         * startup() function is prevented by the "init" barrier
-         * (see just above).
-         */
-        /*
-         * Edit (MP 27/06/11):
-         * This must NOT be limited to threads - sync functions
-         * must also call the init function of their offsprings.
-         * (Auto-generated threads do not have any init_ function)
-         */
-        if (USE_PO_HI_C(fv)) {  //  && thread_runtime == fv->runtime_nature) {
+    fprintf(vm_if, "    }\n");
 
-            FOREACH(i, Interface, fv->interfaces, {
-                    if (RI == i->direction && synch == i->synchronism) {
-                        fprintf(vm_if, 
-                            "\t\tvoid init_%s();"
-                            "\t\tinit_%s();\n",
-                            i->distant_fv, 
-                            i->distant_fv);}
-                    }
-            );
-        }
-
-        fprintf(vm_if, "\t}\n");
-
-    //} 
     if (ada == fv->language || qgenada == fv->language) {
         if (USE_PO_HI_C(fv)) {
-            fprintf(vm_if,
-                    "\t/* Calling Ada initialization code (generated by gnatmake) */\n");
-            fprintf(vm_if, "\tadainit();\n");
+            fprintf(vm_if, "    /* Calling Ada initialization code */\n"
+                           "    adainit();\n");
             fprintf(vm_if_h, "extern void adainit();\n");
         }
     }
@@ -216,12 +208,12 @@ void add_PI_to_c_vm_if(Interface * i)
 
     /* c. for each OUT param, add "void *pmy_outparam, size_t *size_my_outparam" */
     FOREACH(p, Parameter, i->out, {
-            fcn_proto =
-            make_string("%s%svoid *pmy_%s, size_t *psize_my_%s",
-                        fcn_proto, (p != i->out->value
-                                    || (p == i->out->value
-                                        && NULL != i->in)) ? ", " : "",
-                        p->name, p->name);}
+        fcn_proto = make_string("%s%svoid *pmy_%s, size_t *psize_my_%s",
+                                fcn_proto,
+                                (p != i->out->value || (p == i->out->value
+                                    && NULL != i->in)) ? ", " : "",
+                                p->name,
+                                p->name);}
     );
 
     fprintf(vm_if, "%s)\n{\n", fcn_proto);
@@ -233,39 +225,43 @@ void add_PI_to_c_vm_if(Interface * i)
 
     if (NULL != i->in) {
         fprintf(vm_if,
-                "\t/* Decoded input variable(s): developer can use them */\n");
+                "    /* Decoded input variable(s): developer can use them */\n");
     }
 
     FOREACH(p, Parameter, i->in, {
-            fprintf(vm_if, "\tstatic asn1Scc%s IN_%s;\n",
-                    p->type, p->name);
-            }
+        fprintf(vm_if, "    static asn1Scc%s IN_%s;\n",
+                       p->type,
+                       p->name);
+        }
     );
 
     /* e. For each OUT param, declare a static variable that the user can fill prior to encoding */
     if (NULL != i->out) {
         fprintf(vm_if,
-                "\n\t/* Output variable(s): developer has to fill them */\n");
+                "\n    /* Output variable(s): developer has to fill them */\n");
     }
 
     FOREACH(p, Parameter, i->out, {
-            fprintf(vm_if, "\tstatic asn1Scc%s OUT_%s;\n",
-                    p->type, p->name);
-            }
+        fprintf(vm_if, "    static asn1Scc%s OUT_%s;\n",
+                       p->type,
+                       p->name);
+        }
     );
 
-    /* f. In case of linux platform, memset to 0 all parameters (to avoid valgrind warnings) 
-     * this is unnecessary for flight platform because it consumes CPU for nothing */
+    /* f. In case of linux platform, memset to 0 all parameters
+     *    !! This is only needed to avoid valgrind warnings !!
+     *    Unnecessary for flight platform because it consumes CPU for nothing
+    */
     if (NULL != i->in || NULL != i->out) {
         fprintf(vm_if, "\n#ifdef __unix__\n");
         FOREACH(p, Parameter, i->in, {
-                fprintf(vm_if, "\tasn1Scc%s_Initialize(&IN_%s);\n",
+                fprintf(vm_if, "    asn1Scc%s_Initialize(&IN_%s);\n",
                         p->type, p->name);
                 }
         );
         FOREACH(p, Parameter, i->out, {
                 fprintf(vm_if,
-                        "\tasn1Scc%s_Initialize(&OUT_%s);\n",
+                        "    asn1Scc%s_Initialize(&OUT_%s);\n",
                         p->type, p->name);
                 }
         );
@@ -275,83 +271,88 @@ void add_PI_to_c_vm_if(Interface * i)
 
     /* g. Decode each IN param */
     if (NULL != i->in) {
-        fprintf(vm_if, "\n\t/* Decode each input parameter */\n");
+        fprintf(vm_if, "\n    /* Decode each input parameter */\n");
     }
 
     FOREACH(p, Parameter, i->in, {
             fprintf(vm_if,
-                    "\tif (0 != Decode_%s_%s (&IN_%s, pmy_%s, size_my_%s)) {\n\t\tprintf(\"\\nError Decoding %s\\n\");\n\t\treturn;\n\t}\n\n",
+                    "    if (0 != Decode_%s_%s (&IN_%s, pmy_%s, size_my_%s)) {\n"
+                    "        printf(\"\\nError Decoding %s\\n\");\n"
+                    "        return;\n"
+                    "    }\n\n",
                     BINARY_ENCODING(p),
                     p->type, p->name, p->name, p->name, p->type);}
     );
 
     if (qgenc == i->parent_fv->language) {
         /* h. Add a call to the user-defined function passing the decoded input as parameter */
-        fprintf(vm_if, "\t/* Call to QGenc comp function */\n");
-        fprintf(vm_if, "\t%s_comp (", i->name);
+        fprintf(vm_if, "    /* Call to QGenc comp function */\n");
+        fprintf(vm_if, "    %s_comp (", i->name);
 
         /* Add the external QGenc comp function declaration in the header file */
         fprintf(vm_if_h, "extern void %s_comp (", i->name);
     } else {
         /* h. Add a call to the user-defined function passing the decoded input as parameter */
-        fprintf(vm_if, "\t/* Call to User-defined function */\n");
-        fprintf(vm_if, "\t%s_PI_%s (", i->parent_fv->name, i->name);
+        fprintf(vm_if, "    /* Call to User-defined function */\n");
+        fprintf(vm_if, "    %s_PI_%s (", i->parent_fv->name, i->name);
 
         /* Add the external PI function declaration in the header file */
         fprintf(vm_if_h, "extern void %s_PI_%s (", i->parent_fv->name, i->name);
     }
 
-    bool needs_comma = false;
+    comma = false;
     FOREACH (p, Parameter, i->in, {
         fprintf(vm_if_h, "%sconst asn1Scc%s *%s",
-                         needs_comma ? ", " : "",
+                         comma ? ", " : "",
                          p->type,
                          p->name);
-        needs_comma = true;
+        comma = true;
     });
     FOREACH (p, Parameter, i->out, {
         fprintf(vm_if_h, "%sasn1Scc%s *%s",
-                         needs_comma ? ", " : "",
+                         comma ? ", " : "",
                          p->type,
                          p->name);
-        needs_comma = true;
+        comma = true;
     });
     fprintf(vm_if_h, ");\n");
 
     comma = false;
     FOREACH(p, Parameter, i->in, {
-            fprintf(vm_if, "%s&IN_%s",
-                    (true == comma) ? ", " : "", p->name); comma = true;}
+        fprintf(vm_if, "%s&IN_%s",
+                (true == comma) ? ", " : "", p->name); comma = true;
+        }
     );
 
     comma = false;
     FOREACH(p, Parameter, i->out, {
-            if (NULL != i->in) comma = true;
-            fprintf(vm_if, "%s&OUT_%s",
-                    (true == comma) ? ", " : "", p->name); comma = true;}
+        if (NULL != i->in) comma = true;
+        fprintf(vm_if, "%s&OUT_%s",
+                (true == comma) ? ", " : "", p->name); comma = true;
+        }
     );
 
     fprintf(vm_if, ");\n\n");
 
     /* i. Encode each OUT param */
     if (NULL != i->out) {
-        fprintf(vm_if, "\t/* Encode each output parameter */\n\n");
+        fprintf(vm_if, "    /* Encode each output parameter */\n\n");
     }
 
     FOREACH(p, Parameter, i->out, {
-
-            fprintf(vm_if,
-                    "\t*psize_my_%s = Encode_%s_%s (pmy_%s, %sasn1Scc%s%s, &OUT_%s);\n",
-                    p->name,
-                    BINARY_ENCODING(p),
-                    p->type,
-                    p->name,
-                    (native == p->encoding) ? "sizeof (" : "",
-                    p->type,
-                    (native == p->encoding) ? ")" :
-                    (uper == p->encoding) ?
-                    "_REQUIRED_BYTES_FOR_ENCODING" :
-                    "_REQUIRED_BYTES_FOR_ACN_ENCODING", p->name);}
+        fprintf(vm_if,
+                "    *psize_my_%s = Encode_%s_%s (pmy_%s, %sasn1Scc%s%s, &OUT_%s);\n",
+                p->name,
+                BINARY_ENCODING(p),
+                p->type,
+                p->name,
+                (native == p->encoding) ? "sizeof (" : "",
+                p->type,
+                (native == p->encoding) ? ")" :
+                (uper == p->encoding) ?
+                "_REQUIRED_BYTES_FOR_ENCODING" :
+                "_REQUIRED_BYTES_FOR_ACN_ENCODING", p->name);
+        }
     );
 
     fprintf(vm_if, "}\n");
@@ -415,12 +416,68 @@ void add_RI_to_c_invoke_ri(Interface * i)
 
     fprintf(invoke_ri, ")\n{\n");
 
+    /* MSC Tracer-related code */
+    FV *receiver_FV = NULL;
+    char *receiver_id = NULL, *sender_id = NULL;
+
+    fprintf(invoke_ri, "#ifdef __unix__\n");
+
+    fprintf(invoke_ri, "    static int innerMsc = -1;\n");
+
+    /* Sender or receiver can be in a FV that was created during VT
+     * (their name may be computed: fv_FV_pi) - in that case this is not
+     * what we want to see in the MSC - we have to retreive the original
+     * name, as it was entered by the user in the interface view */
+    if (NULL != i->distant_fv) {
+        receiver_FV = FindFV(i->distant_fv);
+
+        if (true == receiver_FV->artificial) {
+            receiver_id = receiver_FV->original_name;
+        }
+        else {
+            receiver_id = receiver_FV->name;
+        }
+        if (true == i->parent_fv->artificial) {
+            sender_id = i->parent_fv->original_name;
+        }
+        else {
+            sender_id = i->parent_fv->name;
+        }
+        fprintf(invoke_ri,
+                "    if (-1 == innerMsc)\n"
+                "        innerMsc = (NULL != getenv "
+                "(\"TASTE_INNER_MSC\"))?1:0;\n");
+        fprintf(invoke_ri, "    if (1 == innerMsc) {\n");
+        fprintf(invoke_ri,
+                "        long long msc_time = getTimeInMilliseconds();\n\n");
+        FOREACH(p, Parameter, i->in, {
+            fprintf(invoke_ri, "        {\n");
+            fprintf(invoke_ri,
+                    "            PrintASN1%s (\"INNERDATA: %s::%s::%s\", IN_%s);\n",
+                    p->type,
+                    i->name,
+                    p->type,
+                    p->name,
+                    p->name);
+            fprintf(invoke_ri, "        }\n");
+        });
+        fprintf(invoke_ri,
+                "        printf (\"\\nINNER: %s,%s,%s,%%lld\\n\""
+                ", msc_time);\n"
+                "        fflush(stdout);\n",
+                sender_id, receiver_id, i->name);
+        fprintf(invoke_ri, "    }\n");
+
+        fprintf(invoke_ri, "#endif\n\n");
+        /* End MSC Tracer-related code */
+    }
+
     if (qgenada == i->distant_qgen->language) {
 
         /* Add a call to the vm callback function */
-        fprintf(invoke_ri, "\n\t/* Call to VM callback function */\n");
+        fprintf(invoke_ri, "\n    /* Call to VM callback function */\n");
 
-        fprintf(invoke_ri, "\tvm_%s%s_%s(",
+        fprintf(invoke_ri, "    vm_%s%s_%s(",
                 asynch == i->synchronism ? "async_" : "", i->parent_fv->name,
                 i->name);
 
@@ -438,9 +495,9 @@ void add_RI_to_c_invoke_ri(Interface * i)
     } else if (qgenc == i->distant_qgen->language){
 
         /* Add a call to the QGenc comp function */
-        fprintf(invoke_ri, "\n\t/* Call QGenc function */\n");
+        fprintf(invoke_ri, "\n    /* Call QGenc function */\n");
 
-        fprintf(invoke_ri, "\t%s_comp(", i->distant_name);
+        fprintf(invoke_ri, "    %s_comp(", i->distant_name);
 
         /* Create the list of parameters */
         FOREACH(p, Parameter, i->in, {
@@ -459,12 +516,12 @@ void add_RI_to_c_invoke_ri(Interface * i)
         tmp = i->in;
         if (NULL != tmp) {
             fprintf(invoke_ri,
-                    "\t/* Buffer(s) to put the encoded input parameter(s) */\n");
+                    "    /* Buffer(s) to put the encoded input parameter(s) */\n");
         }
 
         while (NULL != tmp) {
             fprintf(invoke_ri,
-                    "\tstatic char IN_buf_%s[%sasn1Scc%s%s] = {0};\n\tint size_IN_buf_%s=0;\n",
+                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    int size_IN_buf_%s=0;\n",
                     tmp->value->name,
                     (native == tmp->value->encoding) ? "sizeof(" : "",
                     tmp->value->type,
@@ -480,12 +537,12 @@ void add_RI_to_c_invoke_ri(Interface * i)
         tmp = i->out;
         if (NULL != tmp) {
             fprintf(invoke_ri,
-                    "\n\t/* Buffer(s) for the output parameter(s) */\n");
+                    "\n    /* Buffer(s) for the output parameter(s) */\n");
         }
 
         while (NULL != tmp) {
             fprintf(invoke_ri,
-                    "\tstatic char OUT_buf_%s[%sasn1Scc%s%s];\n\tint size_OUT_buf_%s=0;\n",
+                    "    static char OUT_buf_%s[%sasn1Scc%s%s];\n    int size_OUT_buf_%s=0;\n",
                     tmp->value->name,
                     (native == tmp->value->encoding) ? "sizeof(" : "",
                     tmp->value->type,
@@ -500,13 +557,13 @@ void add_RI_to_c_invoke_ri(Interface * i)
         /* e. Encode each IN param */
         tmp = i->in;
         if (NULL != tmp) {
-            fprintf(invoke_ri, "\n\t/* Encode each input parameter */\n");
+            fprintf(invoke_ri, "\n    /* Encode each input parameter */\n");
         }
 
         while (NULL != tmp) {
 
             fprintf(invoke_ri,
-                    "\tsize_IN_buf_%s=Encode_%s_%s(IN_buf_%s, %sasn1Scc%s%s, IN_%s);\n",
+                    "    size_IN_buf_%s=Encode_%s_%s(IN_buf_%s, %sasn1Scc%s%s, IN_%s);\n",
                     tmp->value->name,
                     BINARY_ENCODING(tmp->value),
                     tmp->value->type, tmp->value->name,
@@ -518,22 +575,22 @@ void add_RI_to_c_invoke_ri(Interface * i)
                     "_REQUIRED_BYTES_FOR_ENCODING" :
                     "_REQUIRED_BYTES_FOR_ACN_ENCODING", tmp->value->name);
 
-            fprintf(invoke_ri, "\tif (-1 == size_IN_buf_%s) {\n",
+            fprintf(invoke_ri, "    if (-1 == size_IN_buf_%s) {\n",
                     tmp->value->name);
             fprintf(invoke_ri,
-                    "#ifdef __unix__\n\t\tprintf (\"** Encoding error in %s_RI_%s!!\\n\");\n",
+                    "#ifdef __unix__\n        printf (\"** Encoding error in %s_RI_%s!!\\n\");\n",
                     i->parent_fv->name, i->name);
             fprintf(invoke_ri,
-                    "#endif\n\t\t/* Major error, we must stop the application and let the FDIR/Watchdogs recover */\n");
-            fprintf(invoke_ri, "\t\texit (-1);\n\t}\n");
+                    "#endif\n        /* Major error, we must stop the application and let the FDIR/Watchdogs recover */\n");
+            fprintf(invoke_ri, "        exit (-1);\n    }\n");
 
             tmp = tmp->next;
         }
 
         /* f. Add a call to the vm callback function passing the encoded inputs as parameters */
-        fprintf(invoke_ri, "\n\t/* Call to VM callback function */\n");
+        fprintf(invoke_ri, "\n    /* Call to VM callback function */\n");
 
-        fprintf(invoke_ri, "\tvm_%s%s_%s(",
+        fprintf(invoke_ri, "    vm_%s%s_%s(",
                 asynch == i->synchronism ? "async_" : "", i->parent_fv->name,
                 i->name);
 
@@ -552,12 +609,12 @@ void add_RI_to_c_invoke_ri(Interface * i)
         /* g. Decode each OUT param */
         tmp = i->out;
         if (NULL != tmp) {
-            fprintf(invoke_ri, "\t/* Decode each output parameter */\n");
+            fprintf(invoke_ri, "    /* Decode each output parameter */\n");
         }
 
         while (NULL != tmp) {
             fprintf(invoke_ri,
-                    "\tif (0 != Decode_%s_%s(OUT_%s, OUT_buf_%s, size_OUT_buf_%s)) {\n#ifdef __unix__\n\t\tprintf(\"\\nError Decoding %s\\n\");\n#endif\n\t\treturn;\n\t}\n\n",
+                    "    if (0 != Decode_%s_%s(OUT_%s, OUT_buf_%s, size_OUT_buf_%s)) {\n#ifdef __unix__\n        printf(\"\\nError Decoding %s\\n\");\n#endif\n        return;\n    }\n\n",
                     BINARY_ENCODING(tmp->value),
                     tmp->value->type,
                     tmp->value->name,
@@ -566,61 +623,6 @@ void add_RI_to_c_invoke_ri(Interface * i)
             tmp = tmp->next;
         }
 
-        /* MSC Tracer-related code */
-        FV *receiver_FV = NULL;
-        char *receiver_id = NULL, *sender_id = NULL;
-
-        fprintf(invoke_ri, "#ifdef __unix__\n");
-
-        fprintf(invoke_ri, "\tstatic int innerMsc = -1;\n");
-
-        /* Sender or receiver can be in a FV that was created during VT
-         * (their name may be computed: fv_FV_pi) - in that case this is not
-         * what we want to see in the MSC - we have to retreive the original
-         * name, as it was entered by the user in the interface view */
-        if (NULL != i->distant_fv) {
-            receiver_FV = FindFV(i->distant_fv);
-
-            if (true == receiver_FV->artificial) {
-                receiver_id = receiver_FV->original_name;
-            }
-            else {
-                receiver_id = receiver_FV->name;
-            }
-            if (true == i->parent_fv->artificial) {
-                sender_id = i->parent_fv->original_name;
-            }
-            else {
-                sender_id = i->parent_fv->name;
-            }
-            fprintf(invoke_ri,
-                    "\tif (-1 == innerMsc)\n"
-                    "\t\tinnerMsc = (NULL != getenv "
-                    "(\"TASTE_INNER_MSC\"))?1:0;\n");
-            fprintf(invoke_ri, "\tif (1 == innerMsc) {\n");
-            fprintf(invoke_ri,
-                    "\t\tlong long msc_time = getTimeInMilliseconds();\n\n");
-            FOREACH(p, Parameter, i->in, {
-                fprintf(invoke_ri, "\t\t{\n");
-                fprintf(invoke_ri,
-                        "\t\t\tPrintASN1%s (\"INNERDATA: %s::%s::%s\", IN_%s);\n",
-                        p->type,
-                        i->name,
-                        p->type,
-                        p->name,
-                        p->name);
-                fprintf(invoke_ri, "\t\t}\n");
-            });
-            fprintf(invoke_ri,
-                    "\t\tprintf (\"\\nINNER: %s,%s,%s,%%lld\\n\""
-                    ", msc_time);\n"
-                    "\t\tfflush(stdout);\n",
-                    sender_id, receiver_id, i->name);
-            fprintf(invoke_ri, "\t}\n");
-
-            fprintf(invoke_ri, "#endif\n\n");
-            /* End MSC Tracer-related code */
-        }
     }
 
     fprintf(invoke_ri, "}\n\n");

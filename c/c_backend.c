@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /*
@@ -46,8 +46,8 @@ void C_End()
     Semantic_Checks();
 
     /* 
-     * Temporary support for OpenGEODE - Will be removed when TASTE-IV supports it 
-     * Replace SDL language with Ada for building glue code 
+     * Temporary support for OpenGEODE
+     * Replace SDL language with Ada for building glue code
      */
     if (get_context()->glue) {
         FOREACH(fv, FV, get_system_ast()->functions, {
@@ -57,21 +57,22 @@ void C_End()
 
     /* Mark the callers of QGen functions */
     FOREACH(fv, FV, get_system_ast()->functions, {
-            FOREACH(i, Interface, fv->interfaces, {
-                if (RI == i->direction) {
-                    FV         *connected_fv = NULL;
-                    Interface  *connected_pi = NULL;
-                    connected_fv = FindFV (i->distant_fv);
-                    if ((connected_fv != NULL) && ((qgenada == connected_fv->language) || (qgenc == connected_fv->language))) {
-                        i->distant_qgen->language = connected_fv->language;
-                        i->distant_qgen->fv_name = connected_fv->name;
-                        connected_pi = FindInterface (connected_fv, i->distant_name);
-                        if (connected_pi != NULL) {
-                            connected_pi->distant_qgen->language = connected_fv->language;
-                            connected_pi->distant_qgen->fv_name = fv->name;
-                        }
+        FOREACH(i, Interface, fv->interfaces, {
+            if (RI == i->direction) {
+                FV         *connected_fv = NULL;
+                Interface  *connected_pi = NULL;
+                connected_fv = FindFV (i->distant_fv);
+                if ((connected_fv != NULL) &&
+                         ((qgenada == connected_fv->language) || (qgenc == connected_fv->language))) {
+                    i->distant_qgen->language = connected_fv->language;
+                    i->distant_qgen->fv_name = connected_fv->name;
+                    connected_pi = FindInterface (connected_fv, i->distant_name);
+                    if (connected_pi != NULL) {
+                        connected_pi->distant_qgen->language = connected_fv->language;
+                        connected_pi->distant_qgen->fv_name = fv->name;
                     }
                 }
+            }
         });
     });
 
@@ -95,9 +96,9 @@ void C_End()
         });
     });
 
-    /* 
+    /*
      * If Semantic errors have been found (erros in the user AADL models),
-     * then the application is exited with an error message. 
+     * then the application is exited with an error message.
      */
     if (error_count > 0) {
         fprintf(stderr, "\nFound %d errors.. Aborting...\n", error_count);
@@ -143,7 +144,7 @@ void C_End()
         })
 
 
-        /* 
+        /*
          * Perform the first part of the Vertical transformation (-glue flag):
          * Tranform the interface view to allow a one-to-one mapping Function-Thread
          */
@@ -155,35 +156,33 @@ void C_End()
          * Debug mode (userflag -test) : dump the result of the transformation
          * TODO: generate an AADL model (equivalent to the Concurrency View)
          */
-        if (get_system_ast()->context->test)
+        if (get_system_ast()->context->test) {
             Dump_model(get_system_ast());
+        }
 
-            /*
+        /*
          * Execute various backends applicable to each FV
          */
-            FOREACH(fv, FV, get_system_ast()->functions, {
-                    /* 
-                     * Call 'asn2dataModel' if glue code is not required
-                     * (to avoid slowing down the orchestrator, which is
-                     * the only place where the glue code is requested
-                     */
-                    if (get_context()->gw && 
-                !get_context()->glue && 
-                NULL == fv->zipfile) {
+        FOREACH(fv, FV, get_system_ast()->functions, {
+            /*
+             * Call 'asn2dataModel' if glue code is not required
+             * (to avoid slowing down the orchestrator, which is
+             * the only place where the glue code is requested
+             */
+            if (get_context()->gw && !get_context()->glue && NULL == fv->zipfile) {
                 Call_asn2dataModel(fv);
-                    }
+            }
 
-                    /* Process all functional states declared in the interface view */
-                    if (get_context()->gw && 
-                (NULL == fv->zipfile || get_context()->glue)) {
-                        Process_Context_Parameters(fv);
-                    }
+            /* Process all functional states declared in the interface view */
+            if (get_context()->gw && (NULL == fv->zipfile || get_context()->glue)) {
+                Process_Context_Parameters(fv);
+            }
 
             /* Process function directives */
             if (get_context()->glue || get_context()->test) {
                 Process_Directives (fv);
             }
-                   
+
             if (get_context()->glue) {
                 GLUE_OG_Backend(fv);
                 GLUE_RTDS_Backend(fv);
@@ -197,7 +196,7 @@ void C_End()
         })
 
         /*
-         * Perform the second part of the Vertical transformation: 
+         * Perform the second part of the Vertical transformation:
          * Generate driver configuration
          * Generate the full concurrency view (process.aadl et al.)
          * Additionnally create an AADL file of the concurrency view
@@ -212,15 +211,9 @@ void C_End()
                                              (get_system_ast()->name));
                 AADL_CV_Unparser ();
             }
-        
+
         /* Generation of system configuration used by C_ASN1_Types.h */
         System_Config(get_system_ast());
 
     }
-
-    /*
-     * Free the memory used by the system AST
-     * Removed, this is useless at the end of the application
-     */
-    // Delete_System_AST();
 }

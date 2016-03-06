@@ -92,15 +92,19 @@ void Process_Context_Parameters(FV *fv)
      * In the future this namespace shall comme automatically from Asn1Scc
      */
     fprintf(asn, "\nContext-%s ::= SEQUENCE {", fv_no_underscore);
+    bool first = true;
     FOREACH (cp, Context_Parameter, fv->context_parameters, {
             if (strcmp (cp->type.name, "Taste-directive") &&
                 strcmp (cp->type.name, "Simulink-Tunable-Parameter") &&
                 strcmp(cp->type.name, "Timer")) {
                 cp_no_underscore = underscore_to_dash
                                         (cp->name, strlen(cp->name));
-                fprintf(asn, "%s\t%s %s",
-                    cp != fv->context_parameters->value? ",\n": "\n",
-                    cp_no_underscore, 
+                if (false == first) {
+                    fprintf(asn, ",");
+                }
+                first = false;
+                fprintf(asn, "\n\t%s %s",
+                    cp_no_underscore,
                     cp->type.name);
                 free (cp_no_underscore);
             }
@@ -113,16 +117,19 @@ void Process_Context_Parameters(FV *fv)
     fprintf(asn, "\n%s-ctxt Context-%s ::= {",
             fv_no_underscore,
             fv_no_underscore);
-
+    first = true;
     FOREACH (cp, Context_Parameter, fv->context_parameters, {
         if (strcmp (cp->type.name, "Taste-directive") &&
             strcmp (cp->type.name, "Simulink-Tunable-Parameter") &&
             strcmp(cp->type.name, "Timer")) {
             cp_no_underscore = underscore_to_dash
                                     (cp->name, strlen(cp->name));
-            fprintf(asn, "%s\t%s %s", 
-                cp != fv->context_parameters->value? ",\n": "\n",
-                cp_no_underscore, 
+            if (false == first) {
+                fprintf(asn, ",");
+            }
+            first = false;
+            fprintf(asn, "\n\t%s %s",
+                cp_no_underscore,
                 cp->value);
             free (cp_no_underscore);
         }

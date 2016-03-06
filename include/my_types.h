@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* Types used for description of the C AST of TASTE systems */
@@ -87,15 +87,15 @@ typedef enum {
 
 /* Basic ASN.1 type */
 typedef enum {
-    sequenceof, 
-    sequence,  
-    enumerated, 
-    set, 
-    setof, 
-    integer, 
-    boolean, 
-    real, 
-    choice, 
+    sequenceof,
+    sequence,
+    enumerated,
+    set,
+    setof,
+    integer,
+    boolean,
+    real,
+    choice,
     octetstring,
     string,
     unknown_type
@@ -104,8 +104,8 @@ typedef enum {
 
 /* Function nature: thread or shared resource */
 typedef enum {
-    thread_runtime, 
-    passive_runtime, 
+    thread_runtime,
+    passive_runtime,
     unknown_runtime
 } Nature;
 
@@ -193,8 +193,9 @@ typedef struct t_interface {
   char                  *distant_fv;
   struct t_qgen         *distant_qgen;
   struct t_FV_list      *calling_threads;
-  char                  *distant_name; 
+  char                  *distant_name;
   unsigned long long    queue_size;
+  bool                  ignore_params;
 } Interface;
 
 DECLARE_LIST (Interface)
