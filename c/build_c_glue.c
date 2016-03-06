@@ -361,42 +361,49 @@ void add_PI_to_c_vm_if(Interface * i)
 /* Generation of interface functions to allow developer to call RI */
 void add_RI_to_c_invoke_ri(Interface * i)
 {
-    Parameter_list *tmp;
-
     if (NULL == invoke_ri) {
         char *path = NULL;
         int hasparam = 0;
 
         FOREACH(interface, Interface, i->parent_fv->interfaces, {
-                CheckForAsn1Params(interface, &hasparam);});
+                CheckForAsn1Params(interface, &hasparam);
+        });
 
         if (NULL != i->parent_fv->system_ast->context->output) {
             build_string(&path, get_context()->output,
                          strlen(get_context()->output));
         }
+
         build_string(&path, i->parent_fv->name,
                      strlen(i->parent_fv->name));
 
         if (-1 == create_file(path, "invoke_ri.c", &invoke_ri)) {
             free(path);
             return;
-        } else {
+        }
+        else {
             fprintf(invoke_ri,
-                    "/* This file was generated automatically: DO NOT MODIFY IT ! */\n\n");
-            fprintf(invoke_ri, "#include <stdlib.h>\n");
-            fprintf(invoke_ri, "#ifdef __unix__\n#include <stdio.h>\n");
+                    "/* This file was generated automatically: DO NOT MODIFY IT ! */\n\n"
+                    "#include <stdlib.h>\n"
+                    "#ifdef __unix__\n"
+                    "#include <stdio.h>\n");
             if (hasparam) {
-                fprintf(invoke_ri, "#include \"PrintTypesAsASN1.h\"\n");
-                fprintf(invoke_ri, "#include \"timeInMS.h\"\n");
+                fprintf(invoke_ri,
+                        "#include \"PrintTypesAsASN1.h\"\n"
+                        "#include \"timeInMS.h\"\n");
             }
             fprintf(invoke_ri, "#endif\n\n");
             if (hasparam)
                 fprintf(invoke_ri, "#include \"C_ASN1_Types.h\"\n");
             if (get_context()->polyorb_hi_c) {
-                fprintf(invoke_ri, "#include \"%s_polyorb_interface.h\"\n\n", i->parent_fv->name);
+                fprintf(invoke_ri,
+                        "#include \"%s_polyorb_interface.h\"\n\n",
+                        i->parent_fv->name);
             }
             if (qgenc == i->distant_qgen->language)
-                fprintf(invoke_ri, "#include \"%s.h\"\n\n", string_to_lower (i->distant_name));
+                fprintf(invoke_ri,
+                        "#include \"%s.h\"\n\n",
+                        string_to_lower(i->distant_name));
         }
         free(path);
     }
@@ -404,8 +411,11 @@ void add_RI_to_c_invoke_ri(Interface * i)
 
     /* a. function name */
 
-    fprintf(invoke_ri, "void %s_RI_%s(", (i->parent_fv->name), (i->name)
-        );
+    fprintf(invoke_ri,
+            "void %s_RI_%s(",
+            i->parent_fv->name,
+            i->name);
+
     /* Add the IN and OUT parameters: */
     FOREACH(p, Parameter, i->in, {
             List_C_Types_And_Params_With_Pointers(p, &invoke_ri);}
@@ -445,28 +455,25 @@ void add_RI_to_c_invoke_ri(Interface * i)
         }
         fprintf(invoke_ri,
                 "    if (-1 == innerMsc)\n"
-                "        innerMsc = (NULL != getenv "
-                "(\"TASTE_INNER_MSC\"))?1:0;\n");
-        fprintf(invoke_ri, "    if (1 == innerMsc) {\n");
-        fprintf(invoke_ri,
+                "        innerMsc = (NULL != getenv(\"TASTE_INNER_MSC\"))?1:0;\n"
+                "    if (1 == innerMsc) {\n"
                 "        long long msc_time = getTimeInMilliseconds();\n\n");
         FOREACH(p, Parameter, i->in, {
-            fprintf(invoke_ri, "        {\n");
             fprintf(invoke_ri,
-                    "            PrintASN1%s (\"INNERDATA: %s::%s::%s\", IN_%s);\n",
+                    "        {\n"
+                    "            PrintASN1%s (\"INNERDATA: %s::%s::%s\", IN_%s);\n"
+                    "        }\n",
                     p->type,
                     i->name,
                     p->type,
                     p->name,
                     p->name);
-            fprintf(invoke_ri, "        }\n");
         });
         fprintf(invoke_ri,
-                "        printf (\"\\nINNER: %s,%s,%s,%%lld\\n\""
-                ", msc_time);\n"
-                "        fflush(stdout);\n",
+                "        printf (\"\\nINNER: %s,%s,%s,%%lld\\n\", msc_time);\n"
+                "        fflush(stdout);\n"
+                "    }\n",
                 sender_id, receiver_id, i->name);
-        fprintf(invoke_ri, "    }\n");
 
         fprintf(invoke_ri, "#endif\n\n");
         /* End MSC Tracer-related code */
@@ -513,85 +520,73 @@ void add_RI_to_c_invoke_ri(Interface * i)
     } else {
 
         /* d. For each IN and OUT params, declare a static buffer to put encoded data */
-        tmp = i->in;
-        if (NULL != tmp) {
+        if (NULL != i->in) {
             fprintf(invoke_ri,
                     "    /* Buffer(s) to put the encoded input parameter(s) */\n");
         }
-
-        while (NULL != tmp) {
+        FOREACH(p, Parameter, i->in, {
             fprintf(invoke_ri,
                     "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    int size_IN_buf_%s=0;\n",
-                    tmp->value->name,
-                    (native == tmp->value->encoding) ? "sizeof(" : "",
-                    tmp->value->type,
-                    (native ==
-                     tmp->value->encoding) ? ")" :
-                    (uper == tmp->value->encoding) ?
-                    "_REQUIRED_BYTES_FOR_ENCODING" :
-                    "_REQUIRED_BYTES_FOR_ACN_ENCODING", tmp->value->name);
+                    p->name,
+                    (native == p->encoding) ? "sizeof(" : "",
+                    p->type,
+                    (native == p->encoding) ? ")" :
+                    (uper == p->encoding) ? "_REQUIRED_BYTES_FOR_ENCODING" :
+                    "_REQUIRED_BYTES_FOR_ACN_ENCODING",
+                    p->name);
+        });
 
-            tmp = tmp->next;
-        }
-
-        tmp = i->out;
-        if (NULL != tmp) {
+        if (NULL != i->out) {
             fprintf(invoke_ri,
                     "\n    /* Buffer(s) for the output parameter(s) */\n");
         }
-
-        while (NULL != tmp) {
+        FOREACH(p, Parameter, i->out, {
             fprintf(invoke_ri,
                     "    static char OUT_buf_%s[%sasn1Scc%s%s];\n    int size_OUT_buf_%s=0;\n",
-                    tmp->value->name,
-                    (native == tmp->value->encoding) ? "sizeof(" : "",
-                    tmp->value->type,
-                    (native == tmp->value->encoding) ? ")" :
-                    (uper == tmp->value->encoding) ?
-                    "_REQUIRED_BYTES_FOR_ENCODING" :
-                    "_REQUIRED_BYTES_FOR_ACN_ENCODING", tmp->value->name);
-
-            tmp = tmp->next;
-        }
+                    p->name,
+                    (native == p->encoding) ? "sizeof(" : "",
+                    p->type,
+                    (native == p->encoding) ? ")" :
+                    (uper == p->encoding) ? "_REQUIRED_BYTES_FOR_ENCODING" :
+                    "_REQUIRED_BYTES_FOR_ACN_ENCODING",
+                    p->name);
+        });
 
         /* e. Encode each IN param */
-        tmp = i->in;
-        if (NULL != tmp) {
+        if (NULL != i->in) {
             fprintf(invoke_ri, "\n    /* Encode each input parameter */\n");
         }
 
-        while (NULL != tmp) {
-
+        FOREACH(p, Parameter, i->in, {
             fprintf(invoke_ri,
-                    "    size_IN_buf_%s=Encode_%s_%s(IN_buf_%s, %sasn1Scc%s%s, IN_%s);\n",
-                    tmp->value->name,
-                    BINARY_ENCODING(tmp->value),
-                    tmp->value->type, tmp->value->name,
-                    (native == tmp->value->encoding) ? "sizeof(" : "",
-                    tmp->value->type,
-                    (native ==
-                     tmp->value->encoding) ? ")" :
-                    (uper == tmp->value->encoding) ?
-                    "_REQUIRED_BYTES_FOR_ENCODING" :
-                    "_REQUIRED_BYTES_FOR_ACN_ENCODING", tmp->value->name);
-
-            fprintf(invoke_ri, "    if (-1 == size_IN_buf_%s) {\n",
-                    tmp->value->name);
-            fprintf(invoke_ri,
-                    "#ifdef __unix__\n        printf (\"** Encoding error in %s_RI_%s!!\\n\");\n",
-                    i->parent_fv->name, i->name);
-            fprintf(invoke_ri,
-                    "#endif\n        /* Major error, we must stop the application and let the FDIR/Watchdogs recover */\n");
-            fprintf(invoke_ri, "        exit (-1);\n    }\n");
-
-            tmp = tmp->next;
-        }
+                    "    size_IN_buf_%s = Encode_%s_%s(IN_buf_%s, %sasn1Scc%s%s, IN_%s);\n"
+                    "    if (-1 == size_IN_buf_%s) {\n"
+                    "#ifdef __unix__\n"
+                    "        printf (\"** Encoding error in %s_RI_%s!!\\n\");\n"
+                    "#endif\n"
+                    "        /* Major error, we must stop the application and let the FDIR/Watchdogs recover */\n"
+                    "        exit (-1);\n"
+                    "    }\n",
+                    p->name,
+                    BINARY_ENCODING(p),
+                    p->type, p->name,
+                    (native == p->encoding) ? "sizeof(" : "",
+                    p->type,
+                    (native == p->encoding) ? ")" :
+                    (uper == p->encoding) ? "_REQUIRED_BYTES_FOR_ENCODING" :
+                    "_REQUIRED_BYTES_FOR_ACN_ENCODING",
+                    p->name,
+                    p->name,
+                    i->parent_fv->name,
+                    i->name);
+        });
 
         /* f. Add a call to the vm callback function passing the encoded inputs as parameters */
-        fprintf(invoke_ri, "\n    /* Call to VM callback function */\n");
-
-        fprintf(invoke_ri, "    vm_%s%s_%s(",
-                asynch == i->synchronism ? "async_" : "", i->parent_fv->name,
+        fprintf(invoke_ri,
+                "\n    /* Call to VM callback function */\n"
+                "    vm_%s%s_%s(",
+                asynch == i->synchronism ? "async_" : "",
+                i->parent_fv->name,
                 i->name);
 
         /* Add the IN and OUT parameters */
@@ -602,26 +597,28 @@ void add_RI_to_c_invoke_ri(Interface * i)
                 List_C_Params_And_Size(p, &invoke_ri);}
         );
 
-
         fprintf(invoke_ri, ");\n\n");
 
-
         /* g. Decode each OUT param */
-        tmp = i->out;
-        if (NULL != tmp) {
+        if (NULL != i->out) {
             fprintf(invoke_ri, "    /* Decode each output parameter */\n");
         }
 
-        while (NULL != tmp) {
+        FOREACH(p, Parameter, i->out, {
             fprintf(invoke_ri,
-                    "    if (0 != Decode_%s_%s(OUT_%s, OUT_buf_%s, size_OUT_buf_%s)) {\n#ifdef __unix__\n        printf(\"\\nError Decoding %s\\n\");\n#endif\n        return;\n    }\n\n",
-                    BINARY_ENCODING(tmp->value),
-                    tmp->value->type,
-                    tmp->value->name,
-                    tmp->value->name, tmp->value->name, tmp->value->type);
-
-            tmp = tmp->next;
-        }
+                    "    if (0 != Decode_%s_%s(OUT_%s, OUT_buf_%s, size_OUT_buf_%s)) {\n"\
+                    "#ifdef __unix__\n"
+                    "        printf(\"\\nError Decoding %s\\n\");\n"
+                    "#endif\n"
+                    "        return;\n"
+                    "    }\n\n",
+                    BINARY_ENCODING(p),
+                    p->type,
+                    p->name,
+                    p->name,
+                    p->name,
+                    p->type);
+        });
 
     }
 
