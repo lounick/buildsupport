@@ -150,9 +150,11 @@ int Init_C_Glue_Backend(FV * fv)
     char *path = NULL;
     char *filename = NULL;
 
-    if (NULL != fv->system_ast->context->output)
+    if (NULL != fv->system_ast->context->output) {
         build_string(&path, fv->system_ast->context->output,
                      strlen(fv->system_ast->context->output));
+    }
+
     build_string(&path, fv->name, strlen(fv->name));
 
     filename = make_string("%s_vm_if.h", fv->name);
