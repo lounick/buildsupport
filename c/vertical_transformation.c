@@ -220,7 +220,7 @@ void write_thread_implementation(FV *fv)
    }
 
    /* Default source stack size per thread */
-   fprintf(thread,"\tSource_Stack_Size => 250 KByte;\n");
+   fprintf(thread,"\tSource_Stack_Size => 50 KByte;\n");
 
    /* Calculate the priority : temporary solution using the period */
    FOREACH(i, Interface, fv->interfaces, {
@@ -810,6 +810,9 @@ void GenerateProcessImplementation(Process *p)
    }
    else {
       fprintf (nodes, " default");
+   }
+   if (p->coverage) {
+       fprintf(nodes, " coverage");
    }
    fprintf (nodes, "\n");
    FOREACH(b, Aplc_binding, p->bindings, { 

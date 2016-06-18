@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* build_c_skeletons.c
@@ -6,6 +6,7 @@
   this program generates empty C functions respecting the interfaces defined
   in the interface view. it provides functions to invoke RI.
 
+  updated 10/06/2016: properly align params and use FOREACH
   updated 20/04/2009 to disable in case "-onlycv" flag is set
   updated 8/10/2009 to rename the user_code.h/c to FV_name.h/c like in the Ada backend
  */
@@ -58,7 +59,7 @@ void c_gw_preamble(FV * fv)
     /* b. user_code.c preamble (if applicable) */
     if (NULL != user_code_c) {
         fprintf(user_code_c,
-                "/* Functions to be filled by the user (never overwritten by buildsupport tool) */\n\n");
+                "/* User code: This file will not be overwritten by TASTE. */\n\n");
         fprintf(user_code_c, "#include \"%s.h\"\n\n", fv->name);
 
 
@@ -92,12 +93,14 @@ int Init_C_GW_Backend(FV * fv, bool generateC)
                      strlen(fv->system_ast->context->output));
     }
     build_string(&path, fv->name, strlen(fv->name));
-
     build_string(&filename, fv->name, strlen(fv->name));
     build_string(&filename, ".h", strlen(".h"));
-    create_file(path, filename, &user_code_h);
 
+    create_file(path, filename, &user_code_h);
     filename[strlen(filename) - 1] = 'c';       /* change from .h to .c */
+    if (cpp == fv->language) {
+        build_string(&filename, "c", 1);       /* change from .c to .cc */
+    }
 
     if (!file_exists(path, filename) && true == generateC)
         create_file(path, filename, &user_code_c);
@@ -131,79 +134,92 @@ void close_c_gw_files()
  */
 void add_PI_to_C_gw(Interface * i)
 {
-    Parameter_list *tmp;
-
     if (NULL == user_code_h)
         return;
 
-    fprintf(user_code_h, "void %s_PI_%s(", i->parent_fv->name, i->name);
-    if (NULL != user_code_c)
-        fprintf(user_code_c, "void %s_PI_%s(", i->parent_fv->name,
-                i->name);
+    char *signature = make_string("void %s_PI_%s(",
+                                  i->parent_fv->name,
+                                  i->name);
 
-    tmp = i->in;
+    size_t sig_len = strlen(signature);
+    char *sep = make_string(",\n%*s", sig_len, "");
+    bool comma = false;
 
-    while (NULL != tmp) {
-        fprintf(user_code_h, "%sconst asn1Scc%s *",
-                (tmp != i->in) ? ", " : "", tmp->value->type);
-        if (NULL != user_code_c)
-            fprintf(user_code_c, "%sconst asn1Scc%s *IN_%s",
-                    (tmp != i->in) ? ", " : "",
-                    tmp->value->type, tmp->value->name);
-        tmp = tmp->next;
+    fprintf(user_code_h, "%s", signature);
+
+    if (NULL != user_code_c) {
+        fprintf(user_code_c, "%s", signature);
     }
 
-    tmp = i->out;
+    FOREACH (p, Parameter, i->in, {
+        char *sort = make_string("%sconst asn1Scc%s *",
+                                 comma? sep: "",
+                                 p->type);
+        fprintf(user_code_h, "%s", sort);
+        if(NULL != user_code_c) {
+            fprintf(user_code_c, "%sIN_%s",
+                                 sort,
+                                 p->name);
+        }
+        free(sort);
+        comma = true;
+    });
 
-    while (NULL != tmp) {
-        fprintf(user_code_h, "%sasn1Scc%s *",
-                (tmp != i->out
-                 || (tmp == i->out
-                     && NULL != i->in)) ? ", " : "", tmp->value->type);
-        if (NULL != user_code_c)
-            fprintf(user_code_c, "%sasn1Scc%s *OUT_%s",
-                    (tmp != i->out
-                     || (tmp == i->out
-                         && NULL != i->in)) ? ", " : "", tmp->value->type,
-                    tmp->value->name);
-        tmp = tmp->next;
-    }
+    FOREACH (p, Parameter, i->out, {
+        char *sort = make_string("%sasn1Scc%s *",
+                                 comma? sep: "",
+                                 p->type);
+        fprintf(user_code_h, "%s", sort);
+        if(NULL != user_code_c) {
+            fprintf(user_code_c, "%sOUT_%s",
+                                 sort,
+                                 p->name);
+        }
+        free(sort);
+        comma = true;
+    });
 
     fprintf(user_code_h, ");\n\n");
     if (NULL != user_code_c)
         fprintf(user_code_c, ")\n{\n    /* Write your code here! */\n}\n\n");
+
+    free(signature);
+    free(sep);
 }
 
 /* Declaration of the RI in user_code.h */
 void add_RI_to_C_gw(Interface * i)
 {
-    Parameter_list *tmp;
-
     if (NULL == user_code_h)
         return;
 
-    fprintf(user_code_h, "extern void %s_RI_%s(", i->parent_fv->name,
-            i->name);
+    char *signature = make_string("extern void %s_RI_%s(",
+                                  i->parent_fv->name,
+                                  i->name);
 
-    tmp = i->in;
+    size_t sig_len = strlen(signature);
+    char *sep = make_string(",\n%*s", sig_len, "");
+    bool comma = false;
 
-    while (NULL != tmp) {
+    fprintf(user_code_h, "%s", signature);
+
+    FOREACH (p, Parameter, i->in, {
         fprintf(user_code_h, "%sconst asn1Scc%s *",
-                (tmp != i->in) ? ", " : "", tmp->value->type);
-        tmp = tmp->next;
-    }
+                             comma? sep: "",
+                             p->type);
+        comma = true;
+    });
 
-    tmp = i->out;
-
-    while (NULL != tmp) {
-        fprintf(user_code_h, "%sasn1Scc%s *",
-                (tmp != i->out
-                 || (tmp == i->out
-                     && NULL != i->in)) ? ", " : "", tmp->value->type);
-        tmp = tmp->next;
-    }
+    FOREACH (p, Parameter, i->out, {
+        fprintf(user_code_h,"%sconst asn1Scc%s *",
+                            comma? sep: "",
+                            p->type);
+        comma = true;
+    });
 
     fprintf(user_code_h, ");\n\n");
+    free(signature);
+    free(sep);
 }
 
 /* Add timer declarations to the C code skeletons */

@@ -29,11 +29,11 @@ void Add_Binding(char *b, size_t length);
 void Set_Current_Process(Process *p);
 void End_Process();
 void New_Drivers_Section();
-void End_Drivers_Section();    
+void End_Drivers_Section();
 void New_Processor (char *name, size_t name_length,
                      char *classifier, size_t classifier_length,
                      char* platform, size_t platform_length);
-void New_Process(char *, size_t, char *,size_t, char *, size_t);
+void New_Process(char *, size_t, char *,size_t, char *, size_t, bool);
 void Set_OutDir(char *o,size_t len);
 void Set_Interfaceview (char *name, size_t len);
 void Set_Dataview (char *name, size_t len);

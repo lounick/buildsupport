@@ -15,6 +15,7 @@
   4) If some nodes use timers, generate the code for a timer
      manager (one per partition).
   5) Set the "ignore_params" flag on interfaces that run on the same node
+  6) Create a TASTE API that provides useful features to User functions
  */
 
 
@@ -33,6 +34,9 @@ static int thread_id = 0;
 
 // Files used for the timer management
 FILE *header = NULL, *code = NULL;
+
+
+
 
 /* Create a new function to manage the timers of a given node */
 FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
@@ -56,9 +60,9 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
     interface->name = make_string ("tick_100ms");
 
     interface->distant_fv = NULL;
-    interface->direction=PI;
-    interface->synchronism=asynch;
-    interface->rcm=cyclic;
+    interface->direction = PI;
+    interface->synchronism = asynch;
+    interface->rcm = cyclic;
     /* clock rate for timers is 100 ms */
     interface->period = 100;
     interface->parent_fv = fv;
@@ -76,8 +80,8 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
     Set_Current_Process (node);
     Add_Binding(name, strlen(name));
 
-   /* 3) Create a file called "_hook" to add this function
-    *    to the orchestrator work */
+   /* Create a file called "_hook" to add this function
+    * to the orchestrator work */
     path = make_string ("%s/%s", OUTPUT_PATH, fv->name);
 
     create_file (path, "_hook", &hook);
@@ -759,6 +763,264 @@ void Preprocess_timers (Process *node)
     Close_Timer_Files();
 }
 
+/* Create a function named <node>_api and add a number of unprotected PIs */
+void Add_api(Process *node, FV_list *all_fv)
+{
+    FV   *fv   = NULL;
+    char *name = NULL;
+    char *path = NULL;
+    FILE *hook = NULL;
+
+    name = make_string("%s_taste_api", node->name);
+
+    fv = New_FV(name, strlen(name), name);
+    assert (NULL != fv);
+
+    Set_Language_To_C();
+
+    /* Add a PI for each of the node's functions */
+    FOREACH (function, FV, all_fv, {
+        Interface *pi = NULL;
+        Interface *ri = NULL;
+        Create_Interface(&pi);
+        assert(NULL != pi);
+        pi->name           = make_string("%s_has_pending_msg", function->name);
+        pi->distant_fv     = make_string("%s", function->name);    // right ?
+        pi->distant_name   = make_string("%s", pi->name);  // No?
+        pi->direction      = PI;
+        pi->synchronism    = synch;
+        pi->rcm            = unprotected;
+        pi->period         = 0;
+        pi->parent_fv      = fv;
+        pi->wcet_high      = 10;
+        pi->wcet_low       = 10;
+        pi->wcet_low_unit  = make_string("ms");
+        pi->wcet_high_unit = make_string("ms");
+
+        /* Add OUT param to handle the result */
+        Parameter *param      = NULL;
+        Create_Parameter(&param);
+        param->name            = make_string("res");
+        param->type            = make_string("T_Boolean");
+        param->encoding        = native;
+        param->asn1_module     = make_string("taste_basictypes");
+        param->basic_type      = boolean;
+        param->asn1_filename   = make_string("taste-types.asn");
+        param->interface       = pi;
+        param->param_direction = param_out;
+        APPEND_TO_LIST(Parameter, pi->out, param);
+        APPEND_TO_LIST(Interface, fv->interfaces, pi);
+
+        /* Add the corresponding RI in the user FV */
+        ri = Duplicate_Interface(RI, pi, fv);
+        ri->name              = make_string("%s", pi->distant_name);
+        ri->distant_name      = make_string("%s", pi->name);
+        free(ri->distant_fv);
+        ri->distant_fv = make_string("%s", fv->name);
+        APPEND_TO_LIST(Interface, function->interfaces, ri);
+    });
+
+    /* Set flag indicating that this function was created during VT */
+    fv->timer = true;
+    End_FV();
+
+    /* Add the new FV to the binding list of the Process */
+    Set_Current_Process (node);
+    Add_Binding(name, strlen(name));
+
+   /* Create a file called "_hook" to add this function
+    * to the orchestrator work */
+    path = make_string ("%s/%s", OUTPUT_PATH, fv->name);
+    create_file(path, "_hook", &hook);
+    close_file(&hook);
+
+   /* Create files containing the implementation of the function */
+    create_file (path, make_string ("%s.h", fv->name), &header);
+    create_file (path, make_string ("%s.c", fv->name), &code);
+
+    fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
+    fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
+
+    fprintf (code, "#include <assert.h>\n\n"
+                   "#include \"%s.h\"\n\n", fv->name);
+
+
+    fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
+                     "#define __AUTO_CODE_H_%s__\n\n"
+                     "#include \"C_ASN1_Types.h\"\n"
+                     "#ifdef __cplusplus\n"
+                     "extern \"C\" {\n"
+                     "#endif\n\n",
+                     fv->name,
+                     fv->name);
+
+    fprintf (header, "void %s_startup();\n\n", fv->name);
+    fprintf (code,   "void %s_startup()\n"
+                     "{\n"
+                     "    /* TASTE API start up (nothing to do) */\n"
+                     "}\n\n", fv->name);
+
+    FOREACH(function, FV, all_fv, {
+        char *decl = NULL;
+        decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)",
+                           fv->name,
+                           function->name);
+        fprintf(header, "%s;\n\n", decl);
+        fprintf(code, "%s {\n"
+                      "/* Check all incoming queues for a pending message */\n",
+                      decl);
+
+        fprintf(code, "}\n\n");
+        free(decl);
+    });
+
+    fprintf (header, "#ifdef __cplusplus\n"
+                     "}\n"
+                     "#endif\n\n"
+                     "#endif");
+    close_file(&header);
+    close_file(&code);
+    free(path);
+
+ //   return fv;
+
+}
+
+
+/* Create a function to handle the calls to the TASTE API
+ * For each node:
+ *      create a function named <node>_taste_api
+ *      for each FV of the node:
+ *          add a PI named "<fv>_has_pending_msg (result: boolean)
+ *             (reports true if any of the PI queue holds a message)
+ *      add a PI named "event"
+ */
+void Preprocess_taste_api (Process *node)
+{
+    FV_list *all_fv = NULL;
+    //FV *taste_api = NULL;
+
+    /* 1) List all functions of this node */
+    // TODO keep only functions that have at least a thread and not the guis
+    FOREACH (binding, Aplc_binding, node->bindings, {
+        if (gui != binding->fv->language) {
+            APPEND_TO_LIST(FV, all_fv, binding->fv);
+        }
+    });
+
+    /* 2) Create the FV I */
+    //taste_api = 
+    Add_api(node, all_fv);
+}
+
+/* Create code that handles the collection of code coverage data
+ * For each node:
+ *      if flag "coverage" is set, add a periodic task that dumps the
+ *      coverage data to disk (using gcov flush function)
+ */
+void Preprocess_coverage (Process *node)
+{
+    FV *fv = NULL;
+    Interface *interface = NULL;
+    char *name = NULL;
+    char *path = NULL;
+    FILE *hook = NULL;
+
+    name = make_string ("%s_coverage_collector", node->name);
+
+    fv = (FV *) New_FV (name, strlen(name), name);
+
+    Set_Language_To_C();
+
+    Create_Interface (&interface);
+
+    assert (NULL != fv && NULL != interface);
+
+    interface->name = make_string ("dump_coverage");
+
+    interface->distant_fv = NULL;
+    interface->direction = PI;
+    interface->synchronism = asynch;
+    interface->rcm = cyclic;
+    /* Interface needs to be cyclic but the call does not do anything */
+    /* because to collect the coverage data user must send SIGUSR2 */
+    interface->period = 100000;
+    interface->parent_fv = fv;
+    interface->wcet_high = 10;
+    interface->wcet_low = 10;
+    interface->wcet_low_unit = make_string ("ms");
+    interface->wcet_high_unit = make_string ("ms");
+    APPEND_TO_LIST (Interface, fv->interfaces, interface);
+    /* Set flag indicating that this function was created during VT */
+    fv->timer = true;
+
+    End_FV();
+
+    /* Add the new FV to the binding list of the Process */
+    Set_Current_Process (node);
+    Add_Binding(name, strlen(name));
+
+   /* 3) Create a file called "_hook" to add this function
+    *    to the orchestrator work */
+    path = make_string ("%s/%s", OUTPUT_PATH, fv->name);
+
+    create_file (path, "_hook", &hook);
+    create_file (path, make_string ("%s.h", fv->name), &header);
+    create_file (path, make_string ("%s.c", fv->name), &code);
+
+    fprintf (header, "/* Code Coverage manager */\n%s", do_not_modify_warning);
+    fprintf (code, "/* Code Coverage manager */\n%s", do_not_modify_warning);
+
+    fprintf (header, "#ifndef __COVERAGE_CODE_H_%s__\n"
+                     "#define __COVERAGE_CODE_H_%s__\n\n"
+                     "#ifdef __cplusplus\n"
+                     "extern \"C\" {\n"
+                     "#endif\n\n",
+                     fv->name,
+                     fv->name);
+
+    fprintf (header, "void %s_startup();\n\n"
+                     "void %s_PI_dump_coverage();\n\n",
+                     fv->name,
+                     fv->name);
+    fprintf (code, "#include <signal.h>\n\n"
+                   "#include \"%s.h\"\n\n", fv->name);
+
+    fprintf (code, "/* Dummy cyclic function */\n"
+                   "void %s_PI_dump_coverage()\n"
+                   "{\n"
+                   "}\n\n", fv->name);
+
+    fprintf (code, "/* Signal handler to dump coverage information */\n"
+                   "void gc_handler()\n"
+                   "{\n"
+                   "    puts(\"Collecting code coverage\");\n"
+                   "    extern void __gcov_flush();\n"
+                   "    __gcov_flush();\n"
+                   "    exit(0);\n"
+                   "}\n\n");
+
+    /* Initialisation code of the coverage manager - nothing special */
+    fprintf (code, "void %s_startup()\n"
+                   "{\n"
+                   "    puts(\"use kill -SIGUSR2 to collectcode coverage\");\n"
+                   "    signal(SIGUSR2, gc_handler);\n"
+                   "}\n\n",
+                   fv->name);
+
+    close_file (&hook);
+    free (path);
+
+    fprintf (header, "#ifdef __cplusplus\n"
+                     "}\n"
+                     "#endif\n\n"
+                     "#endif");
+    close_file(&header);
+    close_file(&code);
+}
+
+
+
 /* Look at all provided interfaces of a function and if some do
  * not reside on the same node as any of their callers set the ignore_params
  * flag to false. This enables some runtime optimisations wrt buffer copies.
@@ -788,9 +1050,16 @@ void Set_Ignore_Params(FV *fv)
 void Preprocessing_Backend (System *s)
 {
 
-    /* Manage timers that may be declared as context parameters */
     FOREACH (node, Process, s->processes, {
+        /* Manage timers that may be declared as context parameters */
         Preprocess_timers(node);
+        /* Create a TASTE API function with a set of unprotected PIs */
+        Preprocess_taste_api(node);
+    });
+
+    /* Manage coverage flag for each node */
+    FOREACH (node, Process, s->processes, {
+        if(node->coverage) Preprocess_coverage(node);
     });
 
     FOREACH (fv, FV, s->functions, {

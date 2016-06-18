@@ -19,7 +19,7 @@
 /* Return a string representing the selected encoding rules for a Parameter */
 #define BINARY_ENCODING(p) (native==p->encoding)?"NATIVE":(uper==p->encoding)?"UPER":(acn==p->encoding)?"ACN":"#ERROR#"
 
-#define LANGUAGE(fv) ada==fv->language?"Ada": c==fv->language?"C": sdl==fv->language?"OG": rtds==fv->language?"RTDS": scade==fv->language?"SCADE6":simulink==fv->language?"SIMULINK": blackbox_device==fv->language? "C": rhapsody==fv->language? "C": vhdl==fv->language?"VHDL": system_c==fv->language?"SYSTEM_C":gui==fv->language?"GUI": qgenc==fv->language?"QGenC": qgenada==fv->language?"QGenAda":"UNSUPPORTED_LANGUAGE!"
+#define LANGUAGE(fv) ada==fv->language?"Ada": c==fv->language?"C": sdl==fv->language?"OG": rtds==fv->language?"RTDS": scade==fv->language?"SCADE6":simulink==fv->language?"SIMULINK": blackbox_device==fv->language? "C": rhapsody==fv->language? "C": vhdl==fv->language?"VHDL": system_c==fv->language?"SYSTEM_C":gui==fv->language?"GUI": qgenc==fv->language?"QGenC": qgenada==fv->language?"QGenAda": cpp==fv->language?"CPP": "UNSUPPORTED_LANGUAGE!"
 
 #define RCM_KIND(IF) (protected==IF->rcm?"protected":unprotected==IF->rcm?"unprotected":sporadic==IF->rcm?"sporadic":cyclic==IF->rcm?"cyclic":variator==IF->rcm?"variator":"unknown")
 
@@ -180,13 +180,6 @@ void Create_QGenAda_Argument(char * name, char **result, bool deref);
   (low priority: having several identical "with Package;" lines does not affect the compiler)
 */
 void Add_With_RI_Wrapper_to_Ada(Interface *i, FILE **file);
-
-/* Check if there is at least one cyclic PI in a function
-*/
-void IsThereAtLeastOneCyclicPI (Interface *i, int *res);
-
-/* Check if there is at least one ASYNC RI in the current FV */
-void IsThereAtLeastOneAsyncRI (Interface *i, int *res);
 
 /* Copy an interface */
 Interface *Duplicate_Interface (IF_type direction, Interface *i, FV *fv);

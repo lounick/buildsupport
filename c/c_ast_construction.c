@@ -8,8 +8,6 @@
  */
 
 
-#define ID "$Id$"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -319,7 +317,7 @@ void Set_Context_Variable (char *name, size_t len1, char *type, size_t len2,
 {
  Context_Parameter *cp = NULL;
  unsigned int i = 0;
- 
+
  cp = (Context_Parameter *) malloc (sizeof (Context_Parameter));
 
  assert (NULL != cp);
@@ -334,7 +332,7 @@ void Set_Context_Variable (char *name, size_t len1, char *type, size_t len2,
  /* First check the validity of the ASN.1 module name */
  if (!strncmp (mod, "nomodule", len4)) {
      ERROR ("** Error: The dataview you are using was generated using an old version\n");
-     ERROR ("          of the toolchain. You must update it by calling asn2aadlPlus.py <file.asn>.\n");
+     ERROR ("          of the toolchain. You must update it by calling taste-update-data-view\n");
      exit (-1);
  }
  /* Temporary for the SMP2 support until version of taste-IV withtout obj suffixes */
@@ -503,7 +501,8 @@ void New_Process(char *procname,
                  char *procid,
                  size_t lenid,
                  char *node,
-                 size_t lennode)
+                 size_t lennode,
+                 bool coverage)
 {
     Create_Process(&process);
 
@@ -520,6 +519,7 @@ void New_Process(char *procname,
                                               old_cpu_name);
             //free(old_cpu_name);
         }
+        process->coverage = coverage;
     }
 }
 
@@ -907,7 +907,7 @@ void Add_RI(char *ri, size_t length,
                  RI);
 }
 
-/* add an IN parameter to the list */
+/* add an IN parameter to the list (name respects the case) */
 void Add_In_Param(char *name,     size_t l1,
                   char *type,     size_t l2,
                   char *module,   size_t l3,
@@ -917,8 +917,14 @@ void Add_In_Param(char *name,     size_t l1,
 
     Create_Parameter(&parameter);
     assert (NULL != parameter && NULL != interface);
+    char *param_name = name;
 
-    build_string(&(parameter->name), name, l1);
+    if (0 == system_ast->context->keep_case) {
+        // user does not want to keep case of the parameters
+        param_name = string_to_lower(name);
+    }
+
+    build_string(&(parameter->name), param_name, l1);
     build_string(&(parameter->type), type, l2);
     build_string(&(parameter->asn1_module), module, l3);
     build_string(&(parameter->asn1_filename), filename, l4);
@@ -938,8 +944,14 @@ void Add_Out_Param(char *name, size_t l1,
 
     Create_Parameter(&parameter);
     assert (NULL != parameter && NULL != interface);
+    char *param_name = name;
 
-    build_string(&(parameter->name), name, l1);
+    if (0 == system_ast->context->keep_case) {
+        // user does not want to keep case of the parameters
+        param_name = string_to_lower(name);
+    }
+
+    build_string(&(parameter->name), param_name, l1);
     build_string(&(parameter->type), type, l2);
     build_string(&(parameter->asn1_module), module, l3);
     build_string(&(parameter->asn1_filename), filename, l4);

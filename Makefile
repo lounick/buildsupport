@@ -42,6 +42,7 @@ endif
 #	strip $(exec)
 
 install:
+	$(MAKE)
 	cp buildsupport `ocarina-config --prefix`/bin/
 	cp misc/driveGnuPlotsStreams.pl `ocarina-config --prefix`/bin/
 

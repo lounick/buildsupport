@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* Practical functions used by the backends */
@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdbool.h>
 
 #include "practical_functions.h"
 
@@ -21,12 +22,16 @@
 char *asn2underscore(char *s, size_t len)
 {
     unsigned int i = 0;
+    char *result = (char*) malloc(len + 1);
 
-    for (i = 0; i < (unsigned int)len; i++)
-        if ('-' == s[i])
-            s[i] = '_';
+    assert(NULL != result);
 
-    return s;
+    for (i = 0; i < (unsigned int)len; i++) {
+        result[i] = ('-' == s[i])? '_': s[i];
+    }
+    result[len] = '\0';
+
+    return result;
 }
 
 /* Convert a string to lowercase - create a new string */
@@ -349,6 +354,7 @@ void Create_Process(Process ** p)
         (*p)->bindings = NULL;
         (*p)->drivers = NULL;
         (*p)->connections = 0;
+        (*p)->coverage = false;
     }
 }
 
@@ -930,7 +936,6 @@ void Clear_FV(FV * fv)
         free(fv->name);
         fv->name = NULL;
     }
-    
     if (NULL != fv->nameWithCase) {
         free(fv->nameWithCase);
         fv->nameWithCase = NULL;
@@ -985,8 +990,6 @@ void Clear_System(System * s)
     Clear_Context(s->context);
 
     Clear_FV_List(s->functions);
-
-    //Clear_Processes_List(s->processes);
 
     Clear_Packages_List(s->packages);
 
@@ -1154,23 +1157,6 @@ void Add_With_RI_Wrapper_to_Ada(Interface * i, FILE ** file)
 {
     if (RI == i->direction && synch == i->synchronism)
         fprintf(*file, "with %s_wrappers;\n", i->distant_fv);
-}
-
-
-/* 
- * Check if there is at least one cyclic PI in a function 
- */
-void IsThereAtLeastOneCyclicPI(Interface * i, int *res)
-{
-    if (PI == i->direction && cyclic == i->rcm)
-        *res = 1;
-}
-
-/* Check if there is at least one ASYNC RI in the current FV  */
-void IsThereAtLeastOneAsyncRI(Interface * i, int *res)
-{
-    if (RI == i->direction && asynch == i->synchronism)
-        *res = 1;
 }
 
 

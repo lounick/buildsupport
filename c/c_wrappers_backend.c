@@ -21,8 +21,6 @@
 
 static FILE *h = NULL, *cfile = NULL;
 
-extern void Check_If_A_Calling_Thread_Has_No_Async_RI(FV *, int *);
-
 /* Adds header to files */
 void c_wrappers_preamble(FV * fv)
 {
@@ -224,10 +222,10 @@ void add_sync_PI_to_c_wrappers(Interface * i)
     fprintf(h, "----------------------------------------------------*/\n");
     fprintf(h, "void sync_%s_%s(int", i->parent_fv->name, i->name);
     FOREACH(p, Parameter, i->in, {
-            (void) p; fprintf(h, ", void *, int");});
+            (void) p; fprintf(h, ", void *, size_t");});
 
     FOREACH(p, Parameter, i->out, {
-            (void) p; fprintf(h, ", void *, int *");});
+            (void) p; fprintf(h, ", void *, size_t *");});
 
     fprintf(h, ");\n\n");
 
@@ -241,11 +239,11 @@ void add_sync_PI_to_c_wrappers(Interface * i)
     fprintf(cfile, "void sync_%s_%s(int calling_thread",
             i->parent_fv->name, i->name);
     FOREACH(p, Parameter, i->in, {
-            fprintf(cfile, ", void *%s, int %s_len", p->name, p->name);
+            fprintf(cfile, ", void *%s, size_t %s_len", p->name, p->name);
             });
 
     FOREACH(p, Parameter, i->out, {
-            fprintf(cfile, ", void *%s, int *%s_len", p->name, p->name);
+            fprintf(cfile, ", void *%s, size_t *%s_len", p->name, p->name);
             });
     fprintf(cfile, ")\n{\n");
 
@@ -592,8 +590,8 @@ void Generate_C_CallingStack(FV * fv)
     if (2 > count)
         return;
 
-    fprintf(h, "static int %s_stack[%d] = {0};\n\n", fv->name, count);
-    /* 
+    fprintf(cfile, "static int %s_stack[%d] = {0};\n\n", fv->name, count);
+    /*
        In C we would need a semaphore to protect the stack.
        TO BE INVESTIGATED (we could create a new function with protected interfaces at system level)
        But when we are already in a protected function there is no risk to be preempted by a higher
@@ -610,6 +608,7 @@ void Generate_C_CallingStack(FV * fv)
     fprintf(cfile,
             "#ifdef __unix__\n\tprintf(\"### STACK ERROR (GET TOP EMPTY STACK) in %s\\n\");\n#endif\n",
             fv->name);
+    fprintf(cfile, "return -1;\n");
     fprintf(cfile, "}\n\n");
 
     /* push function */

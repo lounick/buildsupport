@@ -1,9 +1,9 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* build_script.c
 
-  this backend generates parts of the build_sample.sh script that are project-specific.
+  this backend generates the build script that generates the binary files
 
   1st version 20 may 2009
 
@@ -105,20 +105,34 @@ void Create_script()
 
     fprintf (script, "SKELS=\"%s\"\n\n", OUTPUT_PATH);
 
+    fprintf (script, "# Update the data view with local paths\n"
+                     "taste-update-data-view\n\n");
+
+    /* OpenGEODE-specific: call code generator on the fly */
+    FOREACH (fv, FV, get_system_ast()->functions, {
+        if (sdl == fv->language) {
+            fprintf(script,
+                    "# Generate code for OpenGEODE function %s\n"
+                    "cd \"$SKELS\"/%s && "
+                    "opengeode --toAda %s.pr system_structure.pr "
+                    "&& cd $OLDPWD\n\n",
+                    fv->name, fv->name, fv->name);
+        }
+    });
+
     /* Remove old zip files and create fresh new ones from user code */
-    fprintf (script, "cd \"$SKELS\"\n");
     FOREACH (fv, FV, get_system_ast()->functions, {
         //if (sdl != fv->language  PUT BACK WHEN OPENGEODE FULLY SUPPORTED
         if (vhdl != fv->language
             && gui != fv->language
             && rtds != fv->language
             && NULL == fv->zipfile) {
-            fprintf (script, "rm -f %s.zip\n", fv->name);
-                    fprintf (script, "zip %s %s/*\n", fv->name, fv->name);
-
+            fprintf (script,
+                    "cd \"$SKELS\" && rm -f %s.zip && "
+                    "zip %s %s/* && cd $OLDPWD\n\n",
+                    fv->name, fv->name, fv->name);
         }
     })
-    fprintf (script, "cd \"$OLDPWD\"\n\n");
 
     fprintf (script, "[ ! -z \"$CLEANUP\" ] && rm -rf binary\n\n");
 
@@ -215,11 +229,21 @@ void Create_script()
         }
 
     })
+    /* If node is configured with code coverage flag, set the option */
+    FOREACH (process, Process, get_system_ast()->processes, {
+        if (true == process->coverage) {
+            fprintf(script,
+                    " \\\n\t--nodeOptions %s@gcov=on",
+                    process->name);
+        }
+    });
+
+    /* Let user add custom orchestrator flags */
     fprintf (script, " \\\n\t$ORCHESTRATOR_OPTIONS\n");
     close_file(&script);
 
     if (chmod ("build-script.sh", S_IRWXG | S_IRWXO | S_IRWXU)) {
-            fprintf (stderr, "Warning: Unable to change mode of build-script.sh to make it executable\n");
+        fprintf (stderr, "Warning: Unable to change mode of build-script.sh to make it executable\n");
     }
 }
 

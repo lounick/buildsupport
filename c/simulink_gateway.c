@@ -85,7 +85,7 @@ bool Tunable_Parameters (FV *fv)
             }
             fprintf (mTunable, "%s = Simulink.Parameter;\n", cp->name);
             fprintf (mTunable, "%s.RTWInfo.StorageClass = 'ExportedGlobal';\n", cp->name);
-            fprintf (mTunable, "%s.value = %s\n", 
+            fprintf (mTunable, "%s.Value = %s\n", 
                 cp->name, 
                 cp->value);
         }
@@ -117,6 +117,24 @@ void New_Simulink_Block(Interface * i)
     int posX, posY;             /* variables to keep the icons' position */
 
     char *path = NULL;
+
+    /* Count the inports */
+    tmp = i->in;
+    int count_in = 0;
+
+    while (tmp != NULL) {
+        count_in = count_in + 1;
+        tmp = tmp->next;
+    }
+
+    /* Count the outports */
+    tmp = i->out;
+    int count_out = 0;
+
+    while (tmp != NULL) {
+        count_out = count_out + 1;
+        tmp = tmp->next;
+    }
 
     if (NULL != i->parent_fv->system_ast->context->output) {
         build_string(&path, i->parent_fv->system_ast->context->output,
@@ -162,6 +180,12 @@ void New_Simulink_Block(Interface * i)
      */
     fprintf(mFile, "run Simulink_DataView_asn;\n\n");
 
+        /* create arrays for saving blocks positions */
+    fprintf(mFile, "inports_positions = zeros(%d, 4);\n", count_in);
+    fprintf(mFile, "bussel_positions = zeros(%d, 4);\n", count_in);
+    fprintf(mFile, "outports_positions = zeros(%d, 4);\n", count_out);
+    fprintf(mFile, "buscre_positions = zeros(%d, 4);\n\n", count_out);
+
     /*
      * Check the existance of the .mdl file.
      */
@@ -182,105 +206,100 @@ void New_Simulink_Block(Interface * i)
     fprintf(mFile,
             "\toutportHan = find_system('%s','FindAll','on', 'SearchDepth', 1, 'BlockType','Outport');\n",
             i->name);
-    /* create arrays for saving blocks positions */
-    fprintf(mFile, "\tinports_positions = zeros(length(inportHan), 4);\n");
-    fprintf(mFile, "\tbussel_positions = zeros(length(inportHan), 4);\n");
-    fprintf(mFile, "\toutports_positions = zeros(length(outportHan), 4);\n");
-    fprintf(mFile, "\tbuscre_positions = zeros(length(outportHan), 4);\n");
 
     /* 2. check inports first, along with their type Bus Selectors and lines */
     /*    print a message in the .m file */
     fprintf(mFile,
-            "%% ---------------------------------------------------------------------------------\n");
+            "\t%% ---------------------------------------------------------------------------------\n");
     fprintf(mFile,
-            "%% start by removing the Bus Selectors / then lines / finally ports \n");
+            "\t%% start by removing the Bus Selectors / then lines / finally ports \n");
     fprintf(mFile,
-            "%% ---------------------------------------------------------------------------------\n");
+            "\t%% ---------------------------------------------------------------------------------\n");
     fprintf(mFile,
-            "%% get the handles of all the lines connected to inports \n");
+            "\t%% get the handles of all the lines connected to inports \n");
     /* for (all the Inports of the model get the structures that define the lines going out of them) */
-    fprintf(mFile, "for i=1:length(inportHan)\n");
-    fprintf(mFile, "\tinports_positions(i,:) = get_param(inportHan(i),'Position'); %% remember Inport's position\n");
+    fprintf(mFile, "\tfor i=1:length(inportHan)\n");
+    fprintf(mFile, "\t\tinports_positions(i,:) = get_param(inportHan(i),'Position'); %% remember Inport's position\n");
     fprintf(mFile,
-            "\tline_structsIn(i)=get_param(inportHan(i),'LineHandles'); %% get the structures\n");
+            "\t\tline_structsIn(i)=get_param(inportHan(i),'LineHandles'); %% get the structures\n");
     fprintf(mFile,
-            "\tinLinesHan(i)=line_structsIn(i).Outport;\t%% get the line connected to the block's Outport\n");
-    fprintf(mFile, "\tif (inLinesHan(i) ~= -1) %% if exists\n");
+            "\t\tinLinesHan(i)=line_structsIn(i).Outport;\t%% get the line connected to the block's Outport\n");
+    fprintf(mFile, "\t\tif (inLinesHan(i) ~= -1) %% if exists\n");
     /* get the line's destination block */
     fprintf(mFile,
-            "\t\tdstBlock = get_param(inLinesHan(i),'DstBlockHandle'); %% get the destination block's handle\n");
+            "\t\t\tdstBlock = get_param(inLinesHan(i),'DstBlockHandle'); %% get the destination block's handle\n");
     /* if the block is a Bus Selector ... */
     fprintf(mFile,
-            "\t\tif (strcmp(get_param(dstBlock,'BlockType'),'BusSelector'))\n");
-    fprintf(mFile, "\t\t\tbussel_positions(i,:) = get_param(dstBlock,'Position'); %% remember Bus Selector's position\n");
+            "\t\t\tif (strcmp(get_param(dstBlock,'BlockType'),'BusSelector'))\n");
+    fprintf(mFile, "\t\t\t\tbussel_positions(i,:) = get_param(dstBlock,'Position'); %% remember Bus Selector's position\n");
     /* (1)... find the lines connected to it ... */
     fprintf(mFile,
-            "\t\t\tblockLineStructs = get_param(dstBlock,'LineHandles'); %% get the line connected structures\n");
+            "\t\t\t\tblockLineStructs = get_param(dstBlock,'LineHandles'); %% get the line connected structures\n");
     fprintf(mFile,
-            "\t\t\tblockLineHandles = blockLineStructs.Outport; %% get the line handlers connected to the bus's outports\n");
+            "\t\t\t\tblockLineHandles = blockLineStructs.Outport; %% get the line handlers connected to the bus's outports\n");
 
     /* ... and for every line handler that corresponds to a line ... */
-    fprintf(mFile, "\t\t\tfor j=1:length(blockLineHandles)\n");
-    fprintf(mFile, "\t\t\t\tif (blockLineHandles(j) ~= -1)\n");
+    fprintf(mFile, "\t\t\t\tfor j=1:length(blockLineHandles)\n");
+    fprintf(mFile, "\t\t\t\t\tif (blockLineHandles(j) ~= -1)\n");
     /* ... delete the line. */
-    fprintf(mFile, "\t\t\t\t\tdelete(blockLineHandles(j));\n");
+    fprintf(mFile, "\t\t\t\t\t\tdelete(blockLineHandles(j));\n");
+    fprintf(mFile, "\t\t\t\t\tend\n");
     fprintf(mFile, "\t\t\t\tend\n");
-    fprintf(mFile, "\t\t\tend\n");
     /* (2) delete the Bus Selector */
     fprintf(mFile,
-            "\t\t\tdelete_block(dstBlock); %% delete it if it is a Bus Selector Block\n");
-    fprintf(mFile, "\t\tend\n");
+            "\t\t\t\tdelete_block(dstBlock); %% delete it if it is a Bus Selector Block\n");
+    fprintf(mFile, "\t\t\tend\n");
     /* (3) delete the line starting from the Inport Block's Outport */
     fprintf(mFile,
-            "\t\tdelete(inLinesHan(i)); %% delete the respective line\n");
-    fprintf(mFile, "\tend\n");
+            "\t\t\tdelete(inLinesHan(i)); %% delete the respective line\n");
+    fprintf(mFile, "\t\tend\n");
     /* Finally delete the Inport */
     fprintf(mFile,
-            "\tdelete_block(inportHan(i)); %% delete the outdated inport block\n");
-    fprintf(mFile, "end\n");
+            "\t\tdelete_block(inportHan(i)); %% delete the outdated inport block\n");
+    fprintf(mFile, "\tend\n");
 
     /* 3. now check outports (following the same procedure) */
-    fprintf(mFile, "%% now remove the outports\n");
-    fprintf(mFile, "for i=1:length(outportHan)\n");
-    fprintf(mFile, "\toutports_positions(i,:) = get_param(outportHan(i),'Position'); %% remember Outport's position\n");
+    fprintf(mFile, "\t%% now remove the outports\n");
+    fprintf(mFile, "\tfor i=1:length(outportHan)\n");
+    fprintf(mFile, "\t\toutports_positions(i,:) = get_param(outportHan(i),'Position'); %% remember Outport's position\n");
     fprintf(mFile,
-            "\tline_structsOut(i)=get_param(outportHan(i),'LineHandles'); %% get the structures\n");
+            "\t\tline_structsOut(i)=get_param(outportHan(i),'LineHandles'); %% get the structures\n");
     fprintf(mFile,
-            "\toutLinesHan(i)=line_structsOut(i).Inport;\t%% get the line connected to the block's Inport\n");
-    fprintf(mFile, "\tif (outLinesHan(i) ~= -1) %% if exists\n");
+            "\t\toutLinesHan(i)=line_structsOut(i).Inport;\t%% get the line connected to the block's Inport\n");
+    fprintf(mFile, "\t\tif (outLinesHan(i) ~= -1) %% if exists\n");
     /* get the line's source block */
     fprintf(mFile,
-            "\t\tsrcBlock = get_param(outLinesHan(i),'SrcBlockHandle'); %% get the source block's handle\n");
+            "\t\t\tsrcBlock = get_param(outLinesHan(i),'SrcBlockHandle'); %% get the source block's handle\n");
 
     /* if the block is a Bus Creator ... */
     fprintf(mFile,
-            "\t\tif (strcmp(get_param(srcBlock,'BlockType'),'BusCreator'))\n");
-    fprintf(mFile, "\t\t\tbuscre_positions(i,:) = get_param(srcBlock,'Position'); %% remember Bus Creator's position\n");
+            "\t\t\tif (strcmp(get_param(srcBlock,'BlockType'),'BusCreator'))\n");
+    fprintf(mFile, "\t\t\t\tbuscre_positions(i,:) = get_param(srcBlock,'Position'); %% remember Bus Creator's position\n");
     /* (1)... find the lines connected to it ... */
     fprintf(mFile,
-            "\t\t\tblockLineStructs = get_param(srcBlock,'LineHandles'); %% get the line connected structures\n");
+            "\t\t\t\tblockLineStructs = get_param(srcBlock,'LineHandles'); %% get the line connected structures\n");
     fprintf(mFile,
-            "\t\t\tblockLineHandles = blockLineStructs.Inport; %% get the line handlers connected to the bus's outports\n");
+            "\t\t\t\tblockLineHandles = blockLineStructs.Inport; %% get the line handlers connected to the bus's outports\n");
 
     /* ... and for every line handler that corresponds to a line ... */
-    fprintf(mFile, "\t\t\tfor j=1:length(blockLineHandles)\n");
-    fprintf(mFile, "\t\t\t\tif (blockLineHandles(j) ~= -1)\n");
+    fprintf(mFile, "\t\t\t\tfor j=1:length(blockLineHandles)\n");
+    fprintf(mFile, "\t\t\t\t\tif (blockLineHandles(j) ~= -1)\n");
     /* ... delete the line. */
-    fprintf(mFile, "\t\t\t\t\tdelete(blockLineHandles(j));\n");
+    fprintf(mFile, "\t\t\t\t\t\tdelete(blockLineHandles(j));\n");
+    fprintf(mFile, "\t\t\t\t\tend\n");
     fprintf(mFile, "\t\t\t\tend\n");
-    fprintf(mFile, "\t\t\tend\n");
     /* (2) delete the Bus Creator */
     fprintf(mFile,
-            "\t\t\tdelete_block(srcBlock); %% delete it if it is a Bus Creator Block\n");
-    fprintf(mFile, "\t\tend\n");
+            "\t\t\t\tdelete_block(srcBlock); %% delete it if it is a Bus Creator Block\n");
+    fprintf(mFile, "\t\t\tend\n");
     /* (3) delete the line starting from the Inport Block's Outport */
     fprintf(mFile,
-            "\t\tdelete(outLinesHan(i)); %% delete the respective line\n");
+            "\t\t\tdelete(outLinesHan(i)); %% delete the respective line\n");
     fprintf(mFile, "\tend\n");
     /* Finally, delete the Outport */
     fprintf(mFile,
-            "\tdelete_block(outportHan(i)); %% delete the outdated outport block\n");
-    fprintf(mFile, "end\n");
+            "\t\tdelete_block(outportHan(i)); %% delete the outdated outport block\n");
+    fprintf(mFile, "\tend\n");
     /* this is the FIRST TIME the model is created */
     fprintf(mFile, "else\n");
     fprintf(mFile, "\tsimulink('open');\n");    /* start simulink */

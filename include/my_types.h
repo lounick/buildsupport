@@ -148,7 +148,7 @@ typedef struct t_contextparam {
 
 DECLARE_LIST (Context_Parameter)
 
-    /* 
+/* 
   Type used to define a parameter's attributes (name, type, encoding)
 */
 typedef struct t_parameter {
@@ -313,6 +313,7 @@ typedef struct t_process {
   Aplc_binding_list     *bindings;
   Device_list           *drivers;
   unsigned int          connections;
+  bool                  coverage;
 } Process;
 
 DECLARE_LIST(Process)

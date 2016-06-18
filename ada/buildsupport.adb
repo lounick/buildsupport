@@ -580,7 +580,8 @@ procedure BuildSupport is
                                     if Is_In (Param_I) then
                                        Imported_Routines.C_Add_In_Param
                                          (Get_Name_String
-                                            (Name (Identifier (Param_I))),
+                                            (Display_Name
+                                                (Identifier (Param_I))),
                                           Len_Name,
                                           Get_Name_String
                                             (Get_Type_Source_Name (Asntype)),
@@ -595,7 +596,8 @@ procedure BuildSupport is
                                     else
                                        Imported_Routines.C_Add_Out_Param
                                          (Get_Name_String
-                                            (Name (Identifier (Param_I))),
+                                            (Display_Name
+                                                (Identifier (Param_I))),
                                           Len_Name,
                                           Get_Name_String
                                             (Get_Type_Source_Name (Asntype)),
@@ -1172,111 +1174,120 @@ procedure BuildSupport is
             end if;
 
             if Get_Category_Of_Component (Tmp_CI) = CC_Process then
-
-               CPU := Get_Bound_Processor (Tmp_CI);
-               Set_Str_To_Name_Buffer ("");
-               CPU_Name := Name
-                     (Identifier
-                        (Parent_Subcomponent (CPU)));
-
-               CPU_Platform := Get_Execution_Platform (CPU);
-
-               if ATN.Namespace
-                  (Corresponding_Declaration
-                     (CPU)) /= No_Node
-               then
-
-                  Set_Str_To_Name_Buffer ("");
-                  Get_Name_String
-                     (ATN.Name
-                        (ATN.Identifier
-                           (ATN.Namespace
-                              (Corresponding_Declaration (CPU)))));
-                  Pkg_Name := Name_Find;
-                  Imported_Routines.C_Add_Package
-                     (Get_Name_String (Pkg_Name),
-                     Get_Name_String (Pkg_Name)'Length);
-                  Set_Str_To_Name_Buffer ("");
-                  Get_Name_String (Pkg_Name);
-                  Add_Str_To_Name_Buffer ("::");
-                  Get_Name_String_And_Append (Name (Identifier (CPU)));
-                  CPU_Classifier := Name_Find;
-               else
-                  CPU_Classifier := Name (Identifier (CPU));
-               end if;
-
-               Imported_Routines.C_New_Processor
-                  (Get_Name_String (CPU_Name),
-                  Get_Name_String (CPU_Name)'Length,
-                  Get_Name_String (CPU_Classifier),
-                  Get_Name_String (CPU_Classifier)'Length,
-                  Supported_Execution_Platform'Image (CPU_Platform),
-                  Supported_Execution_Platform'Image (CPU_Platform)'Length);
-
-               Imported_Routines.C_New_Process
-                  (Get_Name_String
-                     (ATN.Name
-                        (ATN.Component_Type_Identifier
-                           (Corresponding_Declaration (Tmp_CI)))),
-                   Get_Name_String
-                     (ATN.Name
-                        (ATN.Component_Type_Identifier
-                           (Corresponding_Declaration (Tmp_CI))))'Length,
-                  Get_Name_String (Name (Identifier (Processes))),
-                  Get_Name_String (Name (Identifier (Processes)))'Length,
-                  NodeName, NodeName'Length);
-
-               Processes2 := First_Node (Subcomponents (My_System));
-
-               while Present (Processes2) loop
-                  Tmp_CI2 := Corresponding_Instance (Processes2);
-
-                  if Get_Category_Of_Component (Tmp_CI2) = CC_System
-                     and then
-                     Is_Defined_Property
-                        (Tmp_CI2, "taste::aplc_binding")
+               declare
+                  Node_Coverage : Boolean := False;
+               begin
+                  if Is_Defined_Property (Tmp_CI,
+                                        "taste_dv_properties::coverageenabled")
                   then
-                     Ref := Get_Reference_Property
-                        (Tmp_CI2, Get_String_Name ("taste::aplc_binding"));
-
-                     if Ref = Tmp_CI then
-                        declare
-                           Bound_APLC_Name : Unbounded_String;
-                           --  constant String :=
-                           --     Get_Name_String
-                           --     (ATN.Name
-                           --        (ATN.Component_Type_Identifier
-                           --          (Corresponding_Declaration (Tmp_CI2))));
-                              --   (Name
-                              --      (Identifier (Processes2)));
-                              --      (Identifier (Tmp_CI2)));
-                        begin
-                           begin
-                              Bound_APLC_Name := To_Unbounded_String
-                                (Get_Name_String
-                                  (ATN.Name
-                                    (ATN.Component_Type_Identifier
-                                      (Corresponding_Declaration (Tmp_CI2)))));
-                           exception
-                              when System.Assertions.Assert_Failure =>
-                                 Put_Line
-                                     ("Detected DV from TASTE version 1.2");
-                                 Bound_APLC_Name := To_Unbounded_String
-                                   (Get_Name_String
-                                      (Name (Identifier (Processes2))));
-                           end;
-
-                           Imported_Routines.C_Add_Binding
-                              (To_String (Bound_APLC_Name),
-                               To_String (Bound_APLC_Name)'Length);
-                        end;
+                     Node_Coverage := Get_Boolean_Property
+                        (Tmp_CI,
+                     Get_String_Name ("taste_dv_properties::coverageenabled"));
+                     if Node_Coverage then
+                        Put_Line ("Needs Coverage");
+                     else
+                        Put_Line ("Needs No coverage");
                      end if;
                   end if;
 
-                  Processes2 := Next_Node (Processes2);
-               end loop;
+                  CPU := Get_Bound_Processor (Tmp_CI);
+                  Set_Str_To_Name_Buffer ("");
+                  CPU_Name := Name
+                        (Identifier
+                           (Parent_Subcomponent (CPU)));
 
-               Imported_Routines.C_End_Process;
+                  CPU_Platform := Get_Execution_Platform (CPU);
+
+                  if ATN.Namespace
+                     (Corresponding_Declaration
+                        (CPU)) /= No_Node
+                  then
+
+                     Set_Str_To_Name_Buffer ("");
+                     Get_Name_String
+                        (ATN.Name
+                           (ATN.Identifier
+                              (ATN.Namespace
+                                 (Corresponding_Declaration (CPU)))));
+                     Pkg_Name := Name_Find;
+                     Imported_Routines.C_Add_Package
+                        (Get_Name_String (Pkg_Name),
+                        Get_Name_String (Pkg_Name)'Length);
+                     Set_Str_To_Name_Buffer ("");
+                     Get_Name_String (Pkg_Name);
+                     Add_Str_To_Name_Buffer ("::");
+                     Get_Name_String_And_Append (Name (Identifier (CPU)));
+                     CPU_Classifier := Name_Find;
+                  else
+                     CPU_Classifier := Name (Identifier (CPU));
+                  end if;
+
+                  Imported_Routines.C_New_Processor
+                     (Get_Name_String (CPU_Name),
+                     Get_Name_String (CPU_Name)'Length,
+                     Get_Name_String (CPU_Classifier),
+                     Get_Name_String (CPU_Classifier)'Length,
+                     Supported_Execution_Platform'Image (CPU_Platform),
+                     Supported_Execution_Platform'Image (CPU_Platform)'Length);
+
+                  Imported_Routines.C_New_Process
+                     (Get_Name_String
+                        (ATN.Name
+                           (ATN.Component_Type_Identifier
+                              (Corresponding_Declaration (Tmp_CI)))),
+                      Get_Name_String
+                        (ATN.Name
+                           (ATN.Component_Type_Identifier
+                              (Corresponding_Declaration (Tmp_CI))))'Length,
+                     Get_Name_String (Name (Identifier (Processes))),
+                     Get_Name_String (Name (Identifier (Processes)))'Length,
+                     NodeName, NodeName'Length,
+                     Boolean'Pos (Node_Coverage));
+
+                  Processes2 := First_Node (Subcomponents (My_System));
+
+                  while Present (Processes2) loop
+                     Tmp_CI2 := Corresponding_Instance (Processes2);
+
+                     if Get_Category_Of_Component (Tmp_CI2) = CC_System
+                        and then
+                        Is_Defined_Property
+                           (Tmp_CI2, "taste::aplc_binding")
+                     then
+                        Ref := Get_Reference_Property
+                           (Tmp_CI2, Get_String_Name ("taste::aplc_binding"));
+
+                        if Ref = Tmp_CI then
+                           declare
+                              Bound_APLC_Name : Unbounded_String;
+                           begin
+                              begin
+                                 Bound_APLC_Name := To_Unbounded_String
+                                   (Get_Name_String
+                                     (ATN.Name
+                                       (ATN.Component_Type_Identifier
+                                     (Corresponding_Declaration (Tmp_CI2)))));
+                              exception
+                                 when System.Assertions.Assert_Failure =>
+                                    Put_Line
+                                       ("Detected DV from TASTE version 1.2");
+                                    Bound_APLC_Name := To_Unbounded_String
+                                      (Get_Name_String
+                                         (Name (Identifier (Processes2))));
+                              end;
+
+                              Imported_Routines.C_Add_Binding
+                                 (To_String (Bound_APLC_Name),
+                                  To_String (Bound_APLC_Name)'Length);
+                           end;
+                        end if;
+                     end if;
+
+                     Processes2 := Next_Node (Processes2);
+                  end loop;
+
+                  Imported_Routines.C_End_Process;
+               end;
             end if;
 
             Processes := Next_Node (Processes);

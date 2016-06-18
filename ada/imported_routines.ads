@@ -34,7 +34,8 @@ package Imported_Routines is
                             Id            : String;
                             LenId         : Integer;
                             Node_Name     : String;
-                            Len_Node      : Integer);
+                            Len_Node      : Integer;
+                            Coverage      : Integer);
 
    procedure C_New_Processor (Name           : String;
                               Name_Len       : Integer;

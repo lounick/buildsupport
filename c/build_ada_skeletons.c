@@ -73,6 +73,15 @@ int ada_gw_preamble(FV * fv)
         FOREACH(i, Interface, fv->interfaces, {
             FOREACH(p, Parameter, i->in, ADD_TO_SET(ASN1_Module, modules, p->asn1_module));
             FOREACH(p, Parameter, i->out, ADD_TO_SET(ASN1_Module, modules, p->asn1_module));
+            FOREACH(cp, Context_Parameter, fv->context_parameters, {
+                if (strcmp (cp->type.name, "Taste-directive") &&
+                    strcmp (cp->type.name, "Simulink-Tunable-Parameter") &&
+                    strcmp (cp->type.name, "Timer")) {
+                    ADD_TO_SET(ASN1_Module,
+                               modules,
+                               asn2underscore(cp->type.module, strlen(cp->type.module)));
+                }
+            });
         });
 
         FOREACH(m, ASN1_Module, modules, {
@@ -99,7 +108,7 @@ int ada_gw_preamble(FV * fv)
                 "\t%s : asn1Scc%s := context_%s.%s_ctxt.%s;\n"
                 "\tpragma export(C, %s, \"%s_%s\");\n",
                 cp->name,
-                cp->type.name,
+                asn2underscore(cp->type.name, strlen(cp->type.name)),
                 fv->name,
                 fv->name,
                 cp->name,
