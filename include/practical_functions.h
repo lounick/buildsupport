@@ -148,8 +148,10 @@ bool has_timer(FV *fv);
 /* Return the list of timers of a given FV */
 String_list *timers(FV *fv);
 
+/* Return the number of Cyclic and Sporadic interfaces from a list */
+int CountActivePI(Interface_list *interfaces);
 
-/* 
+/*
   ForEachWithParam function : Write to file the list of parameters in Ada 
  (form IN/OUT_paramName: interface.c.char_array, IN/OUT_paramNamesize: [access] Integer) 
 */

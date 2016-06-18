@@ -841,8 +841,10 @@ void Add_api(Process *node, FV_list *all_fv)
     fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
     fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
 
-    fprintf (code, "#include <assert.h>\n\n"
-                   "#include \"%s.h\"\n\n", fv->name);
+    fprintf (code, "#include <deployment.h>\n\n"
+                   "#include \"%s.h\"\n\n"
+                   "extern int __po_hi_gqueue_get_count(__po_hi_task_id, __po_hi_local_port_t);\n\n",
+                   fv->name);
 
 
     fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
@@ -862,13 +864,31 @@ void Add_api(Process *node, FV_list *all_fv)
 
     FOREACH(function, FV, all_fv, {
         char *decl = NULL;
-        decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)",
-                           fv->name,
-                           function->name);
+        char *task_id = NULL;
+        char *port = NULL;
+        decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
         fprintf(header, "%s;\n\n", decl);
         fprintf(code, "%s {\n"
-                      "/* Check all incoming queues for a pending message */\n",
-                      decl);
+                      "/* Check all incoming queues for a pending message */\n", decl);
+        /* Naming of ports/task id is different if there is more than 1 active PI */
+        int active = CountActivePI(function->interfaces);
+        FOREACH(pi, Interface, function->interfaces, {
+            if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm) {
+                if (1 == active) {
+                    task_id = make_string("%s_%s_k", node->name, function->name);
+                    port = make_string("%s_local_inport_%s", function->name, pi->name);
+                }
+                else { /* More than one active PI */
+                    task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
+                    port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
+                }
+                fprintf(code, "    if (__po_hi_gqueue_get_count(%s, %s)) *res = 1;\n",
+                              string_to_lower(task_id),
+                              string_to_lower(port));
+                free(task_id);
+                free(port);
+            }
+        });
 
         fprintf(code, "}\n\n");
         free(decl);
@@ -881,9 +901,6 @@ void Add_api(Process *node, FV_list *all_fv)
     close_file(&header);
     close_file(&code);
     free(path);
-
- //   return fv;
-
 }
 
 
@@ -893,12 +910,11 @@ void Add_api(Process *node, FV_list *all_fv)
  *      for each FV of the node:
  *          add a PI named "<fv>_has_pending_msg (result: boolean)
  *             (reports true if any of the PI queue holds a message)
- *      add a PI named "event"
+ *      (later) add a PI named "event"
  */
 void Preprocess_taste_api (Process *node)
 {
     FV_list *all_fv = NULL;
-    //FV *taste_api = NULL;
 
     /* 1) List all functions of this node */
     FOREACH (binding, Aplc_binding, node->bindings, {
@@ -914,8 +930,7 @@ void Preprocess_taste_api (Process *node)
         }
     });
 
-    /* 2) Create the FV I */
-    //taste_api = 
+    /* 2) Create the FV */
     Add_api(node, all_fv);
 }
 
@@ -1060,7 +1075,10 @@ void Preprocessing_Backend (System *s)
         /* Manage timers that may be declared as context parameters */
         Preprocess_timers(node);
         /* Create a TASTE API function with a set of unprotected PIs */
-        Preprocess_taste_api(node);
+        if(get_context()->polyorb_hi_c) {
+            /* Functionality requires POHIC API */
+            Preprocess_taste_api(node);
+        }
     });
 
     /* Manage coverage flag for each node */

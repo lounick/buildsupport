@@ -1033,6 +1033,17 @@ String_list *timers(FV *fv)
 
 }
 
+
+/* Return the number of Cyclic and Sporadic interfaces from a list */
+int CountActivePI(Interface_list *interfaces)
+{
+    int res = 0;
+    FOREACH(pi, Interface, interfaces, {
+        if(PI == pi->direction && asynch == pi->synchronism) res ++;
+    });
+    return res;
+}
+
 /* Check if a list of input parameters match a list of output parameters.
  * IMPORTANT : it must be checked first that the number of IN and OUT
  * parameters are the same (using CountParams)
