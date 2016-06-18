@@ -222,8 +222,9 @@ void add_PI_to_c_vm_if(Interface * i)
     fprintf(vm_if_h, "%s);\n", fcn_proto);
     free(fcn_proto);
 
-    /* d. For each IN param, declare a static variable to put the DECODED data
-       If language is Ada, also declare a static variable to put the Ada type */
+    /* d. For each IN param, declare a variable to put the DECODED data.
+     *    Variable is static for all interface but unprotected ones.
+     */
 
     if (NULL != i->in) {
         fprintf(vm_if,
@@ -231,20 +232,24 @@ void add_PI_to_c_vm_if(Interface * i)
     }
 
     FOREACH(p, Parameter, i->in, {
-        fprintf(vm_if, "    static asn1Scc%s IN_%s;\n",
+        fprintf(vm_if, "    %sasn1Scc%s IN_%s;\n",
+                       unprotected != i->rcm? "static ": "",
                        p->type,
                        p->name);
         }
     );
 
-    /* e. For each OUT param, declare a static variable that the user can fill prior to encoding */
+    /* e. For each OUT param, declare a variable that the user can fill
+     *    prior to encoding. Variable is static except for unprotected
+     *    interfaces (that would lead to race conditions) */
     if (NULL != i->out) {
         fprintf(vm_if,
                 "\n    /* Output variable(s): developer has to fill them */\n");
     }
 
     FOREACH(p, Parameter, i->out, {
-        fprintf(vm_if, "    static asn1Scc%s OUT_%s;\n",
+        fprintf(vm_if, "    %sasn1Scc%s OUT_%s;\n",
+                       unprotected != i->rcm? "static ": "",
                        p->type,
                        p->name);
         }
@@ -304,17 +309,15 @@ void add_PI_to_c_vm_if(Interface * i)
 
     comma = false;
     FOREACH (p, Parameter, i->in, {
-        fprintf(vm_if_h, "%sconst asn1Scc%s *%s",
+        fprintf(vm_if_h, "%sconst asn1Scc%s *",
                          comma ? ", " : "",
-                         p->type,
-                         p->name);
+                         p->type);
         comma = true;
     });
     FOREACH (p, Parameter, i->out, {
-        fprintf(vm_if_h, "%sasn1Scc%s *%s",
+        fprintf(vm_if_h, "%sasn1Scc%s *",
                          comma ? ", " : "",
-                         p->type,
-                         p->name);
+                         p->type);
         comma = true;
     });
     fprintf(vm_if_h, ");\n");
@@ -583,13 +586,32 @@ void add_RI_to_c_invoke_ri(Interface * i)
                     i->name);
         });
 
-        /* f. Add a call to the vm callback function passing the encoded inputs as parameters */
-        fprintf(invoke_ri,
-                "\n    /* Call to VM callback function */\n"
-                "    vm_%s%s_%s(",
-                asynch == i->synchronism ? "async_" : "",
-                i->parent_fv->name,
+
+        /* f. Add a call to the vm callback function passing the encoded
+         *  inputs as parameters */
+        fprintf(invoke_ri, "\n    /* Call to VM callback function */\n");
+        char *name = make_string("vm_%s%s_%s",
+                asynch == i->synchronism ? "async_" : "", i->parent_fv->name,
                 i->name);
+
+        /* Declare external function (may be in Ada, so no file to include */
+        fprintf(invoke_ri, "    extern void %s(", name);
+        bool comma = false;
+        FOREACH(_, Parameter, i->in, {
+                (void) _;
+                fprintf(invoke_ri, "%svoid *, size_t", comma? ", ": "");
+                comma = true;
+        });
+        FOREACH(_, Parameter, i->out, {
+                (void) _;
+                fprintf(invoke_ri, "%svoid *, size_t *", comma? ", ": "");
+                comma = true;
+        });
+        fprintf(invoke_ri, ");\n\n");
+
+        fprintf(invoke_ri, "    %s(", name);
+
+        free(name);
 
         /* Add the IN and OUT parameters */
         FOREACH(p, Parameter, i->in, {
