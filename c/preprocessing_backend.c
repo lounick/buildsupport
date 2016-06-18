@@ -785,8 +785,8 @@ void Add_api(Process *node, FV_list *all_fv)
         Create_Interface(&pi);
         assert(NULL != pi);
         pi->name           = make_string("%s_has_pending_msg", function->name);
-        pi->distant_fv     = make_string("%s", function->name);    // right ?
-        pi->distant_name   = make_string("%s", pi->name);  // No?
+        pi->distant_fv     = make_string("%s", function->name);
+        pi->distant_name   = make_string("check_queue", pi->name);
         pi->direction      = PI;
         pi->synchronism    = synch;
         pi->rcm            = unprotected;
@@ -812,8 +812,8 @@ void Add_api(Process *node, FV_list *all_fv)
         APPEND_TO_LIST(Interface, fv->interfaces, pi);
 
         /* Add the corresponding RI in the user FV */
-        ri = Duplicate_Interface(RI, pi, fv);
-        ri->name              = make_string("%s", pi->distant_name);
+        ri = Duplicate_Interface(RI, pi, function);
+        ri->name              = make_string("check_queue");
         ri->distant_name      = make_string("%s", pi->name);
         free(ri->distant_fv);
         ri->distant_fv = make_string("%s", fv->name);
@@ -901,9 +901,15 @@ void Preprocess_taste_api (Process *node)
     //FV *taste_api = NULL;
 
     /* 1) List all functions of this node */
-    // TODO keep only functions that have at least a thread and not the guis
     FOREACH (binding, Aplc_binding, node->bindings, {
-        if (gui != binding->fv->language) {
+        bool is_async = false;
+        FOREACH(iface, Interface, binding->fv->interfaces, {
+            /* Discard functions with no active interface */
+            if (PI == iface->direction && asynch == iface->synchronism) {
+                is_async = true;
+            }
+        });
+        if (gui != binding->fv->language && true == is_async) {
             APPEND_TO_LIST(FV, all_fv, binding->fv);
         }
     });
