@@ -218,6 +218,7 @@ typedef struct t_context {
   bool  future;
   char  *stacksize;
   int   polyorb_hi_c;
+  bool  needs_basictypes;
 } Context;
 
 /*

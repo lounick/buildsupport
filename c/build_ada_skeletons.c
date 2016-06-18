@@ -57,7 +57,7 @@ int ada_gw_preamble(FV * fv)
 
     /* Check if any interface needs Asn.1 types and if so, include asn1 modules */
 
-    if (NULL != fv->timer_list) {
+    if (NULL != fv->timer_list || get_context()->polyorb_hi_c) {
        fprintf(ads, "with taste_basictypes;\n"
                     "use taste_basictypes;\n\n");
     }
@@ -330,6 +330,7 @@ void add_RI_to_Ada_gw(Interface * i)
 
     fprintf(ads, "\tpragma import(C, %s, \"%s_RI_%s\");\n\n", i->name,
             i->parent_fv->name, i->name);
+
 }
 
 /* Add timer declarations to the Ada code skeletons */
@@ -399,6 +400,16 @@ void GW_Ada_Backend(FV * fv)
                 default: break;
             }
         });
+
+        /* SDL semantics requires that the state machine checks the
+         * input queue of the process before executing continuous signals */
+        if(get_context()->polyorb_hi_c) {
+            fprintf(ads,
+                    "\t-- TASTE API to check if the input queue is empty\n"
+                    "\tprocedure check_queue(res: access asn1SccT_Boolean);\n"
+                    "\tpragma import(C, check_queue, \"%s_RI_check_queue\");\n",
+                    fv->name);
+        }
 
         // If any timers, add declarations in code skeleton
         Ada_Add_timers(fv);

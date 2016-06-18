@@ -869,19 +869,20 @@ void Create_Context(Context ** context)
 
     assert (NULL != *context);
 
-        (*context)->output      = NULL;
-        (*context)->ifview      = NULL;
-        (*context)->dataview    = NULL;
-        (*context)->gw          = 0;
-    (*context)->smp2    = false;
-        (*context)->glue        = 0;
-        (*context)->keep_case   = 0;
-        (*context)->onlycv      = 0;
-        (*context)->aadlv2      = 0;
-        (*context)->test        = 0;
-        (*context)->debug       = 0;
-        (*context)->polyorb_hi_c = 0;
-        (*context)->stacksize   = NULL;
+        (*context)->output           = NULL;
+        (*context)->ifview           = NULL;
+        (*context)->dataview         = NULL;
+        (*context)->gw               = 0;
+        (*context)->smp2             = false;
+        (*context)->glue             = 0;
+        (*context)->keep_case        = 0;
+        (*context)->onlycv           = 0;
+        (*context)->aadlv2           = 0;
+        (*context)->test             = 0;
+        (*context)->debug            = 0;
+        (*context)->polyorb_hi_c     = 0;
+        (*context)->stacksize        = NULL;
+        (*context)->needs_basictypes = false;
 }
 
 // Free the memory of a Context data structure
