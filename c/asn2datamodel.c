@@ -2,7 +2,7 @@
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /*
- *  Call 'asn2dataModel.py' tool to complete the generation
+ *  Call 'asn2dataModel' tool to complete the generation
  *  of function skeleton with the data types transformed
  *  from ASN.1 to the target language (C, Ada, RTDS, etc.).
  *   
@@ -91,7 +91,7 @@ void Call_asn2dataModel(FV * fv)
         exit(-1);
     }
 
-    command = make_string("asn2dataModel.py -o %s -to%s %s/%s",
+    command = make_string("asn2dataModel -o %s -to%s %s/%s",
                           dataviewpath,
                           LANGUAGE(fv), dataview_path, dataview_uniq);
 
