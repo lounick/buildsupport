@@ -230,6 +230,7 @@ extern void add_error();
 int Compare_Package(Package *one, Package *two);
 int Compare_Protected_Object_Name(Protected_Object_Name *one, Protected_Object_Name *two);
 int Compare_Interface (Interface *one, Interface *two);
+int Compare_FV (FV *one, FV *two);
 int Compare_String (String *one, String *two);
 int Compare_ASN1_Filename(ASN1_Filename *one, ASN1_Filename *two);
 int Compare_ASN1_Module (ASN1_Module *one, ASN1_Module *two);
@@ -243,13 +244,13 @@ void Print_FV (FV *fv);
 Example of use:
 
         with "MyType_list *l;" and l containing elements
-                
+
                 FOREACH(tmp, MyType,l, {
                         printf("%s",tmp);
                         printf(" ");
                         }
                 )
-                        
+
 */
 #define FOREACH(var,type,list,stmt) {type##_list *varlist##var##type=list; type *var;while(varlist##var##type!=NULL) { var=varlist##var##type->value; stmt varlist##var##type=varlist##var##type->next; }}
 
@@ -288,6 +289,16 @@ if(Compare_##type(val,elem)) result = 1; \
 });\
 if (!result) APPEND_TO_LIST(type, list, val);\
 }
+
+/* return true if value of type sort is in set */
+#define IN_SET(sort, set, val) \
+__extension__({\
+bool result = false; \
+FOREACH(elem, sort, set, {\
+if(Compare_##sort(val,elem)) result = true; \
+});\
+result;\
+})
 
 #define FREE_LIST(type, list) \
 {\

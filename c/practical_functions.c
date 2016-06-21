@@ -114,6 +114,10 @@ int Compare_Interface (Interface *one, Interface *two)
         return (!strcmp (name1, name2));
 }
 
+int Compare_FV (FV *one, FV *two)
+{
+    return (!strcmp(one->name, two->name));
+}
 
 int Compare_Protected_Object_Name (Protected_Object_Name *one, Protected_Object_Name *two)
 {
@@ -689,6 +693,7 @@ void Create_Interface(Interface ** i)
     (*i)->distant_qgen = distant_qgen;
     (*i)->calling_threads = NULL;
     (*i)->distant_name = NULL;
+    (*i)->calling_pis = NULL;
 }
 
 // this function clears up an Interface data structure
@@ -735,16 +740,15 @@ void Clear_Interface(Interface * i)
         i->distant_qgen = NULL;
     }
 
-    if (NULL != i->calling_threads) {
-        //Clear_FV_List_Keep_Elem(i->calling_threads);
-        i->calling_threads = NULL;
-    }
 
     if (NULL != i->distant_name) {
         free(i->name);
         i->name = NULL;
     }
 
+    /* Don' t try to free the lists here */
+    i->calling_threads = NULL;
+    i->calling_pis = NULL;
 }
 
 

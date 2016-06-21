@@ -174,8 +174,15 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
 {
     Interface *expire = NULL, *set_timer = NULL, *reset_timer = NULL;
     Parameter *param = NULL;
+    Interface *cyclic_pi = NULL;
 
     assert (NULL != header && NULL != code);
+
+    /* Find the cyclic interface of the timer manager */
+    FOREACH(pi, Interface, timer_manager->interfaces, {
+        if (!strcmp(pi->name, "tick_100ms")) cyclic_pi = pi;
+    });
+
 
     FOREACH (timer, String, fv->timer_list, {
         /* Declare functions in timer manager code */
@@ -228,6 +235,8 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         expire->distant_name    = make_string (timer);
         free (expire->distant_fv);
         expire->distant_fv      = make_string (fv->name);
+        /* Filter: set the list of calling PIs in the timer manager */
+        ADD_TO_SET(Interface, expire->calling_pis, cyclic_pi);
         APPEND_TO_LIST (Interface, timer_manager->interfaces, expire);
 
         /* Add Unpro PI "RESET_timer" to timer manager (no param) */
@@ -423,13 +432,6 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
 
             /* Find the corresponding interface in the caller */
             distant_RI = FindCorrespondingRI(caller, i);
-//           FOREACH (interface, Interface, caller->interfaces, {
-//               if (RI == interface->direction &&
-//                   !strcmp (interface->distant_name, i->name) &&
-//                   !strcmp (interface->distant_fv, i->parent_fv->name)) {
-//                   distant_RI = interface;
-//               }
-//           });
 
             if (NULL != distant_RI
                 && strcmp(artificial_fv_name, distant_RI->parent_fv->name)) {
@@ -522,87 +524,97 @@ void Add_RI_To_Thread (Interface *i, FV *fv)
 
 
 /* Add a thread to the calling list */
-int Add_Thread_To_Calling_List (FV_list **calling_threads_list, FV *fv) 
+void Add_Thread_To_Calling_List (FV_list **calling_threads_list, FV *fv) 
 {
         assert(NULL != calling_threads_list);
         assert(NULL != fv);
 
         FOREACH(t, FV, *calling_threads_list, {
-                if (t == fv) fv = NULL; 
+            if (t == fv) fv = NULL;
         });
 
         if (NULL != fv) {
-                APPEND_TO_LIST(FV, *calling_threads_list, fv);
-                return 0;
+            APPEND_TO_LIST(FV, *calling_threads_list, fv);
+            return;
         }
-        else return 1;  
 }
 
 /* Pre-Processing: propagate Calling thread to distant FV
  *                 (used to allow sync function to make call to RI). */
 void Propagate_Calling_Thread(Interface *i, FV **fv)
 {
-    FV *distant_fv = NULL;
-    Interface *corresponding_pi = NULL;
-    distant_fv = (FV *)FindFV (i->distant_fv);
+    FV           *distant_fv       = NULL;
+    Interface    *corresponding_pi = NULL;
 
-    if (NULL != distant_fv) {
+    /* Find the function to which the RI is connected */
+    distant_fv = FindFV(i->distant_fv);
 
-        FOREACH(dist_i, Interface, distant_fv->interfaces, {
-            //printf("%s %s %s\n", dist_i->name, i->name, i->distant_name);
-            // Temporary fix to support the new version of tasteIV
-            char *res=NULL;
-            if (NULL != i->distant_name) {
-                res = strchr(i->distant_name, '.');
-                if (NULL != res) {
-                    printf("[preprocessing_backend.c] XXX\n");
-                    *res = '\0';
+    if(NULL == distant_fv) {
+        /* This RI is not connected */
+        return;
+    }
+
+    /* Find the PI corresponding to the RI passed as first argument */
+    FOREACH(dist_i, Interface, distant_fv->interfaces, {
+        // Long-term temporary fix to support the new version of tasteIV
+        char *res = NULL;
+        if (NULL != i->distant_name) {
+            res = strchr(i->distant_name, '.');
+            if (NULL != res) {
+                printf("[preprocessing_backend.c] FIXME\n");
+                *res = '\0';
+            }
+        }
+        if(PI == dist_i->direction &&
+           !strcmp(dist_i->name,
+                   NULL != i->distant_name ? i->distant_name : i->name)) {
+            corresponding_pi = dist_i;
+        }
+    });
+
+    assert(NULL != corresponding_pi);
+
+    /*
+    * Check that the calling thread is not already in the list of
+    * the distant fv/pi. This is essential to avoid infinite recursion
+    * in case of circular dependencies
+    */
+    FOREACH(ct, FV, corresponding_pi->calling_threads, {
+        if(ct == *fv) return;
+    });
+
+    FOREACH(ct, FV, distant_fv->calling_threads, {
+        if(ct == *fv) return;
+    });
+
+    /* Add the thread to the list of calling FV of the interface */
+    Add_Thread_To_Calling_List (&(corresponding_pi->calling_threads), *fv);
+
+    /* Also add the thread to the calling list of the FV itself */
+    Add_Thread_To_Calling_List (&(distant_fv->calling_threads), *fv);
+
+    /* And change the "distant fv" field of the corresponding PI */
+    if(NULL != corresponding_pi->distant_fv) {
+        free(corresponding_pi->distant_fv);
+        corresponding_pi->distant_fv = NULL;
+    }
+    build_string(&(corresponding_pi->distant_fv),
+                 (*fv)->name, strlen((*fv)->name));
+
+    if(passive_runtime == distant_fv->runtime_nature) {
+        /* Do the same recursively until we reach another thread */
+        FOREACH(sub_i, Interface, distant_fv->interfaces, {
+            if (RI == sub_i->direction) {
+            /* filter: some RIs are not called by the code of a given PI
+             * for example the timer expiration signal is only called by the
+             * cyclic PI of the timer manager. Don't propagate in that case
+             * to avoid explosion of the number of AADL ports in the CV */
+                if (NULL == sub_i->calling_pis
+                   || IN_SET(Interface, sub_i->calling_pis, corresponding_pi)) {
+                    Propagate_Calling_Thread(sub_i, fv);
                 }
             }
-            if(PI==dist_i->direction &&
-               !strcmp(dist_i->name,
-                       NULL != i->distant_name?i->distant_name:i->name)) {
-                corresponding_pi=dist_i;
-            }
         });
-
-        assert(NULL != corresponding_pi);
-
-        /* 
-        * Check that the calling thread is not already in the list of
-        * the distant fv/pi. This is essential to avoid infinite recursion
-        * in case of circular dependencies
-        */
-        FOREACH(ct, FV, corresponding_pi->calling_threads, {
-            if(ct == *fv) return;
-        });
-
-        FOREACH(ct, FV, distant_fv->calling_threads, {
-            if(ct == *fv) return;
-        });
-
-        /* Add the thread to the list of calling FV of the interface */
-        Add_Thread_To_Calling_List (&(corresponding_pi->calling_threads), *fv);
-
-        /* Also add the thread to the calling list of the FV itself */
-        Add_Thread_To_Calling_List (&(distant_fv->calling_threads), *fv);
-
-        /* And change the "distant fv" field of the corresponding PI */
-        if(NULL != corresponding_pi->distant_fv) {
-            free(corresponding_pi->distant_fv);
-            corresponding_pi->distant_fv=NULL;
-        }
-        build_string(&(corresponding_pi->distant_fv),
-                     (*fv)->name, strlen((*fv)->name));
-
-        if(passive_runtime == distant_fv->runtime_nature) {
-            /* Do the same recursively until we reach another thread */
-            FOREACH(sub_i, Interface, distant_fv->interfaces, {
-                    if (RI == sub_i->direction) {
-                        Propagate_Calling_Thread (sub_i, fv);
-                    }
-            });
-        }
     }
 }
 
@@ -708,7 +720,7 @@ void Preprocess_FV (FV *fv)
 
   /*  preprocessing: determine if a FV is a thread or a passive function
    *  (once all artificial threads have been created) */
-        fv->runtime_nature = passive_runtime;  
+        fv->runtime_nature = passive_runtime;
 
         FOREACH (i, Interface, fv->interfaces, {
             if (PI==i->direction) switch (i->rcm) {
@@ -1021,10 +1033,10 @@ void Preprocess_coverage (Process *node)
                    "    exit(0);\n"
                    "}\n\n");
 
-    /* Initialisation code of the coverage manager - nothing special */
+    /* Initialisation code of the coverage manager */
     fprintf (code, "void %s_startup()\n"
                    "{\n"
-                   "    puts(\"use kill -SIGUSR2 to collectcode coverage\");\n"
+                   "    puts(\"use kill -SIGUSR2 to collect code coverage\");\n"
                    "    signal(SIGUSR2, gc_handler);\n"
                    "}\n\n",
                    fv->name);
@@ -1088,28 +1100,47 @@ void Preprocessing_Backend (System *s)
 
     FOREACH (fv, FV, s->functions, {
         Preprocess_FV(fv);
-    })
+    });
 
-    /* preprocessing: Propagate calling thread to distant PI (recursively) */
+    /* Propagate calling thread to distant PI (recursively)
+     * i.e look for all threads (functions have already been preprocessed)
+     * then go through all their RIs recursively until reaching another thread,
+     * and set that the function is a calling thread of the reached one */
     FOREACH(fv, FV, s->functions, {
-           if (thread_runtime == fv->runtime_nature) {
+        if (thread_runtime == fv->runtime_nature) {
             FOREACH(i, Interface, fv->interfaces, {
                 if (RI == i->direction) Propagate_Calling_Thread (i, &fv);
             })
         }
-    })
+    });
 
-    /* Add each RI of passive functions as RI of their calling thread */
+    /* Add each RI of passive functions as RI of their calling threads */
     FOREACH(fv, FV, s->functions, {
         if(passive_runtime==fv->runtime_nature) {
             FOREACH(i, Interface, fv->interfaces, {
                 if (RI==i->direction && i->distant_qgen->language == other) {
-                    FOREACH(thread, FV, fv->calling_threads, {
-                        Add_RI_To_Thread(i, thread); 
+                    /* Add to calling threads only of PIs that actually call
+                     * the current RI - filtering to be done, but the result
+                     * is the ri->calling_pis list */
+                    FV_list *callers = NULL;
+                    if (NULL == i->calling_pis) {
+                        callers = fv->calling_threads;
+                    }
+                    else {
+                        /* Build a set of actual calling threads of this RI */
+                        FOREACH(calling_pi, Interface, i->calling_pis, {
+                            FOREACH(thread_caller, FV, calling_pi->calling_threads, {
+                                ADD_TO_SET(FV, callers, thread_caller);
+                            });
+                        });
+                    }
+                    //FOREACH(thread, FV, fv->calling_threads, {
+                    FOREACH(thread, FV, callers, {
+                        Add_RI_To_Thread(i, thread);
                         Propagate_Calling_Thread(i, &thread);
-                    })
+                    });
                 }
-            })
+            });
         }
     });
 

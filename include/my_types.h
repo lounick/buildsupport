@@ -177,25 +177,26 @@ typedef struct T_name_list
    Type used to describe an interface (provided or required)
 */
 typedef struct t_interface {
-  char                  *name;
-  Port                  *port_name;
-  struct t_fv           *parent_fv;
-  IF_type               direction;
-  Parameter_list        *in;
-  Parameter_list        *out;
-  IF_kind               synchronism;
-  RCM                   rcm;
-  long long             period;
-  uint64_t              wcet_low;
-  char                  *wcet_low_unit;
-  uint64_t              wcet_high;
-  char                  *wcet_high_unit;
-  char                  *distant_fv;
-  struct t_qgen         *distant_qgen;
-  struct t_FV_list      *calling_threads;
-  char                  *distant_name;
-  unsigned long long    queue_size;
-  bool                  ignore_params;
+  char                    *name;
+  Port                    *port_name;
+  struct t_fv             *parent_fv;
+  IF_type                 direction;
+  Parameter_list          *in;
+  Parameter_list          *out;
+  IF_kind                 synchronism;
+  RCM                     rcm;
+  long long               period;
+  uint64_t                wcet_low;
+  char                    *wcet_low_unit;
+  uint64_t                wcet_high;
+  char                    *wcet_high_unit;
+  char                    *distant_fv;
+  struct t_qgen           *distant_qgen;
+  struct t_FV_list        *calling_threads;
+  char                    *distant_name;
+  unsigned long long      queue_size;
+  bool                    ignore_params;
+  struct t_Interface_list *calling_pis; // only set in RIs of passive functions
 } Interface;
 
 DECLARE_LIST (Interface)
