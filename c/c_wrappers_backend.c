@@ -486,13 +486,27 @@ void add_RI_to_c_wrappers(Interface * i)
                     "\t /* This function is passive, thus not have direct access to the VM\n");
             fprintf(b,
                     "\t  It must use its calling thread to invoke this asynchronous RI */\n\n");
-            FOREACH(t, FV, i->parent_fv->calling_threads, {
-                    (void) t; count++;});
 
+            /* Build the list of calling threads for this RI */
+            FV_list *calltmp = NULL;
+            if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
+            else {
+                FOREACH(calling_pi, Interface, i->calling_pis, {
+                    FOREACH(thread_caller, FV, calling_pi->calling_threads, {
+                        ADD_TO_SET(FV, calltmp, thread_caller);
+                    });
+                });
+            }
+
+            /* Count the number of calling threads */
+            FOREACH(ct, FV, calltmp, {
+                (void) ct;
+                count ++;
+            });
             /* If there is only one possible caller, no need for stack */
             if (1 == count) {
                 fprintf(b, "\tvm_async_%s_%s_vt(",
-                        i->parent_fv->calling_threads->value->name,
+                        calltmp->value->name,
                         i->name);
 
                 /*  If any, add the IN parameter (async RI) */
@@ -502,15 +516,21 @@ void add_RI_to_c_wrappers(Interface * i)
                 }
 
                 fprintf(b, ");\n");
-            } else if (count > 1) {     /* Several possible callers: switch-case based on the stack top value */
+            }
+            else if (count > 1) {     /* Several possible callers: switch-case based on the stack top value */
                 fprintf(b, "\tswitch(%s_callinglist_get_top_value()) {\n",
                         i->parent_fv->name);
-                FOREACH(t, FV, i->parent_fv->calling_threads, {
-                        fprintf(b, "\t\tcase %d: vm_async_%s_%s_vt(", t->thread_id, t->name, i->name); if (NULL != i->in) {     /* Add the unique IN parameter (async RI) */
-                        fprintf(b, "%s, %s_len", i->in->value->name,
-                                i->in->value->name);}
-                        fprintf(b, "); break;\n");}
-                );
+                FOREACH(caller, FV, calltmp, {
+                        fprintf(b, "\t\tcase %d: vm_async_%s_%s_vt(",
+                                   caller->thread_id,
+                                   caller->name,
+                                   i->name);
+                        if (NULL != i->in) {     /* Add the unique IN parameter (async RI) */
+                            fprintf(b, "%s, %s_len", i->in->value->name,
+                                    i->in->value->name);
+                        }
+                        fprintf(b, "); break;\n");
+                });
                 fprintf(b, "\t\tdefault: break;\n");
                 fprintf(b, "\t}\n");
 
