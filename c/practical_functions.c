@@ -1039,12 +1039,12 @@ String_list *timers(FV *fv)
 }
 
 
-/* Return the number of Cyclic and Sporadic interfaces from a list */
+/* Return the number of RCM-Visible (SPO/CYC/PRO) interfaces from a list */
 int CountActivePI(Interface_list *interfaces)
 {
     int res = 0;
     FOREACH(pi, Interface, interfaces, {
-        if(PI == pi->direction && asynch == pi->synchronism) res ++;
+        if(PI == pi->direction && (asynch == pi->synchronism || protected==pi->rcm)) res ++;
     });
     return res;
 }
