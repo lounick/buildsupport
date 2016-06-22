@@ -402,7 +402,6 @@ void add_RI_to_ada_wrappers(Interface * i)
 {
     Parameter_list *tmp;
     int count = 0;
-    FV_list *calltmp = NULL;
 
     FILE *s = ads, *b = adb;
 
@@ -569,10 +568,8 @@ void add_RI_to_ada_wrappers(Interface * i)
             fprintf(b,
                 "\t\t -- It must use its calling thread to invoke this asynchronous RI\n\n");
 
-           /* ForEachWithParam element of i->parent_fv->calling_threads,
-            execute CountFV and update & count thanks;*/
-
-            /* Count the number of calling threads */
+            /* Build the list of calling threads for this RI */
+            FV_list *calltmp = NULL;
             if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
             else {
                 FOREACH(calling_pi, Interface, i->calling_pis, {
@@ -581,6 +578,8 @@ void add_RI_to_ada_wrappers(Interface * i)
                     });
                 });
             }
+
+            /* Count the number of calling threads */
             FOREACH(ct, FV, calltmp, {
                 (void) ct;
                 count ++;
