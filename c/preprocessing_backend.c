@@ -186,9 +186,11 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
 
     FOREACH (timer, String, fv->timer_list, {
         /* Declare functions in timer manager code */
-        fprintf (header, "void %s_PI_SET_%s(const asn1SccT_UInt32 *val);\n\n",
-                         timer_manager->name, timer);
-        fprintf (code, "void %s_PI_SET_%s(const asn1SccT_UInt32 *val)\n"
+        fprintf (header, "void %s_PI_%s_SET_%s(const asn1SccT_UInt32 *val);\n\n",
+                         timer_manager->name,
+                         fv->name,
+                         timer);
+        fprintf (code, "void %s_PI_%s_SET_%s(const asn1SccT_UInt32 *val)\n"
                        "{\n"
                        "    /* Timer value must be multiple of 100 ms */\n"
                        "    assert (*val %% 100 == 0);\n"
@@ -196,18 +198,22 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                        "    timers[%s_%s].value = *val / 100;\n"
                        "}\n\n",
                        timer_manager->name,
+                       fv->name,
                        timer,
                        fv->name,
                        timer,
                        fv->name,
                        timer);
-        fprintf (header, "void %s_PI_RESET_%s();\n\n",
-                         timer_manager->name, timer);
-        fprintf (code, "void %s_PI_RESET_%s()\n"
+        fprintf (header, "void %s_PI_%s_RESET_%s();\n\n",
+                         timer_manager->name,
+                         fv->name,
+                         timer);
+        fprintf (code, "void %s_PI_%s_RESET_%s()\n"
                        "{\n"
                        "    timers[%s_%s].state = inactive;\n"
                        "}\n\n",
                        timer_manager->name,
+                       fv->name,
                        timer,
                        fv->name,
                        timer);
@@ -242,9 +248,11 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         /* Add Unpro PI "RESET_timer" to timer manager (no param) */
         reset_timer = Duplicate_Interface (PI, expire, timer_manager);
         free (reset_timer->name);
-        reset_timer->name         = make_string ("RESET_%s", timer);
+        reset_timer->name         = make_string ("%s_RESET_%s",
+                                                 fv->name,
+                                                 timer);
         free (reset_timer->distant_name);
-        reset_timer->distant_name = make_string (reset_timer->name);
+        reset_timer->distant_name = make_string ("RESET_%s", timer); // irrelevant in PI
         reset_timer->rcm          = unprotected;
         reset_timer->synchronism  = synch;
         APPEND_TO_LIST (Interface, timer_manager->interfaces, reset_timer);
@@ -252,15 +260,21 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         /* Add corresponding RI in the user FV */
         reset_timer = Duplicate_Interface (RI, reset_timer, fv);
         free (reset_timer->distant_fv);
-        reset_timer->distant_fv = make_string (timer_manager->name);
+        reset_timer->distant_fv   = make_string (timer_manager->name);
+        reset_timer->name         = make_string("RESET_%s", timer);
+        reset_timer->distant_name = make_string("%s_%s",
+                                                fv->name,
+                                                reset_timer->name);
         APPEND_TO_LIST (Interface, fv->interfaces, reset_timer);
 
         /* Add Unpro PI "SET_timer(value)" in timer manager */
         set_timer = Duplicate_Interface (PI, reset_timer, timer_manager);
         free (set_timer->name);
-        set_timer->name         = make_string ("SET_%s", timer);
+        set_timer->name         = make_string ("%s_SET_%s",
+                                               fv->name,
+                                               timer);
         free (set_timer->distant_name);
-        set_timer->distant_name = make_string (set_timer->name);
+        set_timer->distant_name = make_string ("SET_%s", timer);
 
         /* Add IN param holding the timer duration */
         Create_Parameter (&param);
@@ -278,6 +292,10 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         /* Add corresponding RI in the user FV */
         set_timer = Duplicate_Interface (RI, set_timer, fv);
         free (set_timer->distant_fv);
+        set_timer->name         = make_string("SET_%s", timer);
+        set_timer->distant_name = make_string("%s_%s",
+                                                fv->name,
+                                                set_timer->name);
         set_timer->distant_fv = make_string (timer_manager->name);
         APPEND_TO_LIST (Interface, fv->interfaces, set_timer);
     });

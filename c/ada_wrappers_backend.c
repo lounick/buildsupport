@@ -504,70 +504,125 @@ void add_RI_to_ada_wrappers(Interface * i)
             fprintf(b, "%s", qgen_args);
         fprintf(b, ");\n\n");
 
-    } else {
+    }
+    else {
         if (asynch == i->synchronism) {
-        /*
-         * Distant FV is a thread (asynchronous RI). This means that depending on the nature of the current FV (thread or passive)
-         * we have either to call the VM (if we are in a thread) or to switch-case the caller thread to call his own access to the VM
-         * We retrieve the caller thread ID using the "stack" 
-         */
-        if (thread_runtime == i->parent_fv->runtime_nature) {
+            /*
+             * Distant FV is a thread (asynchronous RI). This means that depending on the nature of the current FV (thread or passive)
+             * we have either to call the VM (if we are in a thread) or to switch-case the caller thread to call his own access to the VM
+             * We retrieve the caller thread ID using the "stack" 
+             */
+            if (thread_runtime == i->parent_fv->runtime_nature) {
 
-            fprintf(b, "\t\tValue: %s%s%s_%s_others_Interface \n\t\t(%s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
-                (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",  // AADL v2 only
-                (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                i->parent_fv->name, i->name);
-            fprintf(b,
-                "\t\tErr: PolyORB_HI.Errors.Error_Kind;\n\t\tuse type PolyORB_HI.Errors.Error_Kind;\n");
-            fprintf(b, "\tbegin\n");
-            /* Copy the buffer(s) from C to Ada */
-            if (NULL != i->in) {
-            tmp = i->in;
-            while (NULL != tmp) {
-                fprintf(b, "\t\tfor J in 1 .. IN_%s_size loop\n",
-                    tmp->value->name);
+                fprintf(b, "\t\tValue: %s%s%s_%s_others_Interface \n\t\t(%s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
+                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
+                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
+                    i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",  // AADL v2 only
+                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
+                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
+                    i->parent_fv->name, i->name);
                 fprintf(b,
-                    "\t\t\tValue.OUTPORT_%s_DATA.Buffer (J) := PolyORB_HI_Generated.Types.Stream_Element%s\n",
-                    i->name,
-                    get_context()->aadlv2?"_Buffer":"");
+                    "\t\tErr: PolyORB_HI.Errors.Error_Kind;\n\t\tuse type PolyORB_HI.Errors.Error_Kind;\n");
+                fprintf(b, "\tbegin\n");
+                /* Copy the buffer(s) from C to Ada */
+                if (NULL != i->in) {
+                tmp = i->in;
+                while (NULL != tmp) {
+                    fprintf(b, "\t\tfor J in 1 .. IN_%s_size loop\n",
+                        tmp->value->name);
+                    fprintf(b,
+                        "\t\t\tValue.OUTPORT_%s_DATA.Buffer (J) := PolyORB_HI_Generated.Types.Stream_Element%s\n",
+                        i->name,
+                        get_context()->aadlv2?"_Buffer":"");
+                    fprintf(b,
+                        "\t\t\t\t(IN_%s (Interfaces.C.size_t (J - 1)));\n",
+                        tmp->value->name);
+                    fprintf(b, "\t\tend loop;\n");
+                    if (!(get_context()->aadlv2))
+                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.uint16 (IN_%s_size);\n",     // old V1
+                        i->name, tmp->value->name);
+                    else
+                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_16 (IN_%s_size);\n",        // AADL V2, should work with V1 but not supported by Ocarina yet also, otherwise put back previous line for V1
+                        i->name, tmp->value->name);
+                    tmp = tmp->next;
+                }
+                }
+
+
+                if (NULL != i->parent_fv->process) {
+                fprintf(b, "\t\tPut_Value (%s_%s_K, Value);\n",
+                    i->parent_fv->process->identifier,
+                    i->parent_fv->name);
+
+                /* Following is added only for the Backdoor backend : call the Send_Output to
+                   flush immediately the output buffer */
+                fprintf(b, "\t\tErr:=Send_Output(%s_%s_K, %s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", i->parent_fv->process->identifier, i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
+                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
+                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
+                    i->parent_fv->name, i->name);
+                }
+            }
+            else {                // Current FV = Passive function
+                fprintf(b, "\tbegin\n");
                 fprintf(b,
-                    "\t\t\t\t(IN_%s (Interfaces.C.size_t (J - 1)));\n",
-                    tmp->value->name);
-                fprintf(b, "\t\tend loop;\n");
-                if (!(get_context()->aadlv2))
-                fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.uint16 (IN_%s_size);\n",     // old V1
-                    i->name, tmp->value->name);
-                else
-                fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_16 (IN_%s_size);\n",        // AADL V2, should work with V1 but not supported by Ocarina yet also, otherwise put back previous line for V1
-                    i->name, tmp->value->name);
-                tmp = tmp->next;
-            }
-            }
+                    "\t\t -- This function is passive, thus not have direct access to the VM\n");
+                fprintf(b,
+                    "\t\t -- It must use its calling thread to invoke this asynchronous RI\n\n");
 
+                /* Build the list of calling threads for this RI */
+                FV_list *calltmp = NULL;
+                if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
+                else {
+                    FOREACH(calling_pi, Interface, i->calling_pis, {
+                        FOREACH(thread_caller, FV, calling_pi->calling_threads, {
+                            ADD_TO_SET(FV, calltmp, thread_caller);
+                        });
+                    });
+                }
 
-            if (NULL != i->parent_fv->process) {
-            fprintf(b, "\t\tPut_Value (%s_%s_K, Value);\n",
-                i->parent_fv->process->identifier,
-                i->parent_fv->name);
+                /* Count the number of calling threads */
+                FOREACH(ct, FV, calltmp, {
+                    (void) ct;
+                    count ++;
+                });
 
-            /* Following is added only for the Backdoor backend : call the Send_Output to
-               flush immediately the output buffer */
-            fprintf(b, "\t\tErr:=Send_Output(%s_%s_K, %s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", i->parent_fv->process->identifier, i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
-                (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                i->parent_fv->name, i->name);
+                if (1 == count) {
+                    fprintf(b, "\t\t%s_async_ri_wrappers.vm_%s_vt",
+                        calltmp->value->name,
+                        i->name);
+
+                    if (NULL != i->in) {        // Add parameters
+                        fprintf(b, "(");
+                        FOREACH(p, Parameter, i->in, {
+                            List_Ada_Param_Names(p, &b);
+                        });
+                        fprintf(b, ")");
+                    }
+                    fprintf(b, ";\n");
+                }
+                else if (count > 1) {
+                    fprintf(b, "\t\tcase callinglist.get_top_value is\n");
+                    FOREACH(caller, FV, calltmp, {
+                        fprintf(b,
+                            "\t\t\twhen %d => %s_async_ri_wrappers.vm_%s_vt",
+                            caller->thread_id,
+                            caller->name, i->name);
+
+                        if (NULL != i->in) {    // Add parameters
+                            fprintf(b, "(");
+                            FOREACH(p, Parameter, i->in, {
+                                List_Ada_Param_Names(p, &b);
+                            });
+                            fprintf(b, ")");
+                        }
+                        fprintf(b, ";\n");
+                    });
+                    fprintf(b, "\t\t\twhen others => null;\n");
+                    fprintf(b, "\t\tend case;\n");
+                }
             }
         }
-        else {                // Current FV = Passive function
-            fprintf(b, "\tbegin\n");
-            fprintf(b,
-                "\t\t -- This function is passive, thus not have direct access to the VM\n");
-            fprintf(b,
-                "\t\t -- It must use its calling thread to invoke this asynchronous RI\n\n");
-
+        else {
             /* Build the list of calling threads for this RI */
             FV_list *calltmp = NULL;
             if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
@@ -585,49 +640,6 @@ void add_RI_to_ada_wrappers(Interface * i)
                 count ++;
             });
 
-            if (1 == count) {
-                fprintf(b, "\t\t%s_async_ri_wrappers.vm_%s_vt",
-                    calltmp->value->name,
-                    i->name);
-
-                if (NULL != i->in) {        // Add parameters
-                    fprintf(b, "(");
-                    FOREACH(p, Parameter, i->in, {
-                        List_Ada_Param_Names(p, &b);
-                    });
-                    fprintf(b, ")");
-                }
-                fprintf(b, ";\n");
-            }
-            else if (count > 1) {
-                fprintf(b, "\t\tcase callinglist.get_top_value is\n");
-                FOREACH(caller, FV, calltmp, {
-                    fprintf(b,
-                        "\t\t\twhen %d => %s_async_ri_wrappers.vm_%s_vt",
-                        caller->thread_id,
-                        caller->name, i->name);
-
-                    if (NULL != i->in) {    // Add parameters
-                        fprintf(b, "(");
-                        FOREACH(p, Parameter, i->in, {
-                            List_Ada_Param_Names(p, &b);
-                        });
-                        fprintf(b, ")");
-                    }
-                    fprintf(b, ";\n");
-                });
-                fprintf(b, "\t\t\twhen others => null;\n");
-                fprintf(b, "\t\tend case;\n");
-            }
-        }
-    }
-    else {
-            int cnt = 0;
-            FOREACH(t, FV, i->parent_fv->calling_threads, {
-            (void) t;
-                cnt++;
-            })
-
             fprintf(b, "\tbegin\n");
 
             if (protected == i->rcm) {
@@ -638,13 +650,13 @@ void add_RI_to_ada_wrappers(Interface * i)
             }
 
             if (passive_runtime == i->parent_fv->runtime_nature) {
-                if (cnt > 1) {
+                if (count > 1) {
                 fprintf(b, "callinglist.get_top_value");
                 }
-                else if (1 == cnt) {
-                fprintf(b, "%d", i->parent_fv->calling_threads->value->thread_id);
+                else if (1 == count) {
+                fprintf(b, "%d", calltmp->value->thread_id);
                 }
-                else if (0 == cnt) {
+                else if (0 == count) {
                 ERROR ("** Error: function \"%s\" is not called by anyone (dead code)!\n", i->parent_fv->name);
                         ERROR ("** This is not supported by the Ada runtime. You may have to change two things:\n");
                         ERROR ("**    1) (In any case) use the -p flag when calling the TASTE orchestrator, and\n");

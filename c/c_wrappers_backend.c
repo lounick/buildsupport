@@ -538,13 +538,28 @@ void add_RI_to_c_wrappers(Interface * i)
         }
     }
 
-    else {                      /* synch==i->synchronism (RI is synchronous) : 
-                                   make a direct call to the remote function 
-                                   defined in remote polyorb_interface.c, 
+    else {                      /* synch==i->synchronism (RI is synchronous) :
+                                   make a direct call to the remote function
+                                   defined in remote polyorb_interface.c,
                                    and pass the thread id as parameter */
         int count = 0;
-        FOREACH(t, FV, i->parent_fv->calling_threads, {
-                (void) t; count++;});
+
+        /* Build the list of calling threads for this RI */
+        FV_list *calltmp = NULL;
+        if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
+        else {
+            FOREACH(calling_pi, Interface, i->calling_pis, {
+                FOREACH(thread_caller, FV, calling_pi->calling_threads, {
+                    ADD_TO_SET(FV, calltmp, thread_caller);
+                });
+            });
+        }
+
+        /* Count the number of calling threads */
+        FOREACH(ct, FV, calltmp, {
+            (void) ct;
+            count ++;
+        });
 
         fprintf(b, "\tsync_%s_%s(", i->distant_fv,
                 NULL != i->distant_name ? i->distant_name : i->name);
@@ -554,8 +569,7 @@ void add_RI_to_c_wrappers(Interface * i)
                 fprintf(b, "%s_callinglist_get_top_value()",
                         i->parent_fv->name);
             } else if (1 == count) {
-                fprintf(b, "%d",
-                        i->parent_fv->calling_threads->value->thread_id);
+                fprintf(b, "%d",  calltmp->value->thread_id);
             } else if (0 == count) {
                 printf
                     ("Warning: function \"%s\" is not called by anyone (dead code)!\n",
