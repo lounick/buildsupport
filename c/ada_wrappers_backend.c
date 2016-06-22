@@ -561,67 +561,68 @@ void add_RI_to_ada_wrappers(Interface * i)
                 i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
                 i->parent_fv->name, i->name);
             }
-        } else {                // Current FV = Passive function
+        }
+        else {                // Current FV = Passive function
             fprintf(b, "\tbegin\n");
             fprintf(b,
                 "\t\t -- This function is passive, thus not have direct access to the VM\n");
             fprintf(b,
                 "\t\t -- It must use its calling thread to invoke this asynchronous RI\n\n");
-            
+
            /* ForEachWithParam element of i->parent_fv->calling_threads,
             execute CountFV and update & count thanks;*/
 
             /* Count the number of calling threads */
-            FOREACH(ct, FV, i->parent_fv->calling_threads, {
-            (void) ct;
-            count ++;
-            })
+            if (NULL == i->calling_pis) calltmp = i->parent_fv->calling_threads;
+            else {
+                FOREACH(calling_pi, Interface, i->calling_pis, {
+                    FOREACH(thread_caller, FV, calling_pi->calling_threads, {
+                        ADD_TO_SET(FV, calltmp, thread_caller);
+                    });
+                });
+            }
+            FOREACH(ct, FV, calltmp, {
+                (void) ct;
+                count ++;
+            });
 
             if (1 == count) {
-            fprintf(b, "\t\t%s_async_ri_wrappers.vm_%s_vt",
-                i->parent_fv->calling_threads->value->name,
-                i->name);
+                fprintf(b, "\t\t%s_async_ri_wrappers.vm_%s_vt",
+                    calltmp->value->name,
+                    i->name);
 
-            if (NULL != i->in) {        // Add parameters
-                fprintf(b, "(");
-                FOREACH(p, Parameter, i->in, {
-                List_Ada_Param_Names(p, &b);
-                })
-                fprintf(b, ")");
-            }
-            fprintf(b, ";\n");
-            } else if (count >1) {
-            fprintf(b, "\t\tcase callinglist.get_top_value is\n");
-            calltmp = i->parent_fv->calling_threads;
-            while (NULL != calltmp) {
-                fprintf(b,
-                    "\t\t\twhen %d => %s_async_ri_wrappers.vm_%s_vt",
-                    calltmp->value->thread_id,
-                    calltmp->value->name, i->name);
-
-                if (NULL != i->in) {    // Add parameters
-                fprintf(b, "(");
-                FOREACH(p, Parameter, i->in, {
-                    List_Ada_Param_Names(p, &b);
-                })
-
-                fprintf(b, ")");
+                if (NULL != i->in) {        // Add parameters
+                    fprintf(b, "(");
+                    FOREACH(p, Parameter, i->in, {
+                        List_Ada_Param_Names(p, &b);
+                    });
+                    fprintf(b, ")");
                 }
                 fprintf(b, ";\n");
-
-                calltmp = calltmp->next;
             }
-            fprintf(b, "\t\t\twhen others => null;\n");
-            fprintf(b, "\t\tend case;\n");
+            else if (count > 1) {
+                fprintf(b, "\t\tcase callinglist.get_top_value is\n");
+                FOREACH(caller, FV, calltmp, {
+                    fprintf(b,
+                        "\t\t\twhen %d => %s_async_ri_wrappers.vm_%s_vt",
+                        caller->thread_id,
+                        caller->name, i->name);
 
+                    if (NULL != i->in) {    // Add parameters
+                        fprintf(b, "(");
+                        FOREACH(p, Parameter, i->in, {
+                            List_Ada_Param_Names(p, &b);
+                        });
+                        fprintf(b, ")");
+                    }
+                    fprintf(b, ";\n");
+                });
+                fprintf(b, "\t\t\twhen others => null;\n");
+                fprintf(b, "\t\tend case;\n");
             }
-
         }
-        }
-
-
-        else {
-
+    }
+    else {
             int cnt = 0;
             FOREACH(t, FV, i->parent_fv->calling_threads, {
             (void) t;
