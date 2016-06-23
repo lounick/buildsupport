@@ -873,7 +873,7 @@ void Add_api(Process *node, FV_list *all_fv)
 
     fprintf (code, "#include <deployment.h>\n\n"
                    "#include \"%s.h\"\n\n"
-                   "extern int __po_hi_gqueue_get_count(__po_hi_task_id, __po_hi_local_port_t);\n\n",
+                   "extern int __po_hi_gqueue_get_count(int, int);\n\n",
                    fv->name);
 
 
