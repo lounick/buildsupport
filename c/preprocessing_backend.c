@@ -961,7 +961,9 @@ void Preprocess_taste_api (Process *node)
     });
 
     /* 2) Create the FV */
-    Add_api(node, all_fv);
+    if (NULL != all_fv) {
+        Add_api(node, all_fv);
+    }
 }
 
 /* Create code that handles the collection of code coverage data
