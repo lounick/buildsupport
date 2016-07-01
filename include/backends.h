@@ -27,6 +27,7 @@ extern void Process_Directives(FV *);
 extern void AADL_CV_Unparser();
 
 extern void  Preprocessing_Backend(System *);
+extern void  ModelTransformation_Backend(System *);
 extern void  Semantic_Checks();
 extern void  GLUE_OG_Backend(FV *);
 extern void  GLUE_RTDS_Backend(FV *);
