@@ -45,8 +45,8 @@ void C_End()
     /* Perform semantic checks of the user input */
     Semantic_Checks();
 
-    /* 
-     * Temporary support for OpenGEODE
+    /*
+     * OpenGEODE support:
      * Replace SDL language with Ada for building glue code
      */
     if (get_context()->glue) {
@@ -97,7 +97,7 @@ void C_End()
     });
 
     /*
-     * If Semantic errors have been found (erros in the user AADL models),
+     * If Semantic errors have been found (errors in the user AADL models),
      * then the application is exited with an error message.
      */
     if (error_count > 0) {
@@ -121,7 +121,7 @@ void C_End()
                         );
             }
 
-            if (get_context()->gw && 
+            if (get_context()->gw &&
                 (NULL == fv->zipfile || get_context()->glue)) {
                     GW_SDL_Backend(fv);
                     GW_Simulink_Backend(fv);
@@ -132,7 +132,7 @@ void C_End()
                     GW_Driver_Backend(fv);
             }
 
-            /* Export to SMP2: generate glue code and Python AST*/
+            /* Export to SMP2: generate glue code and Python AST */
             if (true == get_context()->smp2) {
                 GLUE_OG_Backend(fv);
                 GLUE_RTDS_Backend(fv);
@@ -146,7 +146,7 @@ void C_End()
 
         /*
          * Perform the first part of the Vertical transformation (-glue flag):
-         * Tranform the interface view to allow a one-to-one mapping Function-Thread
+         * Various model tranformations of the interface view
          */
         if (get_context()->glue) {
             Preprocessing_Backend(get_system_ast());
