@@ -27,6 +27,12 @@
 void ModelTransformation_Backend (System *s)
 {
     (void) s;
-//   FOREACH (node, Process, s->processes, {
-//   });
+    FOREACH (fv, FV, s->functions, {
+        Interface_list *pis = NULL;
+        FOREACH (pi, Interface, fv->interfaces, {
+            if(sporadic == pi->rcm && PI == pi->direction) {
+                ADD_TO_SET(Interface, pis, pi)
+            }
+        });
+    });
 }
