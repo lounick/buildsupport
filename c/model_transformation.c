@@ -26,12 +26,14 @@
 /* External interface */
 void ModelTransformation_Backend (System *s)
 {
-    (void) s;
     FOREACH (fv, FV, s->functions, {
-        Interface_list *pis = NULL;
+        Interface_list *old_pis = NULL;  // to store the PIs to replace
+        Interface_list *new_pis = NULL;  // to store the newly created PIs
+        (void) old_pis;
+        (void) new_pis;
         FOREACH (pi, Interface, fv->interfaces, {
             if(sporadic == pi->rcm && PI == pi->direction) {
-                ADD_TO_SET(Interface, pis, pi)
+               // ADD_TO_SET(Interface, pis, pi)
             }
         });
     });

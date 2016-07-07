@@ -952,8 +952,18 @@ void add_RI_to_gui_glue(Interface * i)
     // 4. Create the macro for encoding and sending to VM
     //
     // Modified by MP 8-8-8 to reuse invoke_ri.c
-    fprintf(header_id, "#define INVOKE_RI_%s(params) %s_RI_%s(", i->name,
-        i->parent_fv->name, i->name);
+    // Modified by MP 7-7-16 to declare the prototype
+    fprintf(header_id, "void %s_RI_%s(", i->parent_fv->name, i->name);
+    bool comma = false;
+    FOREACH (param, Parameter, i->in, {
+        fprintf(header_id, "%sasn1Scc%s *", comma? ", ": "", param->type);
+        comma = true;
+    });
+    fprintf(header_id, ");\n\n"
+                       "#define INVOKE_RI_%s(params) %s_RI_%s(",
+                       i->name,
+                       i->parent_fv->name,
+                       i->name);
     tmp = i->in;
     // Add parameters
     while (NULL != tmp) {
