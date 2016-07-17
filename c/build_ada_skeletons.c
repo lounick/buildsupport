@@ -318,18 +318,25 @@ void add_RI_to_Ada_gw(Interface * i)
     );
 
     if (NULL != ada_params) {
-        fprintf(ads, "(");
-        fprintf(ads, "%s", ada_params);
-        fprintf(ads, ")");
+        fprintf(ads, "(%s)", ada_params);
     }
 
-    free(ada_params);
-    ada_params = NULL;
 
     fprintf(ads, ";\n");
 
-    fprintf(ads, "\tpragma import(C, %s, \"%s_RI_%s\");\n\n", i->name,
+    fprintf(ads, "\tpragma import(C, %s, \"%s_RI_%s\");\n", i->name,
             i->parent_fv->name, i->name);
+
+    fprintf(ads, "\tprocedure RIÜ%s", i->name);
+    if (NULL != ada_params) {
+        fprintf(ads, "(%s)", ada_params);
+    }
+    fprintf(ads, " renames %s;\n\n", i->name);
+    
+    free(ada_params);
+    ada_params = NULL;
+
+
 
 }
 
