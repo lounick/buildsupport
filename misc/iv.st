@@ -4,7 +4,7 @@ interface_view(arrsFunctNames, arrsConnections) ::= <<
 # TASTE Interface View
 # Save this output to file.dot and run "neato file.dot -Tpng -o out.png"
 
-graph interfaceview {
+digraph interfaceview {
 <arrsFunctNames: {each|    <each> [shape=box, label="<each>"];}; separator="\n">
 
 <arrsConnections; separator="\n">
@@ -12,5 +12,5 @@ graph interfaceview {
 >>
 
 connection(sFrom, sTo, arrsMessages) ::= <<
-<sFrom> -> <sTo> [label="[<arrsMessages; separator=",\n">]"];
+    <sFrom> -> <sTo> [label="[<arrsMessages; separator=",\n">]"];
 >>
