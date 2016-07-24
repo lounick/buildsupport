@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 
-import iv
+from collections import defaultdict
 import stringtemplate3
+import iv
 
 STG = None
 
@@ -20,7 +21,23 @@ tpl = new("interface_view")
 
 tpl['arrsFunctNames'] = iv.functions.keys()
 
+
+connections = []  #  type: List[str]
+for fromName, content in iv.functions.viewitems():
+    group = defaultdict(list)
+    for iName, iContent in content['interfaces'].viewitems():
+        if iContent['direction'] == iv.RI:
+            group[iContent['distant_fv']].append(iName)
+    for destName, destContent in group.viewitems():
+        tplConn = new("connection")
+        tplConn['sFrom'] = fromName
+        tplConn['sTo'] = destName
+        tplConn['arrsMessages'] = destContent
+        connections.append(str(tplConn))
+
+tpl['arrsConnections'] = connections
+
 print str(tpl).encode('latin1')
 
-    
+
 
