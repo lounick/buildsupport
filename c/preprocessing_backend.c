@@ -886,10 +886,21 @@ void Add_api(Process *node, FV_list *all_fv)
                      fv->name,
                      fv->name);
 
+    /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
+    fprintf (header, "#ifdef __unix__\n"
+                     "#include <stdbool.h>\n"
+                     "#include <stdlib.h>\n"
+                     "static bool debugCheckQ = false;\n"
+                     "#endif\n\n");
+
+
     fprintf (header, "void %s_startup();\n\n", fv->name);
     fprintf (code,   "void %s_startup()\n"
                      "{\n"
-                     "    /* TASTE API start up (nothing to do) */\n"
+                     "    /* TASTE API start up */\n"
+                     "    #ifdef __unix__\n"
+                     "        debugCheckQ = getenv(\"CHECKQ_DEBUG\");\n"
+                     "    #endif\n"
                      "}\n\n", fv->name);
 
     FOREACH(function, FV, all_fv, {
@@ -912,9 +923,18 @@ void Add_api(Process *node, FV_list *all_fv)
                     task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
                     port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
                 }
-                fprintf(code, "    if (__po_hi_gqueue_get_count(%s, %s)) *res = 1;\n",
+                fprintf(code, "    if (__po_hi_gqueue_get_count(%s, %s)) {"
+                              "        *res = 1;\n"
+                              "        #ifdef __unix__\n"
+                              "        if (debugCheckQ) {\n"
+                              "            printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
+                              "        }\n"
+                              "        #endif\n"
+                              "    }\n",
                               string_to_lower(task_id),
-                              string_to_lower(port));
+                              string_to_lower(port),
+                              pi->name,
+                              function->name);
                 free(task_id);
                 free(port);
             }
