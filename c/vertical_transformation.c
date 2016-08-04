@@ -511,8 +511,8 @@ int Init_Process_Backend()
          }
       });
    });
-  
-   /* 
+
+   /*
     * If there is at lease one protected interface in a process,
     * generate a "protected object" data in AADL, so that
     * PolyORB-HI-C will know that it needs to generate
@@ -534,12 +534,14 @@ int Init_Process_Backend()
                    "\nDATA TASTE_Protected\n"
                    "PROPERTIES\n"
                    "\tConcurrency_Control_Protocol"
-                   " => Immediate_Priority_Ceiling_Protocol;\n"
+//                   " => Immediate_Priority_Ceiling_Protocol;\n"
+                   " => Protected_Access;\n"
                    "END TASTE_Protected;\n\n"
                    "DATA IMPLEMENTATION TASTE_Protected.Object\n"
                    "PROPERTIES\n"
                    "\tConcurrency_Control_Protocol"
-                   " => Immediate_Priority_Ceiling_Protocol;\n"
+                   " => Protected_Access;\n"
+//                   " => Immediate_Priority_Ceiling_Protocol;\n"
                    "END TASTE_Protected.Object;\n\n");
        }
    }
