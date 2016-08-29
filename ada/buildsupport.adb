@@ -200,6 +200,9 @@ procedure BuildSupport is
                         when Language_CPP =>
                            Imported_Routines.C_Set_Language_To_CPP;
 
+                        when Language_VDM =>
+                           Imported_Routines.C_Set_Language_To_VDM;
+
                         when Language_SDL_OpenGEODE =>
                            Imported_Routines.C_Set_Language_To_SDL;
 

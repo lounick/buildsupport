@@ -62,6 +62,7 @@ void Set_ASync_IF();
 void Set_Sync_IF();
 void Set_Language_To_GUI();
 void Set_Language_To_CPP();
+void Set_Language_To_VDM();
 void Set_Language_To_OpenGEODE();
 void Set_Language_To_BlackBox_Device();
 void Set_Language_To_Ada();

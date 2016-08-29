@@ -150,6 +150,7 @@ package Imported_Routines is
    procedure C_Set_Language_To_QGenAda;
    procedure C_Set_Language_To_QGenC;
    procedure C_Set_Language_To_CPP;
+   procedure C_Set_Language_To_VDM;
    procedure C_Set_Language_To_OpenGEODE;
    procedure C_Set_Language_To_BlackBox_Device;
    procedure C_Set_Language_To_RTDS;
@@ -232,7 +233,8 @@ private
    pragma Import (C, C_Set_Language_To_Other, "Set_Language_To_Other");
    pragma Import (C, C_Set_Language_To_C, "Set_Language_To_C");
    pragma Import (C, C_Set_Language_To_CPP, "Set_Language_To_CPP");
-   pragma Import (C, C_Set_Language_To_OpenGEODE, "Set_Language_To_OpenGEODE");
+   pragma Import (C, C_Set_Language_To_VDM, "Set_Language_To_VDM");
+   pragma Import (C, C_Set_Language_To_OpenGEODE, "Set_Language_To_SDL");
    pragma Import (C, C_Set_Language_To_BlackBox_Device,
      "Set_Language_To_BlackBox_Device");
    pragma Import (C, C_Set_Language_To_RTDS, "Set_Language_To_RTDS");

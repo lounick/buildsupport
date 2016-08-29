@@ -162,6 +162,12 @@ void Set_Language_To_CPP()
         fv->language = cpp;
 }
 
+void Set_Language_To_VDM()
+{
+    if (NULL != fv)
+        fv->language = vdm;
+}
+
 void Set_Language_To_OpenGEODE()
 {
     if (NULL != fv)

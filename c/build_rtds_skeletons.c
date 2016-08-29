@@ -152,7 +152,7 @@ void GW_RTDS_Backend(FV *fv)
   FILE *script      = NULL;
 
   if (fv->system_ast->context->onlycv) return;
-    
+
   if (rtds == fv->language && fv->system_ast->context->gw) {
 
 #ifndef __unix__
@@ -186,8 +186,8 @@ void GW_RTDS_Backend(FV *fv)
                         }
                         build_string (&sig_decl, ";\\\n\\\n", strlen(";\\\n\\\n"));
                 }
-        
-                /* 
+
+                /*
                  * Provided interfaces can only by asynchronous and have 
                  * a single input parameter 
                  */
@@ -200,7 +200,7 @@ void GW_RTDS_Backend(FV *fv)
                  * Synchronous interfaces can have several parameters 
                  */
                 else if (RI == i->direction) {
-                        
+
                         /*
                          * Add SDL SIGNAL for Asynchronous RI
                          */
@@ -277,14 +277,14 @@ void GW_RTDS_Backend(FV *fv)
                 fv->name,
                 NULL != outputline? outputline: "");
 #else
-        /* 
+        /*
          * (3) Invoke sed to replace strings in the template files 
          */
         script_name = make_string ("./tmp_rtds_script_%s.sh", fv->name);
         script  = fopen (script_name, "w");
-        
+
         assert (NULL != script);
-        
+
         path    = fv->system_ast->context->output;
 
         /* Project template file: */
@@ -400,14 +400,14 @@ void GW_RTDS_Backend(FV *fv)
             exit (-1);
         }
 
-        /* 
-         * Delete the sed script 
+        /*
+         * Delete the sed script
          */
         if (!get_context()->test) {
             unlink (script_name);
         }
         free (script_name);
         script_name = NULL;
-#endif  
+#endif
   }
 }

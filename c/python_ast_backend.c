@@ -22,7 +22,7 @@ void Generate_Python_AST(System *s, char *dest_directory)
 
     fprintf (py,
         "#! /usr/bin/python\n\n"
-        "Ada, C, GUI, SIMULINK, VHDL, OG, RTDS, SYSTEM_C, SCADE6 = range(9)\n"
+        "Ada, C, GUI, SIMULINK, VHDL, OG, RTDS, SYSTEM_C, SCADE6, VDM, CPP = range(11)\n"
         "thread, passive, unknown = range(3)\n"
         "PI, RI = range(2)\n"
         "synch, asynch = range(2)\n"

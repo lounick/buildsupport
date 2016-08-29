@@ -72,6 +72,7 @@ typedef enum {
     vhdl,
     system_c,
     blackbox_device,
+    vdm,
     other
 } Language;
 
