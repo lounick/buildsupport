@@ -93,12 +93,18 @@ void add_pi_to_vdm_gw(Interface * i)
 
     char *sep = " * ";
     bool comma = false;
+    char *params = " (";
+    char *sep2 = ", ";
 
     FOREACH (p, Parameter, i->in, {
         char *sort = make_string("%s%s`%s",
                                  comma? sep: "",
                                  p->asn1_module,
                                  p->type);
+        params = make_string("%s%s%s",
+                             params,
+                             comma? sep2: "",
+                             p->name);
         fprintf(interface, "%s", sort);
         if(NULL != user_code) {
             fprintf(user_code, "%s",sort);
@@ -106,6 +112,8 @@ void add_pi_to_vdm_gw(Interface * i)
         free(sort);
         comma = true;
     });
+
+    params = make_string("%s)", params);
 
     if (NULL != i->out) {
         char *out = make_string(" ==> %s`%s",
@@ -125,12 +133,16 @@ void add_pi_to_vdm_gw(Interface * i)
             NULL != i->in? " (-)" : "");
 
     if (NULL != user_code)
+
         fprintf(user_code,
                 "\n"
-                "%s == -- Write your code here\n\n",
+                "%s%s == -- Write your code here\n\n",
+                NULL != i->in? params: "",
                 i->name);
 
     free(signature);
+    free(sep2);
+    free(params);
     free(sep);
 }
 
