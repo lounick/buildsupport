@@ -2,8 +2,8 @@
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* 
-	Backends.h
-	External declaration of the backend functions
+        Backends.h
+        External declaration of the backend functions
 */
 
 #include "my_types.h"
@@ -14,6 +14,7 @@
 extern void GW_SDL_Backend(FV *);
 extern void GW_Simulink_Backend(FV *);
 extern void GW_C_Backend(FV *);
+extern void GW_VDM_Backend(FV *);
 extern void GW_Ada_Backend(FV *);
 extern void GW_SCADE_Backend(FV *);
 extern void GW_RTDS_Backend(FV *);

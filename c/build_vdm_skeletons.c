@@ -60,7 +60,7 @@ void Init_VDM_GW_Backend(FV *fv)
     filename = make_string("%s_interface.vdmpp", fv->name);
     create_file(path, filename, &interface);
     free(filename);
-    filename = make_string("%s_code.vdmpp", fv->name);
+    filename = make_string("%s.vdmpp", fv->name);
 
     if (!file_exists(path, filename)) {
         create_file(path, filename, &user_code);
@@ -137,13 +137,8 @@ void add_pi_to_vdm_gw(Interface * i)
         fprintf(user_code,
                 "\n"
                 "%s%s == -- Write your code here\n\n",
-                NULL != i->in? params: "",
-                i->name);
-
-    free(signature);
-    free(sep2);
-    free(params);
-    free(sep);
+                i->name,
+                NULL != i->in? params: "");
 }
 
 /* Declaration of the RI */
@@ -158,9 +153,11 @@ void add_ri_to_vdm_gw(Interface * i)
 void End_VDM_GW_Backend(FV *fv)
 {
     fprintf(interface, "end %s_Interface\n", fv->name);
-    fprintf(user_code, "end %s\n", fv->name);
     close_file(&interface);
-    close_file(&user_code);
+    if (NULL != user_code) {
+        fprintf(user_code, "end %s\n", fv->name);
+        close_file(&user_code);
+    }
 }
 
 /* Function to process one interface of the FV */

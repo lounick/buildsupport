@@ -126,6 +126,7 @@ void C_End()
                     GW_SDL_Backend(fv);
                     GW_Simulink_Backend(fv);
                     GW_C_Backend(fv);
+                    GW_VDM_Backend(fv);
                     GW_Ada_Backend(fv);
                     GW_SCADE_Backend(fv);
                     GW_RTDS_Backend(fv);

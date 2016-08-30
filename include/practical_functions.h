@@ -19,7 +19,7 @@
 /* Return a string representing the selected encoding rules for a Parameter */
 #define BINARY_ENCODING(p) (native==p->encoding)?"NATIVE":(uper==p->encoding)?"UPER":(acn==p->encoding)?"ACN":"#ERROR#"
 
-#define LANGUAGE(fv) ada==fv->language?"Ada": c==fv->language?"C": sdl==fv->language?"OG": rtds==fv->language?"RTDS": scade==fv->language?"SCADE6":simulink==fv->language?"SIMULINK": blackbox_device==fv->language? "C": rhapsody==fv->language? "C": vhdl==fv->language?"VHDL": system_c==fv->language?"SYSTEM_C":gui==fv->language?"GUI": qgenc==fv->language?"QGenC": qgenada==fv->language?"QGenAda": cpp==fv->language?"CPP": vdm==fv->language?"VDM": "UNSUPPORTED_LANGUAGE!"
+#define LANGUAGE(fv) ada==fv->language?"Ada": c==fv->language?"C": sdl==fv->language?"OG": rtds==fv->language?"RTDS": scade==fv->language?"SCADE6":simulink==fv->language?"SIMULINK": blackbox_device==fv->language? "C": rhapsody==fv->language? "C": vhdl==fv->language?"VHDL": system_c==fv->language?"SYSTEM_C":gui==fv->language?"GUI": qgenc==fv->language?"QGenC": qgenada==fv->language?"QGenAda": cpp==fv->language?"CPP": vdm==fv->language?"Vdm": "UNSUPPORTED_LANGUAGE!"
 
 #define RCM_KIND(IF) (protected==IF->rcm?"protected":unprotected==IF->rcm?"unprotected":sporadic==IF->rcm?"sporadic":cyclic==IF->rcm?"cyclic":variator==IF->rcm?"variator":"unknown")
 

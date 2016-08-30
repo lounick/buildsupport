@@ -120,6 +120,19 @@ void Create_script()
         }
     });
 
+    /* VDM-Specific: call code generator and B mappers */
+    FOREACH (fv, FV, get_system_ast()->functions, {
+        if (vdm == fv->language) {
+            fprintf(script,
+                    "# Generate code for VDM function %s\n"
+                    "cd \"$SKELS\"/%s && "
+                    "vdm2c %s.vdmpp %s_Interface.vdmpp out.vdm"
+                    "&& cd $OLDPWD\n\n",
+                    fv->name, fv->name, fv->name, fv->name);
+        }
+        /* TODO call B mappers or add --subVdm in orchestrator */
+    });
+
     /* Remove old zip files and create fresh new ones from user code */
     FOREACH (fv, FV, get_system_ast()->functions, {
         //if (sdl != fv->language  PUT BACK WHEN OPENGEODE FULLY SUPPORTED
@@ -186,13 +199,14 @@ void Create_script()
                 case rtds: fprintf (script, "--subRTDS ");
                       break;
                 case c:
+                case vdm:
                 case blackbox_device:
                     fprintf (script, "--subC ");
                     break;
                 case cpp:
                     fprintf (script, "--subCPP ");
                     break;
-                case sdl:    // REMOVE WHEN OPENGEODE FULLY SUPPORTED
+                case sdl:
                 case ada: fprintf (script, "--subAda ");
                       break;
                 case vhdl: fprintf (script, "--subVHDL ");
