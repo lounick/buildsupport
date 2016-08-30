@@ -126,12 +126,15 @@ void add_pi_to_vdm_gw(Interface * i)
         free(out);
     }
     else {
-        fprintf(interface, " ==> ()\n");
+        fprintf(interface, " ==> ()");
+        if(NULL != user_code) {
+            fprintf(user_code, " ==> ()");
+        }
     }
 
     fprintf(interface,
             "\n"
-            "%s%s == is subclass responsibility\n\n",
+            "    %s%s == is subclass responsibility\n\n",
             i->name,
             NULL != i->in? " (-)" : "");
 
