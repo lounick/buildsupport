@@ -81,7 +81,7 @@ void add_pi_to_vdm_gw(Interface * i)
     if (NULL == interface)
         return;
 
-    char *signature = make_string("public PI_%s:",
+    char *signature = make_string("    public PI_%s: ",
                                   i->name);
 
 
@@ -125,6 +125,9 @@ void add_pi_to_vdm_gw(Interface * i)
         }
         free(out);
     }
+    else {
+        fprintf(interface, " ==> ()\n");
+    }
 
     fprintf(interface,
             "\n"
@@ -136,7 +139,7 @@ void add_pi_to_vdm_gw(Interface * i)
 
         fprintf(user_code,
                 "\n"
-                "%s%s == -- Write your code here\n\n",
+                "    %s%s == -- Write your code here\n\n",
                 i->name,
                 NULL != i->in? params: "");
 }
