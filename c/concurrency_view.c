@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2016 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /*
@@ -20,7 +20,7 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>		// Works with GCC under Windows (not tested with cl.exe)
+#include <sys/stat.h>
 #include "my_types.h"
 
 #include "practical_functions.h"
@@ -29,11 +29,12 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
             (simulink==i->parent_fv->language)?"Simulink":\
             (qgenc==i->parent_fv->language)?"QGenC":\
             (ada==i->parent_fv->language)?"Ada":\
+            (vdm==i->parent_fv->language)?"Vdm":\
             (qgenada==i->parent_fv->language)?"QGenAda":\
             (rtds==i->parent_fv->language)?"RTDS":\
             (scade==i->parent_fv->language)?"SCADE6":\
-	    (vhdl==i->parent_fv->language)?"VHDL":\
-	    (system_c==i->parent_fv->language)?"SYSTEM_C":\
+            (vhdl==i->parent_fv->language)?"VHDL":\
+            (system_c==i->parent_fv->language)?"SYSTEM_C":\
             (gui==i->parent_fv->language && PI==i->direction)?"GUI_PI":\
             (gui==i->parent_fv->language && RI==i->direction)?"GUI_RI":\
             (rhapsody==i->parent_fv->language)? "Rhapsody":"C"
@@ -45,77 +46,60 @@ void Init_MiniCV_Backend(FV * fv)
 {
     char *path = NULL;
     if (NULL != fv->system_ast->context->output)
-	build_string(&path, fv->system_ast->context->output,
-		     strlen(fv->system_ast->context->output));
+        build_string(&path, fv->system_ast->context->output,
+                     strlen(fv->system_ast->context->output));
     build_string(&path, fv->name, strlen(fv->name));
 
     create_file(path, "mini_cv.aadl", &cv);
     free(path);
 
     if (NULL != cv) {
-	fprintf(cv,
-		"-- Automatically Generated - For use with AADL2GlueC only - Do NOT modify! --\n\n");
+        fprintf(cv,
+                "-- Automatically Generated - For use with AADL2GlueC only - Do NOT modify! --\n\n");
     }
 }
 
 /* Add a new AADL SUBPROGRAM to the Concurrency view*/
 void Add_Subprogram(Interface * i)
 {
-    Parameter_list *tmp;
-
     if (NULL == cv)
-	return;
+        return;
 
     fprintf(cv, "SUBPROGRAM %s\n", i->name);
 
     /* If the PI has parameters, add a FEATURE section */
     if (NULL != i->in || NULL != i->out) {
-	fprintf(cv, "FEATURES\n");
+        fprintf(cv, "FEATURES\n");
 
-	tmp = i->in;
+        FOREACH(param, Parameter, i->in, {
+            fprintf(cv,
+                    "\t%s:%s PARAMETER DataView::%s {encoding=>%s;};\n",
+                    param->name,
+                    (PI == i->direction) ? "IN" : "OUT",
+                    param->type,
+                    BINARY_ENCODING(param));
+        });
 
-	while (NULL != tmp) {
-	    fprintf(cv,
-		    "\t%s:%s PARAMETER DataView::%s {encoding=>%s;};\n",
-		    tmp->value->name, (PI == i->direction) ? "IN" : "OUT",
-		    (tmp->value->type),
-		    BINARY_ENCODING(tmp->value));
-/*		    (native == tmp->value->encoding) ? "Native" : (uper ==
-								   tmp->
-								   value->
-								   encoding)
-		    ? "UPER" : (NULL != i->out) ? "Native" : "UPER"); */
-	    tmp = tmp->next;
-	}
 
-	tmp = i->out;
-
-	while (NULL != tmp) {
-	    fprintf(cv,
-		    "\t%s:%s PARAMETER DataView::%s {encoding=>%s;};\n",
-		    tmp->value->name, (PI == i->direction) ? "OUT" : "IN",
-		    (tmp->value->type),
-		    BINARY_ENCODING(tmp->value));
-/*		    (native == tmp->value->encoding) ? "Native" : (uper ==
-								   tmp->
-								   value->
-								   encoding)
-		    ? "UPER" : "Native");*/
-	    tmp = tmp->next;
-	}
+        FOREACH(param, Parameter, i->out, {
+            fprintf(cv,
+                    "\t%s:%s PARAMETER DataView::%s {encoding=>%s;};\n",
+                    param->name,
+                    (PI == i->direction) ? "OUT" : "IN",
+                    param->type,
+                    BINARY_ENCODING(param));
+        });
 
     }
 
     fprintf(cv, "END %s;\n\n", i->name);
 
     fprintf(cv, "SUBPROGRAM IMPLEMENTATION %s.%s\nPROPERTIES\n",
-	    i->name, ENCODING(i)
-	);
+            i->name, ENCODING(i));
 
     fprintf(cv, "\tFV_Name => \"%s\";\n", i->parent_fv->name);
     fprintf(cv, "\tSource_Language => %s;\nEND %s.%s;\n\n",
-	    ENCODING(i), i->name, ENCODING(i)
-	);
+            ENCODING(i), i->name, ENCODING(i));
 }
 
 /* Close the Concurrency view */
@@ -136,7 +120,7 @@ void GLUE_MiniCV_Interface(Interface * i)
 void GLUE_MiniCV_Backend(FV * fv)
 {
     if (fv->system_ast->context->onlycv)
-	return;
+        return;
 
     Init_MiniCV_Backend(fv);
 
