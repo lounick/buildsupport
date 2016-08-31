@@ -205,7 +205,7 @@ void add_pi_to_vdm_gw(Interface * i)
 
     if (i->out) {
         fprintf(c_bridge,
-                "\n    TVP_VDM vdm_OUT_%s;\n"
+                "\n    TVP vdm_OUT_%s;\n"
                 "    //vdm_OUT_%s = ",
                 i->out->value->name,
                 i->out->value->name);
