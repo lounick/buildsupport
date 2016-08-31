@@ -190,7 +190,7 @@ void add_pi_to_vdm_gw(Interface * i)
 
     /* Fill in the C bridge */
     fprintf(c_bridge,
-            ");\n"
+            ")\n"
             "{\n");
 
     FOREACH(param, Parameter, i->in, {
