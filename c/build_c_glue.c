@@ -702,7 +702,7 @@ void GLUE_C_Backend(FV * fv)
     }
 
 
-    if (c == fv->language || gui == fv->language || ada == fv->language
+    if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
         || qgenada == fv->language || qgenc == fv->language
         || rtds == fv->language || cpp == fv->language || opengeode == fv->language) {
         Init_C_Glue_Backend(fv);
