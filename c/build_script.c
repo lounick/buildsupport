@@ -125,7 +125,7 @@ void Create_script()
         if (vdm == fv->language) {
             fprintf(script,
                     "# Generate code for VDM function %s\n"
-                    "cd \"$SKELS\"/%s && "
+                    "# cd \"$SKELS\"/%s && "
                     "vdm2c %s.vdmpp %s_Interface.vdmpp out.vdm"
                     "&& cd $OLDPWD\n\n",
                     fv->name, fv->name, fv->name, fv->name);

@@ -16,16 +16,34 @@
 #include "my_types.h"
 #include "practical_functions.h"
 
-static FILE *user_code = NULL, *interface = NULL;
+static FILE *user_code = NULL, *interface = NULL, *c_bridge;
 
 
 /* Adds header to user_code.h and (if new) user_code.c */
 void vdm_gw_preamble(FV * fv)
 {
-    assert (NULL != interface);
+    assert (NULL != interface && NULL != c_bridge);
 
     fprintf(interface,
           "-- This file was generated automatically: DO NOT MODIFY IT ! \n\n");
+
+    /* C bridge between TASTE and VDM-generated code */
+    fprintf(c_bridge, "%s", do_not_modify_warning);
+
+    /* Check if any interface needs ASN.1 types */
+    int hasparam = 0;
+    FOREACH(i, Interface, fv->interfaces, {
+        CheckForAsn1Params(i, &hasparam);
+    });
+    if(hasparam) {
+        fprintf(c_bridge, "#include \"Vdm_ASN1_Types.h\"\n\n");
+    }
+
+    fprintf(c_bridge, "void %s_startup()\n"
+                      "{\n"
+                      " // TODO: Call VDM Startup function\n"
+                      "}\n\n",
+                      fv->name);
 
     fprintf(interface,
             "class %s_Interface\n"
@@ -64,8 +82,13 @@ void Init_VDM_GW_Backend(FV *fv)
 
     if (!file_exists(path, filename)) {
         create_file(path, filename, &user_code);
-        free(filename);
     }
+
+    free(filename);
+    filename = make_string("%s.c", fv->name);
+    create_file(path, filename, &c_bridge);
+
+    free(filename);
 
     free(path);
     vdm_gw_preamble(fv);
@@ -84,12 +107,18 @@ void add_pi_to_vdm_gw(Interface * i)
     char *signature = make_string("    public PI_%s: ",
                                   i->name);
 
-
     fprintf(interface, "%s", signature);
 
     if (NULL != user_code) {
         fprintf(user_code, "%s", signature);
     }
+
+    char *sig_c = make_string("void %s_PI_%s(",
+                              i->parent_fv->name,
+                              i->name);
+    size_t sig_c_len = strlen(sig_c);
+    char *sep_c = make_string(",\n%*s", sig_c_len, "");
+    fprintf(c_bridge, "%s", sig_c);
 
     char *sep = " * ";
     bool comma = false;
@@ -110,6 +139,13 @@ void add_pi_to_vdm_gw(Interface * i)
             fprintf(user_code, "%s",sort);
         }
         free(sort);
+
+        fprintf(c_bridge,
+                "%sconst asn1Scc%s *IN_%s",
+                comma? sep_c: "",
+                p->type,
+                p->name);
+
         comma = true;
     });
 
@@ -124,6 +160,12 @@ void add_pi_to_vdm_gw(Interface * i)
             fprintf(user_code, "%s", out);
         }
         free(out);
+
+        fprintf(c_bridge,
+                "%sasn1Scc%s *OUT_%s",
+                comma? sep_c: "",
+                i->out->value->type,
+                i->out->value->name);
     }
     else {
         fprintf(interface, " ==> ()");
@@ -145,6 +187,14 @@ void add_pi_to_vdm_gw(Interface * i)
                 "    %s%s == -- Write your code here\n\n",
                 i->name,
                 NULL != i->in? params: "");
+
+    /* Fill in the C bridge */
+    fprintf(c_bridge,
+            ");\n"
+            "{\n"
+            "    // TODO: Call Tommaso's functions and VDM user code\n"
+            "}\n\n");
+
 }
 
 /* Declaration of the RI */
@@ -164,6 +214,7 @@ void End_VDM_GW_Backend(FV *fv)
         fprintf(user_code, "end %s\n", fv->name);
         close_file(&user_code);
     }
+    close_file(&c_bridge);
 }
 
 /* Function to process one interface of the FV */
