@@ -589,8 +589,7 @@ procedure BuildSupport is
                                           Get_Name_String
                                             (Get_Type_Source_Name (Asntype)),
                                           Len_Type,
-                                          To_Lower
-                                             (Get_Name_String (ASN1_Module)),
+                                          Get_Name_String (ASN1_Module),
                                           Get_Name_String
                                              (ASN1_Module)'Length,
                                           Get_Name_String (ASN1_Filename),
@@ -605,8 +604,7 @@ procedure BuildSupport is
                                           Get_Name_String
                                             (Get_Type_Source_Name (Asntype)),
                                           Len_Type,
-                                          To_Lower
-                                             (Get_Name_String (ASN1_Module)),
+                                          Get_Name_String (ASN1_Module),
                                           Get_Name_String
                                              (ASN1_Module)'Length,
                                           Get_Name_String (ASN1_Filename),

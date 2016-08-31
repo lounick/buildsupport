@@ -49,7 +49,7 @@ void vdm_gw_preamble(FV * fv)
             "class %s_Interface\n"
             "operations\n"
             "    public Startup: () ==> ()\n"
-            "    Startup (-) is subclass responsibility;\n\n",
+            "    Startup () is subclass responsibility;\n\n",
             fv->name);
 
 
@@ -62,7 +62,7 @@ void vdm_gw_preamble(FV * fv)
             "is subclass of %s_Interface\n"
             "operations\n"
             "    public Startup: () ==> ()\n"
-            "    -- user: fill your code\n\n",
+            "    Startup () == skip; -- fill your code\n\n",
             fv->name,
             fv->name);
     }
@@ -176,9 +176,9 @@ void add_pi_to_vdm_gw(Interface * i)
 
     fprintf(interface,
             "\n"
-            "    %s%s == is subclass responsibility\n\n",
+            "    %s%s == is subclass responsibility;\n\n",
             i->name,
-            NULL != i->in? " (-)" : "");
+            NULL != i->in? " (-)" : "()");
 
     if (NULL != user_code)
 
