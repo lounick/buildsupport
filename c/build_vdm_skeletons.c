@@ -49,7 +49,7 @@ void vdm_gw_preamble(FV * fv)
             "class %s_Interface\n"
             "operations\n"
             "    public Startup: () ==> ()\n"
-            "    Startup (-) is subclass responsibility\n\n",
+            "    Startup (-) is subclass responsibility;\n\n",
             fv->name);
 
 
@@ -191,8 +191,53 @@ void add_pi_to_vdm_gw(Interface * i)
     /* Fill in the C bridge */
     fprintf(c_bridge,
             ");\n"
-            "{\n"
-            "    // TODO: Call Tommaso's functions and VDM user code\n"
+            "{\n");
+
+    FOREACH(param, Parameter, i->in, {
+        fprintf(c_bridge,
+                "    TVP *ptrVDM_%s = NULL;\n"
+                "    Convert_%s_from_ASN1SCC_to_VDM(ptrVDM_%s, IN_%s);\n",
+                param->name,
+                param->type,
+                param->name,
+                param->name);
+    });
+
+    if (i->out) {
+        fprintf(c_bridge,
+                "\n    TVP_VDM vdm_OUT_%s;\n"
+                "    //vdm_OUT_%s = ",
+                i->out->value->name,
+                i->out->value->name);
+    }
+    else {
+        fprintf(c_bridge,
+                "\n    //");  // remove the comment when name is known
+    }
+
+    fprintf(c_bridge,
+            "Call_VDM_%s(",
+            i->name);
+
+    comma = false;
+    FOREACH(param, Parameter, i->in, {
+        fprintf(c_bridge,
+                "%sptrVDM_%s",
+                comma? sep2: "",
+                param->name);
+        comma = true;
+    });
+    fprintf(c_bridge, ");\n");
+
+    if (i->out) {
+        fprintf(c_bridge,
+                "\n    Convert_%s_from_VDM_to_ASN1SCC(OUT_%s, vdm_OUT_%s);\n",
+                i->out->value->type,
+                i->out->value->name,
+                i->out->value->name);
+    }
+
+    fprintf(c_bridge,
             "}\n\n");
 
 }
