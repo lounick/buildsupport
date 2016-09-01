@@ -36,13 +36,30 @@ void vdm_gw_preamble(FV * fv)
         CheckForAsn1Params(i, &hasparam);
     });
     if(hasparam) {
-        fprintf(c_bridge, "#include \"Vdm_ASN1_Types.h\"\n\n");
+        fprintf(c_bridge, "#include \"Vdm_ASN1_Types.h\"\n");
     }
 
-    fprintf(c_bridge, "void %s_startup()\n"
+    /* Initialize the VDM class and call the startup function */
+    fprintf(c_bridge, "#include \"%s.h\"\n\n"
+                      "static TVP %s;\n\n"
+                      "void %s_startup()\n"
                       "{\n"
-                      " // TODO: Call VDM Startup function\n"
+                      "    //%s_const_init();\n"
+                      "    //%s_static_init();\n"
+                      "    %s = _Z%d%sEV(NULL);\n"
+                      "    CALL_FUNC(%s, %s, %s, CLASS_%s__Z7StartupEV);\n"
                       "}\n\n",
+                      fv->name,
+                      fv->name,
+                      fv->name,
+                      fv->name,
+                      fv->name,
+                      fv->name,
+                      strlen(fv->name),
+                      fv->name,
+                      fv->name,
+                      fv->name,
+                      fv->name,
                       fv->name);
 
     fprintf(interface,
@@ -85,7 +102,7 @@ void Init_VDM_GW_Backend(FV *fv)
     }
 
     free(filename);
-    filename = make_string("%s.c", fv->name);
+    filename = make_string("%s_bridge.c", fv->name);
     create_file(path, filename, &c_bridge);
 
     free(filename);
@@ -99,7 +116,7 @@ void Init_VDM_GW_Backend(FV *fv)
  * Write in user_code.h the declaration of the user functions
  * and if user_code.c is new, copy these declarations there too.
  */
-void add_pi_to_vdm_gw(Interface * i)
+void add_pi_to_vdm_gw(Interface * i, int idx)
 {
     if (NULL == interface)
         return;
@@ -195,8 +212,8 @@ void add_pi_to_vdm_gw(Interface * i)
 
     FOREACH(param, Parameter, i->in, {
         fprintf(c_bridge,
-                "    TVP *ptrVDM_%s = NULL;\n"
-                "    Convert_%s_from_ASN1SCC_to_VDM(ptrVDM_%s, IN_%s);\n",
+                "    TVP ptr_%s = NULL;\n"
+                "    Convert_%s_from_ASN1SCC_to_VDM(ptr_%s, IN_%s);\n",
                 param->name,
                 param->type,
                 param->name,
@@ -206,26 +223,26 @@ void add_pi_to_vdm_gw(Interface * i)
     if (i->out) {
         fprintf(c_bridge,
                 "\n    TVP vdm_OUT_%s;\n"
-                "    //vdm_OUT_%s = ",
+                "    vdm_OUT_%s = ",
                 i->out->value->name,
                 i->out->value->name);
     }
     else {
         fprintf(c_bridge,
-                "\n    //");  // remove the comment when name is known
+                "\n    ");
     }
 
     fprintf(c_bridge,
-            "Call_VDM_%s(",
-            i->name);
+            "CALL_FUNC(%s, %s, %s, %d",
+            i->parent_fv->name,
+            i->parent_fv->name,
+            i->parent_fv->name,
+            idx);
 
-    comma = false;
     FOREACH(param, Parameter, i->in, {
         fprintf(c_bridge,
-                "%sptrVDM_%s",
-                comma? sep2: "",
+                ", ptr_%s",
                 param->name);
-        comma = true;
     });
     fprintf(c_bridge, ");\n");
 
@@ -263,11 +280,11 @@ void End_VDM_GW_Backend(FV *fv)
 }
 
 /* Function to process one interface of the FV */
-void GW_VDM_Interface(Interface * i)
+void GW_VDM_Interface(Interface * i, int idx)
 {
     switch (i->direction) {
         case PI:
-            add_pi_to_vdm_gw(i);
+            add_pi_to_vdm_gw(i, idx);
             break;
 
         case RI:
@@ -297,12 +314,16 @@ void GW_VDM_Interface(Interface * i)
 /* External interface (the one and unique) */
 void GW_VDM_Backend(FV * fv)
 {
+    int count = 1;
     if (fv->system_ast->context->onlycv)
         return;
     if (vdm == fv->language) {
         Init_VDM_GW_Backend(fv);
         FOREACH(i, Interface, fv->interfaces, {
-            GW_VDM_Interface(i);
+            GW_VDM_Interface(i, count);
+            if (PI == i->direction) {
+                count ++;
+            }
         });
         End_VDM_GW_Backend(fv);
     }
