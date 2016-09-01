@@ -213,7 +213,7 @@ void add_pi_to_vdm_gw(Interface * i, int idx)
     FOREACH(param, Parameter, i->in, {
         fprintf(c_bridge,
                 "    TVP ptr_%s = NULL;\n"
-                "    Convert_%s_from_ASN1SCC_to_VDM(ptr_%s, IN_%s);\n",
+                "    Convert_%s_from_ASN1SCC_to_VDM(&ptr_%s, IN_%s);\n",
                 param->name,
                 param->type,
                 param->name,
@@ -248,7 +248,7 @@ void add_pi_to_vdm_gw(Interface * i, int idx)
 
     if (i->out) {
         fprintf(c_bridge,
-                "\n    Convert_%s_from_VDM_to_ASN1SCC(OUT_%s, vdm_OUT_%s);\n",
+                "\n    Convert_%s_from_VDM_to_ASN1SCC(OUT_%s, &vdm_OUT_%s);\n",
                 i->out->value->type,
                 i->out->value->name,
                 i->out->value->name);
