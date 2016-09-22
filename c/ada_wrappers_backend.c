@@ -542,7 +542,7 @@ void add_RI_to_ada_wrappers(Interface * i)
                     fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.uint16 (IN_%s_size);\n",     // old V1
                         i->name, tmp->value->name);
                     else
-                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_16 (IN_%s_size);\n",        // AADL V2, should work with V1 but not supported by Ocarina yet also, otherwise put back previous line for V1
+                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_32 (IN_%s_size);\n",        // AADL V2, should work with V1 but not supported by Ocarina yet also, otherwise put back previous line for V1
                         i->name, tmp->value->name);
                     tmp = tmp->next;
                 }
