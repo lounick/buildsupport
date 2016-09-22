@@ -52,7 +52,13 @@ void Create_script()
                      "# 4) You may need to change the runtime (add -p flag to select PolyORB-HI-C)\n"
                      "# etc.\n\n"
                      "# Note: TASTE will not overwrite your changes - if you need to update some parts\n"
-                     "#       you will have to merge the changes with the newly-created file.\n\n");
+                     "#       you will have to merge the changes with the newly-created file.\n\n"
+                     "if [ -f user_init_pre.sh ]\n"
+                     "then\n"
+                     "    echo [INFO] Executing user-defined init script\n"
+                     "    source user_init_pre.sh\n"
+                     "fi\n\n");
+
 
     /* The first step is to invoke QGen to generate code from user model */
     FOREACH (fv, FV, get_system_ast()->functions, {
@@ -162,11 +168,16 @@ void Create_script()
                      "    OUTPUTDIR=binary.ada\n"
                      "else\n"
                      "    OUTPUTDIR=binary\n"
-                     "fi\n"
+                     "fi\n\n"
                      );
 
-    fprintf (script, "assert-builder-ocarina.py \\\n");
-    fprintf (script, "\t--fast \\\n"
+    fprintf (script, "if [ -f user_init_post.sh ]\n"
+                     "then\n"
+                     "    echo [INFO] Executing user-defined init script\n"
+                     "    source user_init_post.sh\n"
+                     "fi\n\n"
+                     "assert-builder-ocarina.py \\\n"
+                     "\t--fast \\\n"
                      "\t--debug \\\n");
 
     if (get_context()->polyorb_hi_c)
