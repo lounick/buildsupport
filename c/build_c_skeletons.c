@@ -211,7 +211,7 @@ void add_RI_to_C_gw(Interface * i)
     });
 
     FOREACH (p, Parameter, i->out, {
-        fprintf(user_code_h,"%sconst asn1Scc%s *",
+        fprintf(user_code_h,"%sasn1Scc%s *",
                             comma? sep: "",
                             p->type);
         comma = true;

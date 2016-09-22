@@ -1193,7 +1193,7 @@ void List_C_Types_And_Params_With_Pointers(Parameter * p, FILE ** file)
 
     fprintf(*file, "%s%sasn1Scc%s *%s_%s",
             comma ? ", " : "",
-            (param_in == p->param_direction) ? "" : "",
+            (param_in == p->param_direction) ? "const " : "",
             p->type,
             (param_in == p->param_direction) ? "IN" : "OUT", p->name);
 }
