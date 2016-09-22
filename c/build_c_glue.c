@@ -123,7 +123,7 @@ void c_preamble(FV * fv)
         FOREACH(i, Interface, fv->interfaces, {
                 if (RI == i->direction && synch == i->synchronism) {
                     fprintf(vm_if,
-                        "        void init_%s();"
+                        "        extern void init_%s();\n"
                         "        init_%s();\n",
                         i->distant_fv, 
                         i->distant_fv);}
