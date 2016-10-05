@@ -239,8 +239,7 @@ void create_switch_structure(char **pgenerated_switch_structure,
 
     build_string(pgenerated_switch_structure,
              "_data_receptacle, message_data_received, sizeof(T_",
-             strlen
-             ("_data_receptacle, message_data_received, sizeof(T_"));
+             strlen("_data_receptacle, message_data_received, sizeof(T_"));
 
     build_string(pgenerated_switch_structure,
              PI_name, strlen(PI_name));
@@ -364,29 +363,48 @@ void create_single_queue_initialization_function(char *NODE_NAME,
 //
 //CCY 28/08/08 : (DOCUMENTATION) Document this function
 //
-void create_queues_initialization_function(char *NODE_NAME)
+void create_queues_initialization_function(FV *fv)
 {
     //
     //Create the initialisation functions to be called at startup
     //
-    fprintf(code_id, "void %s_startup()\n", NODE_NAME);
-    fprintf(code_id, "{\n");
-    fprintf(code_id, "   int res_RI = 0;\n");
-    fprintf(code_id, "   int res_PI = 0;\n\n");
+    fprintf(code_id, "void %s_startup(void)\n"
+                     "{\n"
+                     "   int res_RI = 0;\n"
+                     "   int res_PI = 0;\n"
+                     "   int msgsize_max = 8192;\n"
+                     "   FILE *f = fopen(\"/proc/sys/fs/mqueue/msgsize_max\", \"r\");\n"
+                     "   fscanf(f, \"%%d\", &msgsize_max);\n\n",
+                     fv->name);
+
+    FOREACH (i, Interface, fv->interfaces, {
+        if (strcmp(i->name, cyclic_name)) {
+            fprintf(code_id,
+                    "    if (sizeof(T_%s_message) > msgsize_max) {\n"
+                    "        printf(\"[ERROR] The GUI is passing a message "
+                    "(%s) which parameter size (%%d) exceeds your system limit"
+                    " (%%d).\\nYou can extend this limit by running: \\n "
+                    "   echo NUMBER | sudo tee /proc/sys/fs/mqueue/msgsize_max"
+                    "  # ...with NUMBER > %%d\\n"
+                    "You can also make it permanent (check TASTE wiki)\\n\\n\","
+                    " sizeof(T_%s_message), msgsize_max, sizeof(T_%s_message));\n"
+                    "        exit(1);\n"
+                    "    }\n\n",
+                    i->name, i->name, i->name, i->name);
+        }
+    });
 
     //Create the RI queue initialization function, if there are some RI to be stored
     if (RI_LIST != NULL) {
-    create_single_queue_initialization_function(NODE_NAME, RI,
+        create_single_queue_initialization_function(fv->name, RI,
                             RI_CURRENT_MAX_NUMBER_OF_PARAMS_IN_MESSAGE);
     }
     //create the PI queue initialization function, if there are some PI to be stored
     if (PI_LIST != NULL) {
-    create_single_queue_initialization_function(NODE_NAME, PI,
-                            PI_CURRENT_MAX_NUMBER_OF_PARAMS_IN_MESSAGE);
+        create_single_queue_initialization_function(fv->name, PI,
+                                PI_CURRENT_MAX_NUMBER_OF_PARAMS_IN_MESSAGE);
     }
-    //End procedure
-    fprintf(code_id, "   return;\n");
-    fprintf(code_id, "}\n\n\n");
+    fprintf(code_id, "}\n\n");
 }
 
 
@@ -457,14 +475,14 @@ int create_max_element_queues_size_compute_function(char *NODE_NAME)
 //
 //CCY 28/08/08 : (DOCUMENTATION) Document this function
 //
-void create_gui_fv_queues(char *NODE_NAME)
+void create_gui_fv_queues(FV *fv)
 {
     //Create the functions allowing to determine the biggest message size for the
     //two queues (PI and RI)
-    create_max_element_queues_size_compute_function(NODE_NAME);
+    create_max_element_queues_size_compute_function(fv->name);
 
     //Create the queues initialization, function
-    create_queues_initialization_function(NODE_NAME);
+    create_queues_initialization_function(fv);
 }
 
 
@@ -1107,7 +1125,7 @@ void End_GUI_Glue_Backend(FV * fv)
     fclose(header_id);
 
     //Create the queues management code for exchanging data with the outside
-    create_gui_fv_queues(fv->name);
+    create_gui_fv_queues(fv);
 
     //finalize code file
     fclose(code_id);
@@ -1121,14 +1139,14 @@ void End_GUI_Glue_Backend(FV * fv)
 void GLUE_GUI_Interface(Interface * i)
 {
     switch (i->direction) {
-    case PI:
-    add_PI_to_gui_glue(i);
-    break;
-    case RI:
-    add_RI_to_gui_glue(i);
-    break;
-    default:
-    break;
+        case PI: 
+            add_PI_to_gui_glue(i);
+            break;
+        case RI:
+            add_RI_to_gui_glue(i);
+            break;
+        default:
+            break;
     }
 }
 
