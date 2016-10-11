@@ -310,6 +310,7 @@ private
    pragma Linker_Options ("system_config.o");
    pragma Linker_Options ("build_scade_skeletons.o");
    pragma Linker_Options ("build_vdm_skeletons.o");
+   pragma Linker_Options ("build_vhdl_skeletons.o");
    pragma Linker_Options ("build_rtds_skeletons.o");
    pragma Linker_Options ("build_driver_skeletons.o");
    pragma Linker_Options ("asn2datamodel.o");

@@ -37,7 +37,7 @@ void add_error()
     error_count++;
 }
 
-/*
+/*:
  * Main function called after the Ada AADL parser has completed.
 */
 void C_End()
@@ -127,6 +127,7 @@ void C_End()
                     GW_Simulink_Backend(fv);
                     GW_C_Backend(fv);
                     GW_VDM_Backend(fv);
+                    GW_VHDL_Backend(fv);
                     GW_Ada_Backend(fv);
                     GW_SCADE_Backend(fv);
                     GW_RTDS_Backend(fv);
