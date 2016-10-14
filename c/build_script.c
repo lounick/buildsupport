@@ -42,22 +42,31 @@ void Create_script()
     assert (NULL != script);
 
     fprintf (script, "#!/bin/bash\n\n"
-                     "# This script will build your TASTE system.\n\n"
-                     "# You should check it before running it to make it fit with your context:\n"
-                     "# 1) You may need to fix some paths and filenames (path to interface/deployment views)\n"
-                     "# 2) You may need to specify additional paths for the compiler to find .h file\n"
-                     "#    (e.g. \"export C_INCLUDE_PATH=/usr/include/xenomai/analogy/:$C_INCLUDE_PATH\")\n"
-                     "# 3) You may need to link with pre-built libraries, using the -l option\n"
-                     "#    (e.g. -l /usr/lib/libanalogy.a,/usr/lib/librtdm.a)\n"
-                     "# 4) You may need to change the runtime (add -p flag to select PolyORB-HI-C)\n"
-                     "# etc.\n\n"
-                     "# Note: TASTE will not overwrite your changes - if you need to update some parts\n"
-                     "#       you will have to merge the changes with the newly-created file.\n\n"
+                     "# This script will build your TASTE system (by default with the C runtime).\n\n"
+                     "# You should not change this file as it was automatically generated.\n\n"
+                     "# If you need additional preprocessing, create a file named 'user_init_pre.sh'\n"
+                     "# and/or 'user_init_post.sh - They will never get overwritten.'\n\n"
+                     "# Inside these files you may set some environment variables:\n"
+                     "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:$C_INCLUDE_PATH\n"
+                     "#    unset USE_POHIC   \n\n"
                      "if [ -f user_init_pre.sh ]\n"
                      "then\n"
                      "    echo [INFO] Executing user-defined init script\n"
                      "    source user_init_pre.sh\n"
-                     "fi\n\n");
+                     "fi\n\n"
+                     "# Use PolyORB-HI-C runtime\n"
+                     "USE_POHIC=1\n\n"
+                     "# Detect models from Ellidiss tools v2, and convert them to 1.3\n"
+                     "INTERFACEVIEW=%s\n"
+                     "grep \"version => \\\"2\" %s >/dev/null && {\n"
+                     "    echo '[INFO] Converting interface view from V2 to V1.3'\n"
+                     "    TASTE --load-interface-view %s --export-interface-view-to-1_3 __iv_1_3.aadl\n"
+                     "    INTERFACEVIEW=__iv_1_3.aadl\n"
+                     "};\n\n",
+                     get_context()->ifview,
+                     get_context()->ifview,
+                     get_context()->ifview);
+
 
 
     /* The first step is to invoke QGen to generate code from user model */
@@ -107,7 +116,14 @@ void Create_script()
     fprintf (script, "if [ -z \"$DEPLOYMENTVIEW\" ]\n"
                      "then\n"
                      "    DEPLOYMENTVIEW=DeploymentView.aadl\n"
-                     "fi\n\n");
+                     "fi\n\n" 
+                     "# Detect models from Ellidiss tools v2, and convert them to 1.3\n"
+                     "grep \"version => \\\"2\" \"$DEPLOYMENTVIEW\" >/dev/null && {\n"
+                     "    echo '[INFO] Converting deployment view from V2 to V1.3'\n"
+                     "    TASTE --load-deployment-view \"$DEPLOYMENTVIEW\" --export-deployment-view-to-1_3 __dv_1_3.aadl\n"
+                     "    DEPLOYMENTVIEW=__dv_1_3.aadl\n"
+                     "};\n\n");
+
 
     fprintf (script, "SKELS=\"%s\"\n\n", OUTPUT_PATH);
 
@@ -187,7 +203,7 @@ void Create_script()
     if (get_context()->keep_case)
         fprintf (script, "\t--keep-case \\\n");
 
-    fprintf (script, "\t--interfaceView %s \\\n", get_context()->ifview);
+    fprintf (script, "\t--interfaceView \"$INTERFACEVIEW\" \\\n");
 
     /* When invoked with -gw, we do not know the exact name of the deployment view
        -> we assume that it's the default spelling given by TASTE-IV */
