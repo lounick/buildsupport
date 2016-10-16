@@ -96,7 +96,7 @@ void build_function_parameter_list(char **generated_code,
 {
     if (*generated_code != NULL)
     build_string(generated_code, ",", strlen(","));
-    build_string(generated_code, "asn1Scc", strlen("asn1Scc"));
+    build_string(generated_code, "const asn1Scc", strlen("const asn1Scc"));
     build_string(generated_code, parameter_type, strlen(parameter_type));
     build_string(generated_code, "* ", strlen("* "));
     build_string(generated_code, parameter_name, strlen(parameter_name));
@@ -114,8 +114,7 @@ void build_assignation_code(char **generated_code, char *IF_name,
 {
     build_string(generated_code, "   ", strlen("   "));
     build_string(generated_code, IF_name, strlen(IF_name));
-    build_string(generated_code, "_", strlen("_"));
-    build_string(generated_code, "data.", strlen("data."));
+    build_string(generated_code, "__data.", strlen("__data."));
     build_string(generated_code, parameter_name, strlen(parameter_name));
     build_string(generated_code, " = *", strlen(" = *"));
     build_string(generated_code, parameter_name, strlen(parameter_name));
@@ -170,13 +169,13 @@ void create_local_Q_recption_variables(char
          PI_name, strlen(PI_name));
 
     build_string(pgenerated_function_local_message_list,
-         "_data ", strlen("_data "));
+         "__data ", strlen("__data "));
 
     build_string(pgenerated_function_local_message_list,
          PI_name, strlen(PI_name));
 
     build_string(pgenerated_function_local_message_list,
-         "_data_receptacle;\n", strlen("_data_receptacle;\n"));
+         "__data_receptacle;\n", strlen("__data_receptacle;\n"));
 }
 
 
@@ -199,7 +198,7 @@ void create_assignation_code(char **pgenerated_assignation_code,
     build_string(pgenerated_assignation_code, IF_name, strlen(IF_name));
 
     build_string(pgenerated_assignation_code,
-         "_data_receptacle.", strlen("_data_receptacle."));
+         "__data_receptacle.", strlen("__data_receptacle."));
 
     build_string(pgenerated_assignation_code,
          param_name, strlen(param_name));
@@ -238,14 +237,14 @@ void create_switch_structure(char **pgenerated_switch_structure,
              PI_name, strlen(PI_name));
 
     build_string(pgenerated_switch_structure,
-             "_data_receptacle, message_data_received, sizeof(T_",
-             strlen("_data_receptacle, message_data_received, sizeof(T_"));
+             "__data_receptacle, message__data_received, sizeof(T_",
+             strlen("__data_receptacle, message__data_received, sizeof(T_"));
 
     build_string(pgenerated_switch_structure,
              PI_name, strlen(PI_name));
 
     build_string(pgenerated_switch_structure,
-             "_data));\n", strlen("_data));\n"));
+             "__data));\n", strlen("__data));\n"));
 
     build_string(pgenerated_switch_structure,
              PI_related_assignation_code,
@@ -674,9 +673,9 @@ void create_outcomming_data_sender(FV * FV_NODE)
             //         to the structure to be stored in the queue
             if (generated_function_parameter_list != NULL) {
             fprintf(code_id,
-                "   //Create a variable of type T_%s_data to be contained in the queue\n",
+                "   //Create a variable of type T_%s__data to be contained in the queue\n",
                 IF_list_iterator->value->name);
-            fprintf(code_id, "   T_%s_data %s_data;\n",
+            fprintf(code_id, "   T_%s__data %s__data;\n",
                 IF_list_iterator->value->name,
                 IF_list_iterator->value->name);
             }
@@ -690,7 +689,7 @@ void create_outcomming_data_sender(FV * FV_NODE)
             //Call the queue manager to store the data
             if (strcmp (FV_NODE->name, "taste_probe_console")) {
                 fprintf(code_id,
-                "   write_message_to_queue(%s_PI_queue_id, sizeof(T_%s_data), (void*)&%s_data, i_%s);\n\n",
+                "   write_message_to_queue(%s_PI_queue_id, sizeof(T_%s__data), (void*)&%s__data, i_%s);\n\n",
                 FV_NODE->name,
                 IF_list_iterator->value->name,
                 IF_list_iterator->value->name,
@@ -699,7 +698,7 @@ void create_outcomming_data_sender(FV * FV_NODE)
 
             // Same for the Python TM queue
             fprintf(code_id,
-                "   write_message_to_queue(%s_PI_Python_queue_id, sizeof(T_%s_data), (void*)&%s_data, i_%s);\n\n",
+                "   write_message_to_queue(%s_PI_Python_queue_id, sizeof(T_%s__data), (void*)&%s__data, i_%s);\n\n",
                 FV_NODE->name,
                 IF_list_iterator->value->name,
                 IF_list_iterator->value->name,
@@ -709,14 +708,14 @@ void create_outcomming_data_sender(FV * FV_NODE)
             //call directly the queue manager to store the data
                         if (strcmp (FV_NODE->name, "taste_probe_console")) {
                 fprintf(code_id,
-                "   write_message_to_queue(%s_PI_queue_id, sizeof(T_%s_data), NULL, i_%s);\n\n",
+                "   write_message_to_queue(%s_PI_queue_id, sizeof(T_%s__data), NULL, i_%s);\n\n",
                 FV_NODE->name,
                 IF_list_iterator->value->name,
                 IF_list_iterator->value->name);
             }
             // Same for the Python TM queue
             fprintf(code_id,
-                "   write_message_to_queue(%s_PI_Python_queue_id, sizeof(T_%s_data), NULL, i_%s);\n\n",
+                "   write_message_to_queue(%s_PI_Python_queue_id, sizeof(T_%s__data), NULL, i_%s);\n\n",
                 FV_NODE->name,
                 IF_list_iterator->value->name,
                 IF_list_iterator->value->name);
@@ -954,7 +953,7 @@ void add_RI_to_gui_glue(Interface * i)
     }
 
     //End the struct definition of the functional data
-    fprintf(header_id, "} T_%s_data;\n\n", i->name);
+    fprintf(header_id, "} T_%s__data;\n\n", i->name);
 
     //
     // 3. Creates the structure to contain the message related to the RI
@@ -962,7 +961,7 @@ void add_RI_to_gui_glue(Interface * i)
     fprintf(header_id, "typedef struct\n{\n");
     fprintf(header_id, "\tT_%s_RI_list\tmessage_identifier;\n",
         i->parent_fv->name);
-    fprintf(header_id, "\tT_%s_data\tmessage;\n} T_%s_message;\n\n\n",
+    fprintf(header_id, "\tT_%s__data\tmessage;\n} T_%s_message;\n\n\n",
         i->name, i->name);
 
 
@@ -974,7 +973,7 @@ void add_RI_to_gui_glue(Interface * i)
     fprintf(header_id, "void %s_RI_%s(", i->parent_fv->name, i->name);
     bool comma = false;
     FOREACH (param, Parameter, i->in, {
-        fprintf(header_id, "%sasn1Scc%s *", comma? ", ": "", param->type);
+        fprintf(header_id, "%sconst asn1Scc%s *", comma? ", ": "", param->type);
         comma = true;
     });
     fprintf(header_id, ");\n\n"
@@ -985,7 +984,7 @@ void add_RI_to_gui_glue(Interface * i)
     tmp = i->in;
     // Add parameters
     while (NULL != tmp) {
-    fprintf(header_id, "%s&((T_%s_data*)params)->%s",
+    fprintf(header_id, "%s&((T_%s__data*)params)->%s",
         (tmp != i->in) ? ", " : "", i->name, tmp->value->name);
     tmp = tmp->next;
     }
@@ -1036,7 +1035,7 @@ void add_PI_to_gui_glue(Interface * i)
     }
 
     //End the struct definition of the functional data
-    fprintf(header_id, "} T_%s_data;\n\n", i->name);
+    fprintf(header_id, "} T_%s__data;\n\n", i->name);
 
     //
     // 3. Creates the structure to contain the message related to the PI
@@ -1044,7 +1043,7 @@ void add_PI_to_gui_glue(Interface * i)
     fprintf(header_id, "typedef struct\n{\n");
     fprintf(header_id, "\tT_%s_PI_list\tmessage_identifier;\n",
         i->parent_fv->name);
-    fprintf(header_id, "\tT_%s_data\tmessage;\n} T_%s_message;\n\n\n",
+    fprintf(header_id, "\tT_%s__data\tmessage;\n} T_%s_message;\n\n\n",
         i->name, i->name);
     }
 }

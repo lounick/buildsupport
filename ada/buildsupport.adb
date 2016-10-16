@@ -62,6 +62,7 @@ procedure BuildSupport is
 
    Interface_Root    : Node_Id := No_Node;
    Deployment_root   : Node_Id := No_Node;
+   Dataview_root     : Node_ID := No_Node;
    Success           : Boolean;
    OutDir            : Integer := 0;
    Stack_Val         : Integer := 0;
@@ -75,6 +76,7 @@ procedure BuildSupport is
 
    procedure Parse_Command_Line;
    procedure Process_Deployment_View (My_Root : Node_Id);
+   --  procedure Process_DataView (My_Root : Node_Id);
    procedure Process_Interface_View (My_System : Node_Id);
    procedure Browse_Deployment_View_System
                   (My_System : Node_Id; NodeName : String);
@@ -678,6 +680,29 @@ procedure BuildSupport is
    end Process_Interface_View;
 
    -----------------------------
+   -- Process_DataView --
+   -----------------------------
+
+--  procedure Process_DataView (My_Root : Node_Id) is
+--     CI             : Node_Id;
+--  begin
+--     Subs := My_Root;
+--     while Present (Subs) loop
+--        CI := Subs;
+--        if Get_Category_Of_Component (CI) = CC_Data then
+--           declare
+--              SourceText : constant Name_Array := Get_Source_Text (CI);
+--           begin
+--              if SourceText'Length > 0 then
+--                 Put_Line (Get_Name_String (SourceText (1)));
+--              end if;
+--           end;
+--        end if;
+--        Subs := Next_Node (Subs);
+--     end loop;
+--  end Process_DataView;
+
+   -----------------------------
    -- Process_Deployment_View --
    -----------------------------
 
@@ -687,7 +712,7 @@ procedure BuildSupport is
       Root_Instance  : Node_Id;
    begin
 
-      if My_Root /= No_Node and then Concurrency_view  /= 0 then
+      if My_Root /= No_Node and then Concurrency_view /= 0 then
          --  Analyze the tree
 
          Success := Ocarina.Analyzer.Analyze (AADL_Language, My_Root);
@@ -1533,6 +1558,8 @@ procedure BuildSupport is
             Deployment_Root := Ocarina.Parser.Parse
                (AADL_Language, Deployment_Root, B);
          end if;
+         Dataview_root := Ocarina.Parser.Parse
+                            (AADL_Language, Dataview_root, B);
       end if;
 
       Exit_On_Error (No (Interface_Root), "Internal error");
@@ -1557,6 +1584,8 @@ begin
 
    Ocarina.Options.Root_System_Name :=
           Get_String_Name ("interfaceview.others");
+
+   --  Process_DataView (Dataview_root);
 
    Process_Interface_View
       (Root_System (Instantiate_Model (Root => Interface_Root)));

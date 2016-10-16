@@ -134,6 +134,9 @@ void c_wrappers_preamble(FV * fv)
         }
     }
 
+    /* Include polyorb-hi header containing po_hi_get_task_id */
+    fprintf(cfile, "#include \"po_hi_task.h\"\n");
+
     /* Include the header files to get the function prototypes */
     if (!fv->artificial) {
         if (blackbox_device != fv->language

@@ -893,6 +893,9 @@ void Add_api(Process *node, FV_list *all_fv)
                      "static bool debugCheckQ = false;\n"
                      "#endif\n\n");
 
+    fprintf (code,   "#ifdef __unix__\n"
+                     "    #include <stdio.h>\n"
+                     "#endif\n\n");
 
     fprintf (header, "void %s_startup();\n\n", fv->name);
     fprintf (code,   "void %s_startup()\n"

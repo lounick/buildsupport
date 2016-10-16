@@ -51,8 +51,10 @@ void c_preamble(FV * fv)
     if (c == fv->language || cpp == fv->language) {
         fprintf(vm_if, "#include \"%s.h\"\n\n", fv->name);
     }
-
-    if (rtds == fv->language) {
+    else if (gui == fv->language) {
+        fprintf(vm_if, "#include \"%s_gui_header.h\"\n\n", fv->name);
+    }
+    else if (rtds == fv->language) {
         fprintf(vm_if, "#include \"glue_%s.h\"\n\n", fv->name);
     }
 
