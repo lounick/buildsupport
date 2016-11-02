@@ -913,7 +913,7 @@ void Add_api(Process *node, FV_list *all_fv)
         decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
         fprintf(header, "%s;\n\n", decl);
         fprintf(code, "%s {\n"
-                      "/* Check all incoming queues for a pending message */\n", decl);
+                      "    /* Check all incoming queues (if any) for a pending message */\n", decl);
         /* Naming of ports/task id is different if there is more than 1 active PI */
         int active = CountActivePI(function->interfaces);
         FOREACH(pi, Interface, function->interfaces, {
@@ -926,7 +926,8 @@ void Add_api(Process *node, FV_list *all_fv)
                     task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
                     port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
                 }
-                fprintf(code, "    if (__po_hi_gqueue_get_count(%s, %s)) {"
+                fprintf(code, "    *res = 0;\n"
+                              "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
                               "        *res = 1;\n"
                               "        #ifdef __unix__\n"
                               "        if (debugCheckQ) {\n"
