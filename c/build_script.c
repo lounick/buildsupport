@@ -49,6 +49,7 @@ void Create_script()
                      "# Inside these files you may set some environment variables:\n"
                      "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:$C_INCLUDE_PATH\n"
                      "#    unset USE_POHIC   \n\n"
+                     "CWD=$(pwd)\n\n"
                      "if [ -f user_init_pre.sh ]\n"
                      "then\n"
                      "    echo [INFO] Executing user-defined init script\n"
@@ -169,7 +170,7 @@ void Create_script()
         }
     })
 
-    fprintf (script, "[ ! -z \"$CLEANUP\" ] && rm -rf binary\n\n");
+    fprintf (script, "[ ! -z \"$CLEANUP\" ] && rm -rf binary*\n\n");
 
     fprintf (script, "if [ -f ConcurrencyView.pro ]\n"
                      "then\n"
@@ -192,7 +193,7 @@ void Create_script()
                      "    echo [INFO] Executing user-defined init script\n"
                      "    source user_init_post.sh\n"
                      "fi\n\n"
-                     "assert-builder-ocarina.py \\\n"
+                     "cd \"$CWD\" && assert-builder-ocarina.py \\\n"
                      "\t--fast \\\n"
                      "\t--debug \\\n");
 
