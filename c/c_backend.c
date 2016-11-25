@@ -153,6 +153,13 @@ void C_End()
         if (get_context()->glue) {
             Preprocessing_Backend(get_system_ast());
         }
+        /*
+         * Preprocessing may have raised some further semantic errors.
+         */
+        if (error_count > 0) {
+            fprintf(stderr, "\nFound %d errors.. Aborting...\n", error_count);
+            exit(1);
+        }
 
         /*
          * Debug mode (userflag -test) : dump the result of the transformation
