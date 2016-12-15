@@ -46,6 +46,7 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
     char *name = NULL;
     char *path = NULL;
     FILE *hook = NULL;
+    int  timer_res = get_context()->timer_resolution;
 
     name = make_string ("%s_timer_manager", node->name);
 
@@ -57,17 +58,17 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
 
     assert (NULL != fv && NULL != interface);
 
-    interface->name = make_string ("tick_100ms");
+    interface->name = make_string ("tick_%dms", timer_res);
 
     interface->distant_fv = NULL;
     interface->direction = PI;
     interface->synchronism = asynch;
     interface->rcm = cyclic;
-    /* clock rate for timers is 100 ms */
-    interface->period = 100;
+    /* clock rate for timers is 100 ms by default */
+    interface->period = timer_res;
     interface->parent_fv = fv;
-    interface->wcet_high = 10;
-    interface->wcet_low = 10;
+    interface->wcet_high = 1;
+    interface->wcet_low = 1;
     interface->wcet_low_unit = make_string ("ms");
     interface->wcet_high_unit = make_string ("ms");
     APPEND_TO_LIST (Interface, fv->interfaces, interface);
@@ -101,9 +102,10 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
                      fv->name);
 
     fprintf (header, "void %s_startup();\n\n"
-                     "void %s_PI_tick_100ms();\n\n",
+                     "void %s_PI_tick_%dms();\n\n",
                      fv->name,
-                     fv->name);
+                     fv->name,
+                     timer_res);
     fprintf (code, "#include <assert.h>\n\n"
                    "#include \"%s.h\"\n\n", fv->name);
 
@@ -145,8 +147,10 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
                    "}\n\n", fv->name);
 
     /* Generate the timer manager code for the cyclic interface */
-    fprintf (code, "void %s_PI_tick_100ms()\n"
-                   "{\n", fv->name);
+    fprintf (code, "void %s_PI_tick_%dms()\n"
+                   "{\n",
+                   fv->name,
+                   timer_res);
 
     FOREACH (timer, String, all_timers, {
         fprintf (code, "    if (timers[%s].state == active && "
@@ -175,12 +179,14 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
     Interface *expire = NULL, *set_timer = NULL, *reset_timer = NULL;
     Parameter *param = NULL;
     Interface *cyclic_pi = NULL;
+    int timer_res = get_context()->timer_resolution;
+    char *cyclic_name = make_string("tick_%dms", timer_res);
 
     assert (NULL != header && NULL != code);
 
     /* Find the cyclic interface of the timer manager */
     FOREACH(pi, Interface, timer_manager->interfaces, {
-        if (!strcmp(pi->name, "tick_100ms")) cyclic_pi = pi;
+        if (!strcmp(pi->name, cyclic_name)) cyclic_pi = pi;
     });
 
 
@@ -192,18 +198,21 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                          timer);
         fprintf (code, "void %s_PI_%s_SET_%s(const asn1SccT_UInt32 *val)\n"
                        "{\n"
-                       "    /* Timer value must be multiple of 100 ms */\n"
-                       "    assert (*val %% 100 == 0);\n"
+                       "    /* Timer value must be multiple of %d ms */\n"
+                       "    assert (*val %% %d == 0);\n"
                        "    timers[%s_%s].state = active;\n"
-                       "    timers[%s_%s].value = *val / 100;\n"
+                       "    timers[%s_%s].value = *val / %d;\n"
                        "}\n\n",
                        timer_manager->name,
                        fv->name,
                        timer,
+                       timer_res,
+                       timer_res,
                        fv->name,
                        timer,
                        fv->name,
-                       timer);
+                       timer,
+                       timer_res);
         fprintf (header, "void %s_PI_%s_RESET_%s();\n\n",
                          timer_manager->name,
                          fv->name,
@@ -227,7 +236,7 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         expire->direction      = PI;
         expire->synchronism    = asynch;
         expire->rcm            = sporadic;
-        expire->period         = 100;
+        expire->period         = timer_res;
         expire->parent_fv      = fv;
         expire->wcet_high      = 10;
         expire->wcet_low       = 10;

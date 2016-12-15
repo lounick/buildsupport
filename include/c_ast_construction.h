@@ -38,6 +38,7 @@ void Set_OutDir(char *o,size_t len);
 void Set_Interfaceview (char *name, size_t len);
 void Set_Dataview (char *name, size_t len);
 void Set_Test();
+void Set_Timer_Resolution(char *val, size_t len);
 void Set_Future();
 void Set_OnlyCV();
 void Set_AADLV2();

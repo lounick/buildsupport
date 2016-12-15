@@ -8,6 +8,7 @@ package Imported_Routines is
 
    procedure C_Set_OutDir (Dir : String; Len : Integer);
    procedure C_Set_Stack  (Val : String; Len : Integer);
+   procedure C_Set_Timer_Resolution  (Val : String; Len : Integer);
    procedure C_New_APLC   (Arg : String; Len : Integer);
    procedure C_New_FV     (Arg : String; Len : Integer; CS : String);
 
@@ -211,6 +212,7 @@ private
    pragma Import (C, C_Set_Interfaceview, "Set_Interfaceview");
    pragma Import (C, C_Set_Dataview, "Set_Dataview");
    pragma Import (C, C_Set_Stack, "Set_Stack");
+   pragma Import (C, C_Set_Timer_Resolution, "Set_Timer_Resolution");
    pragma Import (C, C_New_APLC, "New_APLC");
    pragma Import (C, C_New_FV, "New_FV");
    pragma Import (C, C_Add_PI, "Add_PI");

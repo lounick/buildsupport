@@ -69,7 +69,9 @@ package body Buildsupport_Utils is
       Put ("-g, --debug" & HT & HT & HT & HT);
       Put_Line ("Generate runtime debug output");
       Put ("-s, --stack <stack-value>" & HT & HT);
-      Put_Line ("Set the size of the stack in kbytes (default 100)");
+      Put_Line ("Set the size of the stack per thread in kbytes (default 50)");
+      Put ("-x, --timer <timer-resolution in ms>" & HT);
+      Put_Line ("Set the timer resolution (default 100 ms)");
       Put ("-v, --version" & HT & HT & HT & HT);
       Put_Line ("Display buildsupport version number");
       Put ("-p, --polyorb-hi-c" & HT & HT & HT);

@@ -204,6 +204,7 @@ DECLARE_LIST (Interface)
 
 /*
  * Type used to store context-dependent parameters (eg. output directory)
+ * (initialized in practical_functions.c, update it when you add a field)
 */
 typedef struct t_context {
   char  *output;
@@ -221,6 +222,7 @@ typedef struct t_context {
   char  *stacksize;
   int   polyorb_hi_c;
   bool  needs_basictypes;
+  int   timer_resolution;
 } Context;
 
 /*

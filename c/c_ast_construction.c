@@ -445,6 +445,22 @@ void Set_Test()
     }
 }
 
+void Set_Timer_Resolution(char *val, size_t len) {
+    errno = 0;
+    if (NULL != (system_ast->context)) {
+        char *str = make_string("%.*s", len, val);
+        int time_res = (int) strtol(str, (char **)NULL, 10);
+        if (0 != errno) {
+            ERROR("** Error: Timer resolution must be a valid number\n");
+        }
+        else {
+            printf("[INFO] Set timer resolution to %d\n", time_res);
+            system_ast->context->timer_resolution = time_res;
+        }
+    }
+}
+
+
 /* Set Future - Flag that can be used for temporary purposes,
  * like when migrating from one TASTE version to another one when all
  * tools are not ready.

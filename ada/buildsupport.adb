@@ -66,6 +66,7 @@ procedure BuildSupport is
    Success           : Boolean;
    OutDir            : Integer := 0;
    Stack_Val         : Integer := 0;
+   Timer_Resolution  : Integer := 0;
    Subs              : Node_id;
    Interface_view    : Integer := 0;
    Concurrency_view  : Integer := 0;
@@ -166,6 +167,13 @@ procedure BuildSupport is
             Imported_Routines.C_Set_Stack
               (Ada.Command_Line.Argument (stack_val),
                Ada.Command_Line.Argument (stack_val)'Length);
+         end if;
+
+         --  Set the timer resolution value
+         if Timer_Resolution > 0 then
+            Imported_Routines.C_Set_Timer_Resolution
+              (Ada.Command_Line.Argument (Timer_Resolution),
+               Ada.Command_Line.Argument (Timer_Resolution)'Length);
          end if;
 
          --  Current_function is read from the list of system subcomponents
@@ -1334,6 +1342,7 @@ procedure BuildSupport is
       Previous_CView    : Boolean := False;
       Previous_DataView : Boolean := False;
       Previous_Stack    : Boolean := False;
+      Previous_TimerRes : Boolean := False;
    begin
       for J in 1 .. Ada.Command_Line.Argument_Count loop
          --  Parse the file corresponding to the Jth argument of the
@@ -1358,6 +1367,10 @@ procedure BuildSupport is
          elsif Previous_Stack then
             Stack_Val := J;
             Previous_Stack := false;
+
+         elsif Previous_TimerRes then
+            Timer_Resolution := J;
+            Previous_TimerRes := false;
 
          elsif Ada.Command_Line.Argument (J) = "--polyorb-hi-c"
            or else Ada.Command_Line.Argument (J) = "-p"
@@ -1422,6 +1435,12 @@ procedure BuildSupport is
            or else Ada.Command_Line.Argument (J) = "-s"
          then
             Previous_Stack := True;
+
+         elsif Ada.Command_Line.Argument (J) = "--timer"
+           or else Ada.Command_Line.Argument (J) = "-timer"
+           or else Ada.Command_Line.Argument (J) = "-x"
+         then
+            Previous_TimerRes := True;
 
          elsif Ada.Command_Line.Argument (J) = "--deploymentview"
            or else Ada.Command_Line.Argument (J) = "-c"

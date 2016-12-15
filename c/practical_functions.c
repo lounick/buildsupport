@@ -887,6 +887,7 @@ void Create_Context(Context ** context)
         (*context)->polyorb_hi_c     = 0;
         (*context)->stacksize        = NULL;
         (*context)->needs_basictypes = false;
+        (*context)->timer_resolution = 100;  // milliseconds
 }
 
 // Free the memory of a Context data structure
