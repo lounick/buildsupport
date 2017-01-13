@@ -1462,6 +1462,11 @@ procedure BuildSupport is
          then
             Imported_Routines.C_Set_Debug_Messages;
 
+         elsif Ada.Command_Line.Argument (J) = "--help"
+           or else Ada.Command_Line.Argument (J) = "-h"
+         then
+            Usage;
+
          else
             Set_Str_To_Name_Buffer (Ada.Command_Line.Argument (J));
             FN := Ocarina.Files.Search_File (Name_Find);

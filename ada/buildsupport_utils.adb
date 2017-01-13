@@ -1,5 +1,5 @@
 --  *************************** buildsupport ****************************  --
---  (c) 2015 European Space Agency - maxime.perrotin@esa.int
+--  (c) 2008-2017 European Space Agency - maxime.perrotin@esa.int
 --  LGPL license, see LICENSE file
 
 with Ada.Text_IO;
@@ -30,8 +30,8 @@ package body Buildsupport_Utils is
 
    procedure Banner is
       The_Banner : constant String :=
-        "buildsupport - contact: maxime.perrotin@esa.int or "
-        & "ttsiodras@semantix.gr "
+        "buildsupport - contact: Maxime.Perrotin@esa.int or "
+        & "Thanassis.Tsiodras@esa.int "
         & ASCII.LF & ASCII.CR
         & "Based on Ocarina: " & Ocarina.Configuration.Ocarina_Version
         & " (" & Ocarina.Configuration.Ocarina_SVN_Revision & ")";
