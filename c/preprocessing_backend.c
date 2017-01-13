@@ -135,7 +135,7 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
 
     /* In the code, declare a static variable holding the timers state */
     fprintf (code, "static struct {\n"
-                     "    int value;\n"
+                     "    long long value;\n"
                      "    enum { active, inactive } state;\n"
                      "} timers[%d] = {"
                      " { .value = 0, .state = inactive } };\n\n", count);
@@ -154,7 +154,7 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
 
     FOREACH (timer, String, all_timers, {
         fprintf (code, "    if (timers[%s].state == active && "
-                       "0 == --timers[%s].value) {\n"
+                       "1 == __sync_fetch_and_sub(&timers[%s].value, 1)) {\n"
                        "        %s_RI_%s();\n"
                        "        timers[%s].state = inactive;\n"
                        "    }\n\n",
@@ -201,7 +201,7 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                        "    /* Timer value must be multiple of %d ms */\n"
                        "    assert (*val %% %d == 0);\n"
                        "    timers[%s_%s].state = active;\n"
-                       "    timers[%s_%s].value = *val / %d;\n"
+                       "    __sync_lock_test_and_set(&timers[%s_%s].value, *val / %d);\n"
                        "}\n\n",
                        timer_manager->name,
                        fv->name,
@@ -254,7 +254,7 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
         ADD_TO_SET(Interface, expire->calling_pis, cyclic_pi);
         APPEND_TO_LIST (Interface, timer_manager->interfaces, expire);
 
-        /* Add Unpro PI "RESET_timer" to timer manager (no param) */
+        /* Add Protected PI "RESET_timer" to timer manager (no param) */
         reset_timer = Duplicate_Interface (PI, expire, timer_manager);
         free (reset_timer->name);
         reset_timer->name         = make_string ("%s_RESET_%s",
@@ -262,7 +262,7 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                                                  timer);
         free (reset_timer->distant_name);
         reset_timer->distant_name = make_string ("RESET_%s", timer); // irrelevant in PI
-        reset_timer->rcm          = unprotected;
+        reset_timer->rcm          = protected;
         reset_timer->synchronism  = synch;
         APPEND_TO_LIST (Interface, timer_manager->interfaces, reset_timer);
 
@@ -276,7 +276,8 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                                                 reset_timer->name);
         APPEND_TO_LIST (Interface, fv->interfaces, reset_timer);
 
-        /* Add Unpro PI "SET_timer(value)" in timer manager */
+        /* Add Protected PI "SET_timer(value)" in timer manager */
+        /* Note: it must be protected to avoid race condition with the tick function */
         set_timer = Duplicate_Interface (PI, reset_timer, timer_manager);
         free (set_timer->name);
         set_timer->name         = make_string ("%s_SET_%s",
