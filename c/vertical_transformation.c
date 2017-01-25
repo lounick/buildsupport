@@ -718,8 +718,9 @@ void DeclareProcessFeatures (Aplc_binding *b,
 void ProcessConnectInterfaces(Interface *i, Process **current_process)
 {
    bool remote_in_same_process = true;
+   char *connection = NULL;
 
-   /* 
+   /*
     * Don't connect synchronous and cyclic blocks
     */
    if(asynch != i->synchronism || cyclic == i->rcm) return;
@@ -745,11 +746,6 @@ void ProcessConnectInterfaces(Interface *i, Process **current_process)
    }
 
 
-   if (0==(*current_process)->connections) {
-      fprintf(process,"connections\n");
-      (*current_process)->connections = 1;
-   }
-
    switch (i->direction) {
       case PI:
          if (true == remote_in_same_process) {
@@ -762,11 +758,11 @@ void ProcessConnectInterfaces(Interface *i, Process **current_process)
             /*
              * distant FV not in the same process
              */
-            fprintf(process, "\tPORT INPORT_%s_%s -> %s.INPORT_%s;\n",
-                  i->parent_fv->name,
-                  i->port_name,  
-                  i->parent_fv->name,
-                  i->name);
+            connection = make_string("\tPORT INPORT_%s_%s -> %s.INPORT_%s;\n",
+                                     i->parent_fv->name,
+                                     i->port_name,
+                                     i->parent_fv->name,
+                                     i->name);
          }
          break;
       case RI:
@@ -774,21 +770,31 @@ void ProcessConnectInterfaces(Interface *i, Process **current_process)
              /* if distant FV is in the same process */
              /* We do it only for RI and not for PI (see above) because RIs
              * have a unique, thus more reliable Distant FV value. */
-             fprintf(process, "\tPORT %s.OUTPORT_%s -> %s.INPORT_%s;\n",
-                  i->parent_fv->name,
-                  i->name,
-                  i->distant_fv,
-                  (NULL != i->distant_name)? i->distant_name:i->name
-                  );
+             connection = make_string("\tPORT %s.OUTPORT_%s -> %s.INPORT_%s;\n",
+                                      i->parent_fv->name,
+                                      i->name,
+                                      i->distant_fv,
+                                      (NULL != i->distant_name)? i->distant_name:i->name
+                                      );
          }
          else { /* Distant RI not in the same process */
-            fprintf(process, "\tPORT %s.OUTPORT_%s -> OUTPORT_%s_%s;\n",
-                  i->parent_fv->name,
-                  i->name,
-                  i->parent_fv->name,
-                  i->port_name); 
+            connection = make_string("\tPORT %s.OUTPORT_%s -> OUTPORT_%s_%s;\n",
+                                     i->parent_fv->name,
+                                     i->name,
+                                     i->parent_fv->name,
+                                     i->port_name);
          }
          break;
+   }
+   if (NULL != connection) {
+       if (0==(*current_process)->connections) {
+          fprintf(process,"connections\n");
+          (*current_process)->connections = 1;
+       }
+
+       fprintf(process, "%s", connection);
+
+       free(connection);
    }
 }
 
