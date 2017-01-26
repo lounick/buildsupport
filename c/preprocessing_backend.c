@@ -751,13 +751,25 @@ void Preprocess_FV (FV *fv)
         fv->runtime_nature = passive_runtime;
 
         FOREACH (i, Interface, fv->interfaces, {
-            if (PI==i->direction) switch (i->rcm) {
-                case cyclic:
-                case sporadic:
-                case variator: fv->runtime_nature = thread_runtime;  break;
-                default: break;
-             }
+            if (PI==i->direction) {
+                switch (i->rcm) {
+                    case cyclic:
+                        fv->runtime_nature = thread_runtime;
+                        break;
+                    case sporadic:
+                    case variator:
+                        if (NULL != Find_All_Calling_FV(i)) {
+                             fv->runtime_nature = thread_runtime;
+                        }
+                        else {
+                            printf("unconnected interface %s %s\n", i->name, i->distant_name);
+                            }
+                        break;
+                    default: break;
+                 }
+            }
         });
+
         if(thread_runtime == fv->runtime_nature) {
             /* Set the (unique) thread ID */
             fv->thread_id = ++thread_id;
@@ -927,7 +939,7 @@ void Add_api(Process *node, FV_list *all_fv)
         /* Naming of ports/task id is different if there is more than 1 active PI */
         int active = CountActivePI(function->interfaces);
         FOREACH(pi, Interface, function->interfaces, {
-            if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm) {
+            if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
                 if (1 == active) {
                     task_id = make_string("%s_%s_k", node->name, function->name);
                     port = make_string("%s_local_inport_%s", function->name, pi->name);

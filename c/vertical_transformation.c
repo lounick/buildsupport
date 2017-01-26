@@ -277,7 +277,7 @@ int Init_VT_Backend(FV *fv)
        "--  This file was generated automatically: DO NOT MODIFY IT !\n\n"
        "--  This file contains a part of the system CONCURRENCY VIEW.\n"
        "--  It is an input file for OCARINA.\n\n");
-  
+
    int hasparam=0;
    fprintf(thread,
            "package %s_CV_Thread\n"
@@ -285,15 +285,15 @@ int Init_VT_Backend(FV *fv)
            "\twith Deployment;\n"
            "\twith process_package;\n",
            fv->name);
-  
+
    FOREACH(i, Interface, fv->interfaces, {
       CheckForAsn1Params(i, &hasparam);
    })
-  
+
    if (hasparam){
       fprintf(thread, "\twith Dataview;\n\n");
    }
-  
+
    fv->runtime_nature = thread_runtime;
    write_thread_preamble(fv);
    free(path);
@@ -335,6 +335,12 @@ void Add_IF_to_VT (Interface *i)
          default:
             break;
       }
+      /* If it is a sporadic PI, check that it is actually connected,
+       * and otherwise do not generate any aadl FEATURE (port)
+       */
+      if (sporadic == op_kind && NULL == Find_All_Calling_FV(i)) {
+          return;
+      }
    }
 
 
@@ -345,7 +351,7 @@ void Add_IF_to_VT (Interface *i)
 
    if (cyclic != i->rcm) {
 
-      /* 
+      /*
        * Add a "FEATURE" keyword (once) if
        * the interface is sporadic or protected but NOT unprotected
        * (protected appear in the concurrency view, not unpro).
@@ -610,18 +616,18 @@ int Create_Nodes_file(Process_list *p)
    }
 
    build_string(&path, "ConcurrencyView", strlen("ConcurrencyView"));
-   
+
    /* create the nodes file in a directory called "ConcurrencyView" */
    create_file(path, filename, &nodes);
-   
+
    assert (NULL != nodes);
-   
+
    /* Write file headers. */
    fprintf(nodes,
          "--  This file was generated automatically: DO NOT MODIFY IT !\n\n"
          "--  This file contains the description of the system distribution.\n"
          "--  It is an input file for the TASTE ORCHESTRATOR\n\n");
-   
+
    free(path);
    return 0;
 }
