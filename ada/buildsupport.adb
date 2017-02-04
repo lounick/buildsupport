@@ -1,60 +1,58 @@
 --  *************************** buildsupport ****************************  --
---  (c) 2015 European Space Agency - maxime.perrotin@esa.int
+--  (c) 2017 European Space Agency - maxime.perrotin@esa.int
 --  LGPL license, see LICENSE file
 
 --  pragma Style_Checks (Off);
-with Ada.Strings.Unbounded;
-use Ada.Strings.Unbounded;
-with Ada.Characters.Handling;
-with Ada.Command_Line;
-with Ada.Text_IO;
-with GNAT.OS_Lib;
-use GNAT.OS_Lib;
-with Errors;
-with Locations;
-with Namet;
-with Types;
-with System.Assertions;
-with Ocarina.Analyzer;
-with Ocarina.Backends.Properties;
-with Ocarina.Configuration;
-with Ocarina.Files;
-with Ocarina.Options;
-with Ocarina.Instances;
-with Ocarina.Instances.Queries;
-with Ocarina.ME_AADL.AADL_Tree.Nodes;
-with Ocarina.ME_AADL.AADL_Instances.Entities;
-with Ocarina.ME_AADL.AADL_Instances.Nodes;
-with Ocarina.ME_AADL.AADL_Instances.Nutils;
-with Ocarina.Parser;
-with Ocarina.FE_AADL.Parser;
+with Ada.Strings.Unbounded,
+     Ada.Characters.Handling,
+     Ada.Command_Line,
+     Ada.Text_IO,
+     Ada.Containers.Indefinite_Vectors,
+     GNAT.OS_Lib,
+     Errors,
+     Locations,
+     Namet,
+     Types,
+     System.Assertions,
+     Ocarina.Analyzer,
+     Ocarina.Backends.Properties,
+     Ocarina.Configuration,
+     Ocarina.Files,
+     Ocarina.Options,
+     Ocarina.Instances,
+     Ocarina.Instances.Queries,
+     Ocarina.ME_AADL.AADL_Tree.Nodes,
+     Ocarina.ME_AADL.AADL_Instances.Entities,
+     Ocarina.ME_AADL.AADL_Instances.Nodes,
+     Ocarina.ME_AADL.AADL_Instances.Nutils,
+     Ocarina.Parser,
+     Ocarina.FE_AADL.Parser,
+     Imported_Routines,
+     Buildsupport_Utils,
+     buildsupport_version,
+     Ocarina.Backends.Utils;
 
-with Imported_Routines;
-with Buildsupport_Utils;
-
-with buildsupport_version;
-
-with Ocarina.Backends.Utils;
+use Ada.Strings.Unbounded,
+    Ada.Text_IO,
+    Ada.Characters.Handling,
+    Locations,
+    Namet,
+    Types,
+    Ocarina,
+    Ocarina.Analyzer,
+    Ocarina.Backends.Properties,
+    Ocarina.Instances,
+    Ocarina.Instances.Queries,
+    Ocarina.ME_AADL,
+    Ocarina.ME_AADL.AADL_Instances.Entities,
+    Ocarina.ME_AADL.AADL_Instances.Nodes,
+    Ocarina.ME_AADL.AADL_Instances.Nutils,
+    Ocarina.Backends.Properties,
+    Buildsupport_Utils,
+    GNAT.OS_Lib,
+    Imported_Routines;
 
 procedure BuildSupport is
-
-   use Ada.Text_IO;
-   use Ada.Characters.Handling;
-
-   use Locations;
-   use Namet;
-   use Types;
-
-   use Ocarina;
-   use Ocarina.Analyzer;
-   use Ocarina.Backends.Properties;
-   use Ocarina.Instances;
-   use Ocarina.Instances.Queries;
-   use Ocarina.ME_AADL;
-   use Ocarina.ME_AADL.AADL_Instances.Entities;
-   use Ocarina.ME_AADL.AADL_Instances.Nodes;
-   use Ocarina.ME_AADL.AADL_Instances.Nutils;
-   use Buildsupport_Utils;
 
    package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
 
@@ -157,21 +155,19 @@ procedure BuildSupport is
       if not Is_Empty (Subcomponents (My_System)) then
          --  Set the output directory
          if OutDir > 0 then
-            Imported_Routines.C_Set_OutDir
-              (Ada.Command_Line.Argument (Outdir),
-               Ada.Command_Line.Argument (Outdir)'Length);
+            C_Set_OutDir (Ada.Command_Line.Argument (Outdir),
+                          Ada.Command_Line.Argument (Outdir)'Length);
          end if;
 
          --  Set the stack value
          if Stack_Val > 0 then
-            Imported_Routines.C_Set_Stack
-              (Ada.Command_Line.Argument (stack_val),
-               Ada.Command_Line.Argument (stack_val)'Length);
+            C_Set_Stack (Ada.Command_Line.Argument (stack_val),
+                         Ada.Command_Line.Argument (stack_val)'Length);
          end if;
 
          --  Set the timer resolution value
          if Timer_Resolution > 0 then
-            Imported_Routines.C_Set_Timer_Resolution
+            C_Set_Timer_Resolution
               (Ada.Command_Line.Argument (Timer_Resolution),
                Ada.Command_Line.Argument (Timer_Resolution)'Length);
          end if;
@@ -186,7 +182,7 @@ procedure BuildSupport is
 
                --  Call C function "New_FV" and set the language
 
-                  Imported_Routines.C_New_FV
+                  C_New_FV
                     (Get_Name_String (Name (Identifier (Current_Function))),
                      Get_Name_String
                        (Name (Identifier (Current_Function)))'Length,
@@ -201,59 +197,25 @@ procedure BuildSupport is
                        := Get_Source_Language (CI);
                   begin
                      case Source_Language is
-                        when Language_Ada_95 =>
-                           Imported_Routines.C_Set_Language_To_Ada;
-
-                        when Language_C =>
-                           Imported_Routines.C_Set_Language_To_C;
-
-                        when Language_CPP =>
-                           Imported_Routines.C_Set_Language_To_CPP;
-
-                        when Language_VDM =>
-                           Imported_Routines.C_Set_Language_To_VDM;
-
-                        when Language_SDL_OpenGEODE =>
-                           Imported_Routines.C_Set_Language_To_SDL;
-
-                        when Language_Scade =>
-                           Imported_Routines.C_Set_Language_To_Scade;
-
-                        when Language_Lustre =>
-                           Imported_Routines.C_Set_Language_To_Scade;
-
-                        when Language_SDL =>
-                           Imported_Routines.C_Set_Language_To_SDL;
-
-                        when Language_SDL_RTDS =>
-                           Imported_Routines.C_Set_Language_To_RTDS;
-
-                        when Language_Simulink =>
-                           Imported_Routines.C_Set_Language_To_Simulink;
-
-                        when Language_Rhapsody =>
-                           Imported_Routines.C_Set_Language_To_Rhapsody;
-
-                        when Language_Gui =>
-                           Imported_Routines.C_Set_Language_To_GUI;
-
-                        when Language_VHDL =>
-                           Imported_Routines.C_Set_Language_To_VHDL;
-
-                        when Language_System_C =>
-                           Imported_Routines.C_Set_Language_To_System_C;
-
+                        when Language_Ada_95 => C_Set_Language_To_Ada;
+                        when Language_C => C_Set_Language_To_C;
+                        when Language_CPP => C_Set_Language_To_CPP;
+                        when Language_VDM => C_Set_Language_To_VDM;
+                        when Language_SDL_OpenGEODE => C_Set_Language_To_SDL;
+                        when Language_Scade => C_Set_Language_To_Scade;
+                        when Language_Lustre => C_Set_Language_To_Scade;
+                        when Language_SDL => C_Set_Language_To_SDL;
+                        when Language_SDL_RTDS => C_Set_Language_To_RTDS;
+                        when Language_Simulink => C_Set_Language_To_Simulink;
+                        when Language_Rhapsody => C_Set_Language_To_Rhapsody;
+                        when Language_Gui => C_Set_Language_To_GUI;
+                        when Language_VHDL => C_Set_Language_To_VHDL;
+                        when Language_System_C => C_Set_Language_To_System_C;
                         when Language_Device =>
-                        Imported_Routines.C_Set_Language_To_BlackBox_Device;
-
-                        when Language_QGenAda =>
-                           Imported_Routines.C_Set_Language_To_QGenAda;
-
-                        when Language_QGenC =>
-                           Imported_Routines.C_Set_Language_To_QGenC;
-
-                        when others =>
-                           Imported_Routines.C_Set_Language_To_Other;
+                           C_Set_Language_To_BlackBox_Device;
+                        when Language_QGenAda => C_Set_Language_To_QGenAda;
+                        when Language_QGenC => C_Set_Language_To_QGenC;
+                        when others => C_Set_Language_To_Other;
                      end case;
                   end;
                   declare
@@ -265,9 +227,8 @@ procedure BuildSupport is
                         ZipId := SourceText (1);
                      end if;
                      if ZipId /= No_Name then
-                        Imported_Routines.C_Set_Zipfile
-                          (Get_Name_String (ZipId),
-                           Get_Name_String (ZipId)'Length);
+                        C_Set_Zipfile (Get_Name_String (ZipId),
+                                       Get_Name_String (ZipId)'Length);
                      end if;
                   end;
 
@@ -301,17 +262,17 @@ procedure BuildSupport is
                                Corresponding_Instance (FV_Subco);
 
                               FS_type : constant String :=
-                               Get_Name_String
-                                (Get_Type_Source_Name (Asn1type));
+                                         Get_Name_String
+                                             (Get_Type_Source_Name (Asn1type));
                               --  Variable default value
                               FS_value : constant String :=
-                               Get_Name_String (Get_String_Property
-                                (Asn1type, "taste::fs_default_value"));
+                                     Get_Name_String (Get_String_Property
+                                        (Asn1type, "taste::fs_default_value"));
                               FS_module : constant String :=
-                                Get_ASN1_Module_Name (Asn1type);
+                                               Get_ASN1_Module_Name (Asn1type);
                               --  ASN.1 filename
                               NA : constant Name_Array :=
-                               Get_Source_Text (Asn1type);
+                                                    Get_Source_Text (Asn1type);
                               FS_File : Unbounded_String;
                            begin
                               --  Some special DATA components have no
@@ -323,14 +284,14 @@ procedure BuildSupport is
                               else
                                  FS_File := To_Unbounded_String ("dummy");
                               end if;
-                              Imported_Routines.C_Set_Context_Variable
-                               (FS_name, FS_name'Length,
-                                FS_type, FS_type'Length,
-                                FS_value, FS_value'Length,
-                                FS_module, FS_module'Length,
-                                To_String (FS_file),
-                                To_String (FS_file)'Length,
-                                FS_Fullname);
+                              C_Set_Context_Variable
+                                               (FS_name, FS_name'Length,
+                                                FS_type, FS_type'Length,
+                                                FS_value, FS_value'Length,
+                                                FS_module, FS_module'Length,
+                                                To_String (FS_file),
+                                                To_String (FS_file)'Length,
+                                                FS_Fullname);
                            end;
                         end if;
                         FV_Subco := Next_Node (FV_Subco);
@@ -359,16 +320,14 @@ procedure BuildSupport is
                               begin
                                  PI_Name := Get_Interface_Name (If_I);
                                  if PI_Name /= No_Name then
-                                    Imported_Routines.C_Add_PI
-                                        (Get_Name_String (PI_Name),
-                                         Get_Name_String (PI_Name)'Length);
+                                    C_Add_PI (Get_Name_String (PI_Name),
+                                             Get_Name_String (PI_Name)'Length);
                                  else
                                     --  Keep compatibility with V1.2
                                     if not Keep_case then
                                        PI_string := to_lower (PI_string);
                                     end if;
-                                    Imported_Routines.C_Add_PI
-                                       (PI_String, PI_String'Length);
+                                    C_Add_PI (PI_String, PI_String'Length);
                                  end if;
                               end;
 
@@ -378,7 +337,7 @@ procedure BuildSupport is
                                  (Corresponding_Instance (If_I),
                                  "taste::associated_queue_size")
                               then
-                                 Imported_Routines.C_Set_Interface_Queue_Size
+                                 C_Set_Interface_Queue_Size
                                     (Get_Integer_Property
                                        (Corresponding_Instance (If_I),
                                        "taste::associated_queue_size"));
@@ -390,28 +349,27 @@ procedure BuildSupport is
 
                               case Operation_Kind is
                                  when Cyclic_Operation =>
-                                    Imported_Routines.C_Set_Cyclic_IF;
+                                    C_Set_Cyclic_IF;
 
                                  when Sporadic_Operation =>
-                                    Imported_Routines.C_Set_Sporadic_IF;
+                                    C_Set_Sporadic_IF;
 
                                  when Variator_Operation
                                    | Modifier_Operation =>
-                                    Imported_Routines.C_Set_Variator_IF;
+                                    C_Set_Variator_IF;
 
                                  when Protected_Operation =>
-                                    Imported_Routines.C_Set_Protected_IF;
+                                    C_Set_Protected_IF;
 
                                  when Unprotected_Operation =>
-                                    Imported_Routines.C_Set_Unprotected_IF;
+                                    C_Set_Unprotected_IF;
 
                                  when others =>
-                                    Imported_Routines.C_Set_UndefinedKind_IF;
+                                    C_Set_UndefinedKind_IF;
                               end case;
 
                               --  Set the period or MIAT of the PI
-                              Imported_Routines.C_Set_Period
-                                 (Get_RCM_Period (If_I));
+                              C_Set_Period (Get_RCM_Period (If_I));
 
                               --  Set the WCET of the PI
                               if Is_Subprogram_Access (If_I) and then
@@ -432,13 +390,12 @@ procedure BuildSupport is
                                        (Item
                                           (First_Node (Sources (If_I)))));
                                  begin
-                                    Imported_Routines.C_Set_Compute_Time
+                                    C_Set_Compute_Time
                                      (To_Milliseconds (Exec_Time (0)), "ms", 2,
                                      To_Milliseconds (Exec_Time (1)), "ms", 2);
                                  end;
                               else
-                                 Imported_Routines.C_Set_Compute_Time
-                                    (0, "ms", 2, 0, "ms", 2);
+                                 C_Set_Compute_Time (0, "ms", 2, 0, "ms", 2);
                                  --  Default !
                               end if;
 
@@ -510,7 +467,7 @@ procedure BuildSupport is
                               --   (2) the name of the distant function
                               --   (3) the name of the corresponding PI
                               if Present (Distant_FV) then
-                                 Imported_Routines.C_Add_RI
+                                 C_Add_RI
                                     (Get_Name_String (Local_RI_Name),
                                      Get_Name_String (Local_RI_Name)'Length,
                                      Get_Name_String
@@ -521,7 +478,7 @@ procedure BuildSupport is
                                      Get_Name_String (Distant_PI_Name),
                                      Get_Name_String (Distant_PI_Name)'Length);
                               else
-                                 Imported_Routines.C_Add_RI
+                                 C_Add_RI
                                     (Get_Name_String (Local_RI_Name),
                                      Get_Name_String (Local_RI_Name)'Length,
                                      Get_Name_String (Local_RI_Name),
@@ -537,25 +494,25 @@ procedure BuildSupport is
 
                               case Operation_Kind is
                                  when Sporadic_Operation =>
-                                    Imported_Routines.C_Set_ASync_IF;
-                                    Imported_Routines.C_Set_Sporadic_IF;
+                                    C_Set_ASync_IF;
+                                    C_Set_Sporadic_IF;
 
                                  when Variator_Operation
                                    | Modifier_Operation =>
-                                    Imported_Routines.C_Set_ASync_IF;
-                                    Imported_Routines.C_Set_Variator_IF;
+                                    C_Set_ASync_IF;
+                                    C_Set_Variator_IF;
 
                                  when Protected_Operation =>
-                                    Imported_Routines.C_Set_Sync_IF;
-                                    Imported_Routines.C_Set_Protected_IF;
+                                    C_Set_Sync_IF;
+                                    C_Set_Protected_IF;
 
                                  when Unprotected_Operation =>
-                                    Imported_Routines.C_Set_Sync_IF;
-                                    Imported_Routines.C_Set_Unprotected_IF;
+                                    C_Set_Sync_IF;
+                                    C_Set_Unprotected_IF;
 
                                  when others =>
-                                    Imported_Routines.C_Set_ASync_IF;
-                                    Imported_Routines.C_Set_UndefinedKind_IF;
+                                    C_Set_ASync_IF;
+                                    C_Set_UndefinedKind_IF;
                               end case;
                            end if;
 
@@ -591,7 +548,7 @@ procedure BuildSupport is
                                        "Error: Data Model is incorrect.");
 
                                     if Is_In (Param_I) then
-                                       Imported_Routines.C_Add_In_Param
+                                       C_Add_In_Param
                                          (Get_Name_String
                                             (Display_Name
                                                 (Identifier (Param_I))),
@@ -606,7 +563,7 @@ procedure BuildSupport is
                                           Get_Name_String
                                              (ASN1_Filename)'Length);
                                     else
-                                       Imported_Routines.C_Add_Out_Param
+                                       C_Add_Out_Param
                                          (Get_Name_String
                                             (Display_Name
                                                 (Identifier (Param_I))),
@@ -626,14 +583,10 @@ procedure BuildSupport is
 
                                     Encoding := Get_ASN1_Encoding (Param_I);
                                     case Encoding is
-                                       when Native =>
-                                       Imported_Routines.C_Set_Native_Encoding;
-                                       when UPER =>
-                                       Imported_Routines.C_Set_UPER_Encoding;
-                                       when ACN =>
-                                       Imported_Routines.C_Set_ACN_Encoding;
-                                       when others =>
-                                       null;
+                                       when Native => C_Set_Native_Encoding;
+                                       when UPER   => C_Set_UPER_Encoding;
+                                       when ACN    => C_Set_ACN_Encoding;
+                                       when others => null;
                                     end case;
 
                                     --  Get ASN.1 basic type of the parameter
@@ -642,29 +595,29 @@ procedure BuildSupport is
                                     case Basic_Type is
                                        pragma Style_Checks (Off);
                                        when Asn1_Sequence =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Sequence;
+                                          C_Set_ASN1_BasicType_Sequence;
                                        when ASN1_SequenceOf =>
-                                          Imported_routines.C_Set_ASN1_BasicType_SequenceOf;
+                                          C_Set_ASN1_BasicType_SequenceOf;
                                        when ASN1_Enumerated =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Enumerated;
+                                          C_Set_ASN1_BasicType_Enumerated;
                                        when ASN1_Set =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Set;
+                                          C_Set_ASN1_BasicType_Set;
                                        when ASN1_SetOf =>
-                                          Imported_routines.C_Set_ASN1_BasicType_SetOf;
+                                          C_Set_ASN1_BasicType_SetOf;
                                        when ASN1_Integer =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Integer;
+                                          C_Set_ASN1_BasicType_Integer;
                                        when ASN1_Boolean =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Boolean;
+                                          C_Set_ASN1_BasicType_Boolean;
                                        when ASN1_Real =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Real;
+                                          C_Set_ASN1_BasicType_Real;
                                        when ASN1_OctetString =>
-                                          Imported_routines.C_Set_ASN1_BasicType_OctetString;
+                                          C_Set_ASN1_BasicType_OctetString;
                                        when ASN1_Choice =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Choice;
+                                          C_Set_ASN1_BasicType_Choice;
                                        when ASN1_String =>
-                                          Imported_routines.C_Set_ASN1_BasicType_String;
+                                          C_Set_ASN1_BasicType_String;
                                        when others =>
-                                          Imported_routines.C_Set_ASN1_BasicType_Unknown;
+                                          C_Set_ASN1_BasicType_Unknown;
                                           pragma Style_Checks (On);
                                     end case;
                                  end if;
@@ -673,14 +626,14 @@ procedure BuildSupport is
                               end loop;
                            end if; -- End processing parameters.
 
-                           Imported_Routines.C_End_IF;
+                           C_End_IF;
                         end if;
 
                         If_I := Next_Node (If_I);
                      end loop; -- Go to next interface of this FV
 
                   end if;
-                  Imported_Routines.C_End_FV;
+                  C_End_FV;
             end if;
             Current_Function := Next_Node (Current_Function);
          end loop;
@@ -730,7 +683,7 @@ procedure BuildSupport is
             --  the Glue flag
 
             if generate_glue then
-               Imported_Routines.C_Set_Glue;
+               C_Set_Glue;
             end if;
 
             --  Put_Line (Get_Name_String
@@ -755,8 +708,8 @@ procedure BuildSupport is
                        (Corresponding_Declaration
                         (My_Root_System))));
             begin
-               Imported_routines.C_Set_Root_node
-                 (My_Root_System_Name, My_Root_System_Name'Length);
+               C_Set_Root_node
+                   (My_Root_System_Name, My_Root_System_Name'Length);
             end;
 
             if not Is_Empty (Subcomponents (My_Root_System)) then
@@ -770,15 +723,26 @@ procedure BuildSupport is
                          (CI, Get_Name_String (Name (Identifier (Subs))));
                   elsif Get_Category_Of_Component (CI) = CC_Bus then
                      declare
+                        --  Get the list of properties attaches to the bus
+                        Properties : constant List_Id :=
+                          Ocarina.ME_AADL.AADL_Instances.Nodes.Properties (CI);
+                        Property : Node_Id := First_Node (Properties);
                         Bus_Classifier : Name_Id := No_Name;
                         Pkg_Name : Name_Id := No_Name;
                      begin
+                        while Present (Property) loop
+                           --  TODO
+                           null;
+--                          Put_Line ("Bus property found");
+--                          Put_Line (Get_Name_String
+--                                     (Display_Name (Identifier (Property))));
+--                          Put_Line ("Value: I don't know");
+                           Property := Next_Node (Property);
+                        end loop;
                         Set_Str_To_Name_Buffer ("");
                         if ATN.Namespace
-                            (Corresponding_Declaration
-                              (CI)) /= No_Node
+                            (Corresponding_Declaration (CI)) /= No_Node
                         then
-
                            Set_Str_To_Name_Buffer ("");
                            Get_Name_String
                               (ATN.Name
@@ -786,7 +750,7 @@ procedure BuildSupport is
                                     (ATN.Namespace
                                        (Corresponding_Declaration (CI)))));
                            Pkg_Name := Name_Find;
-                           Imported_Routines.C_Add_Package
+                           C_Add_Package
                               (Get_Name_String (Pkg_Name),
                               Get_Name_String (Pkg_Name)'Length);
                            Set_Str_To_Name_Buffer ("");
@@ -798,12 +762,12 @@ procedure BuildSupport is
                         else
                            Bus_Classifier := Name (Identifier (CI));
                         end if;
-                        Imported_Routines.C_New_Bus
+                        C_New_Bus
                          (Get_Name_String (Name (Identifier (Subs))),
                           Get_Name_String (Name (Identifier (Subs)))'Length,
                           Get_Name_String (Bus_Classifier),
                           Get_Name_String (Bus_Classifier)'Length);
-                        Imported_Routines.C_End_Bus;
+                        C_End_Bus;
                      end;
                   end if;
                   Subs := Next_Node (Subs);
@@ -820,101 +784,40 @@ procedure BuildSupport is
    procedure Load_Deployment_View_Properties (Root_Tree : in out Node_Id) is
       Loc : Location;
       F : Name_Id;
+      package Vectors is new Ada.Containers.Indefinite_Vectors (Natural,
+                                                                String);
+      use Vectors;
+      AADL_Lib : Vectors.Vector;
+
    begin
       if Root_Tree = No_Node then
          return;
       end if;
+      AADL_Lib := AADL_Lib &
+                  Ada.Command_Line.Argument (Interface_View) &
+                  "aadl_project.aadl" &
+                  "taste_properties.aadl" &
+                  "Cheddar_Properties.aadl" &
+                  "communication_properties.aadl" &
+                  "deployment_properties.aadl" &
+                  "thread_properties.aadl" &
+                  "timing_properties.aadl" &
+                  "programming_properties.aadl" &
+                  "memory_properties.aadl" &
+                  "modeling_properties.aadl" &
+                  "arinc653_properties.aadl" &
+                  "base_types.aadl" &
+                  "data_model.aadl" &
+                  "deployment.aadl";
 
       Ocarina.FE_AADL.Parser.Add_Pre_Prop_Sets := True;
-      Set_Str_To_Name_Buffer ("aadl_project.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
 
-      Set_Str_To_Name_Buffer ("taste_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("Cheddar_Properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("communication_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("deployment_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("thread_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("timing_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("programming_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("memory_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("modeling_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("arinc653_properties.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer (Ada.Command_Line.Argument (Interface_View));
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("base_types.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("data_model.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
-
-      Set_Str_To_Name_Buffer ("deployment.aadl");
-      F := Ocarina.Files.Search_File (Name_Find);
-      Loc := Ocarina.Files.Load_File (F);
-      Root_Tree := Ocarina.Parser.Parse
-        (AADL_Language, Root_Tree, Loc);
+      for each of AADL_Lib loop
+         Set_Str_To_Name_Buffer (each);
+         F := Ocarina.Files.Search_File (Name_Find);
+         Loc := Ocarina.Files.Load_File (F);
+         Root_Tree := Ocarina.Parser.Parse (AADL_Language, Root_Tree, Loc);
+      end loop;
    end Load_Deployment_View_Properties;
 
    -----------------------------------
@@ -969,7 +872,7 @@ procedure BuildSupport is
                                                   (Identifier (Dst_Port))));
                end if;
 --             Put_Line (To_String (Src_Name) & " -> " & To_String (Dst_Name));
-               Imported_Routines.C_New_Connection
+               C_New_Connection
                   (Get_Name_String
                      (Name (Identifier
                         (Parent_Subcomponent
@@ -993,7 +896,7 @@ procedure BuildSupport is
                    To_String (Dst_Name),
                    To_String (Dst_Name)'Length);
 
---               Imported_Routines.C_New_Connection
+--               C_New_Connection
 --                  (Get_Name_String
 --                     (Name (Identifier
 --                        (Parent_Subcomponent
@@ -1020,14 +923,14 @@ procedure BuildSupport is
 --                         (Display_Name (Identifier (Dst_Port))),
 --                   Get_Name_String
 --                         (Display_Name (Identifier (Dst_Port)))'Length);
-               Imported_Routines.C_End_Connection;
+               C_End_Connection;
             end if;
             Conn := Next_Node (Conn);
          end loop;
       end if;
 
       if not Is_Empty (Subcomponents (My_System)) then
-         Imported_Routines.C_New_Drivers_Section;
+         C_New_Drivers_Section;
          Processes := First_Node (Subcomponents (My_System));
 
          while Present (Processes) loop
@@ -1137,7 +1040,7 @@ procedure BuildSupport is
                        (ATN.Namespace
                         (Corresponding_Declaration (Tmp_CI)))));
                      Pkg_Name := Name_Find;
-                     Imported_Routines.C_Add_Package
+                     C_Add_Package
                         (Get_Name_String (Pkg_Name),
                          Get_Name_String (Pkg_Name)'Length);
                      Set_Str_To_Name_Buffer ("");
@@ -1182,7 +1085,7 @@ procedure BuildSupport is
                   end if;
 
                   if Associated_Processor_Name /= No_Name then
-                     Imported_Routines.C_New_Device
+                     C_New_Device
                         (Get_Name_String (Name (Identifier (Processes))),
                          Get_Name_String
                            (Name (Identifier (Processes)))'Length,
@@ -1202,7 +1105,7 @@ procedure BuildSupport is
                          Device_ASN1_Typename_Len,
                          Get_Name_String (Device_ASN1_Module),
                          Device_ASN1_Module_Len);
-                     Imported_Routines.C_End_Device;
+                     C_End_Device;
                   end if;
                end;
             end if;
@@ -1226,17 +1129,12 @@ procedure BuildSupport is
 
                   CPU := Get_Bound_Processor (Tmp_CI);
                   Set_Str_To_Name_Buffer ("");
-                  CPU_Name := Name
-                        (Identifier
-                           (Parent_Subcomponent (CPU)));
+                  CPU_Name := Name (Identifier (Parent_Subcomponent (CPU)));
 
                   CPU_Platform := Get_Execution_Platform (CPU);
 
-                  if ATN.Namespace
-                     (Corresponding_Declaration
-                        (CPU)) /= No_Node
+                  if ATN.Namespace (Corresponding_Declaration (CPU)) /= No_Node
                   then
-
                      Set_Str_To_Name_Buffer ("");
                      Get_Name_String
                         (ATN.Name
@@ -1244,7 +1142,7 @@ procedure BuildSupport is
                               (ATN.Namespace
                                  (Corresponding_Declaration (CPU)))));
                      Pkg_Name := Name_Find;
-                     Imported_Routines.C_Add_Package
+                     C_Add_Package
                         (Get_Name_String (Pkg_Name),
                         Get_Name_String (Pkg_Name)'Length);
                      Set_Str_To_Name_Buffer ("");
@@ -1256,7 +1154,7 @@ procedure BuildSupport is
                      CPU_Classifier := Name (Identifier (CPU));
                   end if;
 
-                  Imported_Routines.C_New_Processor
+                  C_New_Processor
                      (Get_Name_String (CPU_Name),
                      Get_Name_String (CPU_Name)'Length,
                      Get_Name_String (CPU_Classifier),
@@ -1264,7 +1162,7 @@ procedure BuildSupport is
                      Supported_Execution_Platform'Image (CPU_Platform),
                      Supported_Execution_Platform'Image (CPU_Platform)'Length);
 
-                  Imported_Routines.C_New_Process
+                  C_New_Process
                      (Get_Name_String
                         (ATN.Name
                            (ATN.Component_Type_Identifier
@@ -1310,7 +1208,7 @@ procedure BuildSupport is
                                          (Name (Identifier (Processes2))));
                               end;
 
-                              Imported_Routines.C_Add_Binding
+                              C_Add_Binding
                                  (To_String (Bound_APLC_Name),
                                   To_String (Bound_APLC_Name)'Length);
                            end;
@@ -1320,13 +1218,13 @@ procedure BuildSupport is
                      Processes2 := Next_Node (Processes2);
                   end loop;
 
-                  Imported_Routines.C_End_Process;
+                  C_End_Process;
                end;
             end if;
 
             Processes := Next_Node (Processes);
          end loop;
-         Imported_Routines.C_End_Drivers_Section;
+         C_End_Drivers_Section;
       end if;
    end Browse_Deployment_View_System;
 
@@ -1376,14 +1274,14 @@ procedure BuildSupport is
            or else Ada.Command_Line.Argument (J) = "-p"
            or else Ada.Command_Line.Argument (J) = "-polyorb-hi-c"
          then
-            Imported_Routines.C_Set_PolyORBHI_C;
+            C_Set_PolyORBHI_C;
 
          elsif Ada.Command_Line.Argument (J) = "--keep-case"
            or else Ada.Command_Line.Argument (J) = "-j"
            or else Ada.Command_Line.Argument (J) = "-keep-case"
          then
             Keep_case := true;
-            Imported_Routines.C_Keep_case;
+            C_Keep_case;
 
          elsif Ada.Command_Line.Argument (J) = "--glue"
            or else Ada.Command_Line.Argument (J) = "-glue"
@@ -1394,13 +1292,13 @@ procedure BuildSupport is
          elsif Ada.Command_Line.Argument (J) = "--smp2"
            or else Ada.Command_Line.Argument (J) = "-m"
          then
-            Imported_Routines.C_Set_SMP2;
+            C_Set_SMP2;
 
          elsif Ada.Command_Line.Argument (J) = "--gw"
            or else Ada.Command_Line.Argument (J) = "-gw"
            or else Ada.Command_Line.Argument (J) = "-w"
          then
-            Imported_Routines.C_Set_Gateway;
+            C_Set_Gateway;
 
          --  The "test" flag activates a function in buildsupport,
          --  used for debugging purposes (e.g. dump of the model after
@@ -1409,7 +1307,7 @@ procedure BuildSupport is
            or else Ada.Command_Line.Argument (J) = "-test"
            or else Ada.Command_Line.Argument (J) = "-t"
          then
-            Imported_Routines.C_Set_Test;
+            C_Set_Test;
 
          elsif Ada.Command_Line.Argument (J) = "--aadlv2"
            or else Ada.Command_Line.Argument (J) = "-aadlv2"
@@ -1418,7 +1316,7 @@ procedure BuildSupport is
             AADL_Version := Ocarina.AADL_V2;
 
          elsif Ada.Command_Line.Argument (J) = "--future" then
-            Imported_Routines.C_Set_Future;
+            C_Set_Future;
 
          elsif Ada.Command_Line.Argument (J) = "--output"
            or else Ada.Command_Line.Argument (J) = "-o"
@@ -1460,7 +1358,7 @@ procedure BuildSupport is
          elsif Ada.Command_Line.Argument (J) = "--debug"
            or else Ada.Command_Line.Argument (J) = "-g"
          then
-            Imported_Routines.C_Set_Debug_Messages;
+            C_Set_Debug_Messages;
 
          elsif Ada.Command_Line.Argument (J) = "--help"
            or else Ada.Command_Line.Argument (J) = "-h"
@@ -1517,7 +1415,7 @@ procedure BuildSupport is
          OS_Exit (1);
       end if;
 
-      Imported_Routines.C_Init;
+      C_Init;
       Ocarina.Initialize;
       Ocarina.AADL_Version := AADL_Version;
 
@@ -1528,7 +1426,7 @@ procedure BuildSupport is
 
       Parse_Command_Line;
 
-      Imported_Routines.C_Set_AADLV2;
+      C_Set_AADLV2;
 
       Buildsupport_Utils.Init;
 
@@ -1537,7 +1435,7 @@ procedure BuildSupport is
       FN := Ocarina.Files.Search_File (Name_Find);
       Exit_On_Error (FN = No_Name, "Error: Missing Interface view!");
       B := Ocarina.Files.Load_File (FN);
-      Imported_Routines.C_Set_Interfaceview
+      C_Set_Interfaceview
        (Ada.Command_Line.Argument (Interface_View),
         Ada.Command_Line.Argument (Interface_View)'Length);
       Interface_Root := Ocarina.Parser.Parse
@@ -1572,7 +1470,7 @@ procedure BuildSupport is
          FN := Ocarina.Files.Search_File (Name_Find);
 
          Exit_On_Error (FN = No_Name, "Cannot find Data View");
-         Imported_Routines.C_Set_Dataview
+         C_Set_Dataview
             (Ada.Command_Line.Argument (Data_View),
             Ada.Command_Line.Argument (Data_View)'Length);
          B := Ocarina.Files.Load_File (FN);
@@ -1623,7 +1521,7 @@ begin
 
    Process_Deployment_View (Deployment_Root);
 
-   Imported_Routines.C_End;
+   C_End;
    Ocarina.Configuration.Reset_Modules;
    Ocarina.Reset;
 exception

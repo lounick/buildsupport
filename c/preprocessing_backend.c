@@ -1133,7 +1133,7 @@ void Set_Ignore_Params(FV *fv)
             FOREACH (remote, FV, Find_All_Calling_FV(i), {
                 if (strcmp(remote->process->name, fv->process->name)) {
                     i->ignore_params = false;
-                    printf("set PI %s->ignore_params to FALSE", i->name);
+                    //printf("set PI %s->ignore_params to FALSE", i->name);
                     distant_RI = FindCorrespondingRI(remote, i);
                     if (NULL != distant_RI) {
                         distant_RI->ignore_params = false;
