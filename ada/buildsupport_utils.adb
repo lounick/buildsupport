@@ -5,10 +5,11 @@
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 
---  with Imported_Routines;
 with Namet;
 with Ocarina.Configuration;
+with Ocarina.AADL_Values;
 with Ocarina.Instances.Queries;
+with Ocarina.ME_AADL.AADL_Tree.Nodes;
 with Ocarina.ME_AADL.AADL_Instances.Nodes;
 with Ocarina.ME_AADL.AADL_Instances.Nutils;
 with Ada.Characters.Latin_1;
@@ -23,6 +24,8 @@ package body Buildsupport_Utils is
    use Ocarina.ME_AADL.AADL_Instances.Nodes;
    use Ocarina.ME_AADL.AADL_Instances.Nutils;
    use Ada.Characters.Latin_1;
+   package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
+   use type ATN.Node_Kind;
 
    ------------
    -- Banner --
@@ -244,6 +247,49 @@ package body Buildsupport_Utils is
          return Get_Name_String (Get_String_Name ("nomodule"));
       end if;
    end Get_ASN1_Module_Name;
+
+   --------------------------------------------
+   -- Get all properties as a Map Key/String --
+   -- Input parameter is an AADL instance    --
+   --------------------------------------------
+   function Get_Properties_Map (D : Node_Id) return Property_Maps.Map is
+      properties : constant List_Id :=
+                          Ocarina.ME_AADL.AADL_Instances.Nodes.Properties (D);
+      result     : Property_Maps.Map := Empty_Map;
+      property   : Node_Id := First_Node (properties);
+   begin
+      while Present (property) loop
+         Put (Get_Name_String (Display_Name (Identifier (property))));
+         Put_Line (" of kind " & ATN.Kind (property)'Img);
+         result.Insert (Key => Get_Name_String
+                                      (Display_Name (Identifier (property))),
+                        New_Item =>
+             (case ATN.Kind (property) is
+                when ATN.K_Signed_AADLNumber =>
+                  Ocarina.AADL_Values.Image
+                      (ATN.Value (ATN.Number_Value (property))) &
+                      (if Present (ATN.Unit_Identifier (property)) then " " &
+                      Get_Name_String
+                          (ATN.Display_Name (ATN.Unit_Identifier (property)))
+                      else ""),
+                when ATN.K_Literal =>
+                   Ocarina.AADL_Values.Image (ATN.Value (property),
+                                              Quoted => False),
+                when ATN.K_Reference_Term =>
+                   Get_Name_String
+                      (ATN.Display_Name (ATN.First_Node --  XXX must iterate
+                         (ATN.List_Items (ATN.Reference_Term (property))))),
+                when ATN.K_Enumeration_Term =>
+                   Get_Name_String
+                      (ATN.Display_Name (ATN.Identifier (property))),
+                when ATN.K_Number_Range_Term =>
+                   "RANGE NOT SUPPORTED!",
+                when others => "ERROR! Unsupported kind: "
+                               & ATN.Kind (property)'Img));
+         property := Next_Node (property);
+      end loop;
+      return result;
+   end Get_Properties_Map;
 
    -----------------------
    -- Get_ASN1_Encoding --

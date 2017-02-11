@@ -1,13 +1,14 @@
 --  *************************** buildsupport ****************************  --
---  (c) 2015 European Space Agency - maxime.perrotin@esa.int
+--  (c) 2017 European Space Agency - maxime.perrotin@esa.int
 --  LGPL license, see LICENSE file
 
 --  Set of helper functions for buildsupport
-with Ocarina;
+with Ocarina,
+     Types,
+     Ada.Containers.Indefinite_Ordered_Maps;
 
-with Types;
-
-use Ocarina;
+use Ocarina,
+    Ada.Containers;
 
 package Buildsupport_Utils is
 
@@ -67,5 +68,11 @@ package Buildsupport_Utils is
    function Get_Interface_Name (D : Node_Id) return Name_Id;
 
    function Get_ASN1_Module_Name (D : Node_Id) return String;
+
+   package Property_Maps is new Indefinite_Ordered_Maps (String, String);
+
+   use Property_Maps;
+
+   function Get_Properties_Map (D : Node_Id) return Property_Maps.Map;
 
 end Buildsupport_Utils;

@@ -724,20 +724,14 @@ procedure BuildSupport is
                   elsif Get_Category_Of_Component (CI) = CC_Bus then
                      declare
                         --  Get the list of properties attaches to the bus
-                        Properties : constant List_Id :=
-                          Ocarina.ME_AADL.AADL_Instances.Nodes.Properties (CI);
-                        Property : Node_Id := First_Node (Properties);
+                        Properties : constant Property_Maps.Map :=
+                                                       Get_Properties_Map (CI);
                         Bus_Classifier : Name_Id := No_Name;
                         Pkg_Name : Name_Id := No_Name;
                      begin
-                        while Present (Property) loop
-                           --  TODO
-                           null;
---                          Put_Line ("Bus property found");
---                          Put_Line (Get_Name_String
---                                     (Display_Name (Identifier (Property))));
---                          Put_Line ("Value: I don't know");
-                           Property := Next_Node (Property);
+                        for each in Properties.Iterate loop
+                           Put_Line (Property_Maps.Key (each) & " : " &
+                                     Property_Maps.Element (each));
                         end loop;
                         Set_Str_To_Name_Buffer ("");
                         if ATN.Namespace
