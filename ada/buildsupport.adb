@@ -729,9 +729,11 @@ procedure BuildSupport is
                         Bus_Classifier : Name_Id := No_Name;
                         Pkg_Name : Name_Id := No_Name;
                      begin
+                        --  Iterate on the BUS Instance properties
                         for each in Properties.Iterate loop
-                           Put_Line (Property_Maps.Key (each) & " : " &
-                                     Property_Maps.Element (each));
+                           null;
+                           --  Put_Line (Property_Maps.Key (each) & " : " &
+                           --            Property_Maps.Element (each));
                         end loop;
                         Set_Str_To_Name_Buffer ("");
                         if ATN.Namespace

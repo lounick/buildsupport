@@ -262,16 +262,10 @@ package body Buildsupport_Utils is
       single_val : Node_Id;
    begin
       while Present (property) loop
-         --  pragma Assert (AIN.Kind (property) =
-         --               AIN.K_Property_Association_Instance);
          prop_value := AIN.Property_Association_Value (property);
-         --  prop_value is is of ATN.Kind K_Property_Value
-         --  Put (Get_Name_String (Display_Name (Identifier (property))));
-         --  Put_Line (" of kind " & AIN.Kind (property)'Img);
          if Present (ATN.Single_Value (prop_value)) then
             --  Only support single-value properties for now
             single_val := ATN.Single_Value (prop_value);
-            Put_Line (ATN.Kind (single_val)'Img); -- e.g. K_Literal!
             result.Insert (Key => Get_Name_String
                                       (Display_Name (Identifier (property))),
                         New_Item =>
