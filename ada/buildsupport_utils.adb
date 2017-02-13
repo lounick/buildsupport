@@ -25,6 +25,7 @@ package body Buildsupport_Utils is
    use Ocarina.ME_AADL.AADL_Instances.Nutils;
    use Ada.Characters.Latin_1;
    package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
+   package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
    use type ATN.Node_Kind;
 
    ------------
@@ -257,35 +258,46 @@ package body Buildsupport_Utils is
                           Ocarina.ME_AADL.AADL_Instances.Nodes.Properties (D);
       result     : Property_Maps.Map := Empty_Map;
       property   : Node_Id := First_Node (properties);
+      prop_value : Node_Id;
+      single_val : Node_Id;
    begin
       while Present (property) loop
-         Put (Get_Name_String (Display_Name (Identifier (property))));
-         Put_Line (" of kind " & ATN.Kind (property)'Img);
-         result.Insert (Key => Get_Name_String
+         --  pragma Assert (AIN.Kind (property) =
+         --               AIN.K_Property_Association_Instance);
+         prop_value := AIN.Property_Association_Value (property);
+         --  prop_value is is of ATN.Kind K_Property_Value
+         --  Put (Get_Name_String (Display_Name (Identifier (property))));
+         --  Put_Line (" of kind " & AIN.Kind (property)'Img);
+         if Present (ATN.Single_Value (prop_value)) then
+            --  Only support single-value properties for now
+            single_val := ATN.Single_Value (prop_value);
+            Put_Line (ATN.Kind (single_val)'Img); -- e.g. K_Literal!
+            result.Insert (Key => Get_Name_String
                                       (Display_Name (Identifier (property))),
                         New_Item =>
-             (case ATN.Kind (property) is
-                when ATN.K_Signed_AADLNumber =>
-                  Ocarina.AADL_Values.Image
-                      (ATN.Value (ATN.Number_Value (property))) &
-                      (if Present (ATN.Unit_Identifier (property)) then " " &
+              (case ATN.Kind (single_val) is
+                 when ATN.K_Signed_AADLNumber =>
+                   Ocarina.AADL_Values.Image
+                      (ATN.Value (ATN.Number_Value (single_val))) &
+                      (if Present (ATN.Unit_Identifier (single_val)) then " " &
                       Get_Name_String
-                          (ATN.Display_Name (ATN.Unit_Identifier (property)))
+                          (ATN.Display_Name (ATN.Unit_Identifier (single_val)))
                       else ""),
-                when ATN.K_Literal =>
-                   Ocarina.AADL_Values.Image (ATN.Value (property),
-                                              Quoted => False),
-                when ATN.K_Reference_Term =>
-                   Get_Name_String
-                      (ATN.Display_Name (ATN.First_Node --  XXX must iterate
-                         (ATN.List_Items (ATN.Reference_Term (property))))),
-                when ATN.K_Enumeration_Term =>
-                   Get_Name_String
-                      (ATN.Display_Name (ATN.Identifier (property))),
-                when ATN.K_Number_Range_Term =>
-                   "RANGE NOT SUPPORTED!",
-                when others => "ERROR! Unsupported kind: "
-                               & ATN.Kind (property)'Img));
+                 when ATN.K_Literal =>
+                    Ocarina.AADL_Values.Image (ATN.Value (single_val),
+                                               Quoted => False),
+                 when ATN.K_Reference_Term =>
+                    Get_Name_String
+                       (ATN.Display_Name (ATN.First_Node --  XXX must iterate
+                          (ATN.List_Items (ATN.Reference_Term (single_val))))),
+                 when ATN.K_Enumeration_Term =>
+                    Get_Name_String
+                       (ATN.Display_Name (ATN.Identifier (single_val))),
+                 when ATN.K_Number_Range_Term =>
+                    "RANGE NOT SUPPORTED!",
+                 when others => "ERROR! Unsupported kind: "
+                                & ATN.Kind (single_val)'Img));
+         end if;
          property := Next_Node (property);
       end loop;
       return result;

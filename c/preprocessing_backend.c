@@ -1137,7 +1137,7 @@ void Set_Ignore_Params(FV *fv)
                     distant_RI = FindCorrespondingRI(remote, i);
                     if (NULL != distant_RI) {
                         distant_RI->ignore_params = false;
-                    printf("set RI %s->ignore_params to FALSE", i->name);
+                    //printf("set RI %s->ignore_params to FALSE", i->name);
                     }
                 }
             });
