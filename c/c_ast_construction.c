@@ -1158,7 +1158,9 @@ FV_list *Find_All_Calling_FV(Interface * i)
                         add_error();
                     }
                 }
-                if (RI == iface->direction &&
+                if (NULL != iface->distant_name && NULL != i->name &&
+                    NULL != iface->distant_fv && NULL != i->parent_fv &&
+                    RI == iface->direction &&
                     !strcmp (iface->distant_name, i->name) &&
                     !strcmp (iface->distant_fv, i->parent_fv->name))
                         match = true;
