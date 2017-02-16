@@ -930,22 +930,25 @@ void GenerateProcessRefinement(Process *p)
 
 void GenerateProcessor(Process *p, Process_list *processes)
 {
-   FOREACH(p2, Process, processes, {
-      if (p2 == p) {
-         break;
-      }
+    FOREACH(p2, Process, processes, {
+       if (p2 == p) {
+          break;
+       }
 
-      if ( (p->cpu != NULL) &&
-           (p2->cpu != NULL) &&
-           (p2->cpu->name != NULL) &&
-           (p->cpu->name != NULL) &&
-           strcmp (p2->cpu->name, p->cpu->name) == 0) {
-         return;
-      }
-   })
+       if ( (p->cpu != NULL) &&
+            (p2->cpu != NULL) &&
+            (p2->cpu->name != NULL) &&
+            (p->cpu->name != NULL) &&
+            strcmp (p2->cpu->name, p->cpu->name) == 0) {
+          return;
+       }
+    })
 
-   fprintf(process, "%s : processor %s;\n", p->cpu->name, p->cpu->classifier);
-
+    if (NULL != p->cpu) {
+        fprintf(process, "%s : processor %s;\n",
+                         p->cpu->name,
+                         p->cpu->classifier);
+    }
 }
 
 /* External interface: Create the PROCESS IMPLEMENTATION part */

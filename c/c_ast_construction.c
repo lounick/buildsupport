@@ -1168,7 +1168,7 @@ FV_list *Find_All_Calling_FV(Interface * i)
             APPEND_TO_LIST (FV, result, function);
         }
     })
-    if (get_context()->test) {
+    if (get_context()->test && NULL != result) {
         printf("\n[Interface %s in FV %s] is called by:\n",
                 i->name,
                 i->parent_fv->name);

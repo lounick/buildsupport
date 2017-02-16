@@ -610,16 +610,13 @@ int CheckTestMode(Interface * i)
         (void) p;
         count_out++;
     })
-    
+
     if (count_in != count_out)
-        return -1;              /* not the same number of input and output parameters */
+        return -1;     /* not the same number of input and output parameters */
 
-    FOREACH(p, Parameter, i->in, { 
-        CheckInOutParams(p, p_result);
+    FOREACH(p, Parameter, i->in, {
+        if (false == CheckInOutParams(p, p_result)) return -1;
     })
-
-    if (NULL == p_result)
-        return -1;
 
     return 0;
 }

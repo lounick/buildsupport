@@ -137,7 +137,7 @@ void Clear_Aplc_bindings_List (Aplc_binding_list *p);
 void CheckForAsn1Params (Interface *i, int *result);
 
 /* Check if a list of input parameters match a list of output parameters. */
-void CheckInOutParams (Parameter *p_in, Parameter_list *p_out);
+bool CheckInOutParams (Parameter *p_in, Parameter_list *p_out);
 
 /* Check if a FV has context parameters (exclude Directives, Timers, etc.) */
 bool has_context_param(FV *fv);

@@ -150,7 +150,7 @@ void c_wrappers_preamble(FV * fv)
                 && vhdl  != fv->language) {
             fprintf (cfile, "#include \"%s.h\"\n\n", fv->name);
         }
-        else if (simulink == fv->language) {
+        else if (simulink == fv->language && NULL != fv->interfaces) {
             Interface *simulink_entrypoint = fv->interfaces->value;
             fprintf (cfile, "#include \"%s_Simulink.Simulink.h\"\n\n",
                             simulink_entrypoint->name);

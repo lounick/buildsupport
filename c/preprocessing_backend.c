@@ -1253,7 +1253,7 @@ void Preprocessing_Backend (System *s)
 
         /* If the caller is passive we must create one connection
          * per calling thread */
-        if (passive_runtime == caller->runtime_nature) {
+        if (passive_runtime == caller->runtime_nature && NULL != callee) {
             FOREACH (ct, FV, caller->calling_threads, {
                 New_Connection (
                     callee->name,   strlen (callee->name),
@@ -1266,7 +1266,7 @@ void Preprocessing_Backend (System *s)
             });
             APPEND_TO_LIST (Connection, connections_to_remove, cnt);
         }
-        else if (strcmp (callee->name, cnt->src_system)) {
+        else if (NULL != callee && strcmp (callee->name, cnt->src_system)) {
                 New_Connection (
                     callee->name,     strlen (callee->name),
                     cnt->src_port,    strlen (cnt->src_port),

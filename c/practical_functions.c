@@ -1054,15 +1054,17 @@ int CountActivePI(Interface_list *interfaces)
  * IMPORTANT : it must be checked first that the number of IN and OUT
  * parameters are the same (using CountParams)
  */
-void CheckInOutParams(Parameter * p_in, Parameter_list * p_out)
+bool CheckInOutParams(Parameter * p_in, Parameter_list * p_out)
 {
     if (NULL == p_out)
-        return;
+        return false;
 
-    if (0 == strcmp(p_in->type, p_out->value->type))
-        p_out = p_out->next;
-    else
-        p_out = NULL;
+    if (0 == strcmp(p_in->type, p_out->value->type)) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 /* 

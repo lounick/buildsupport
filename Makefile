@@ -2,6 +2,7 @@ GCCVERSION := $(shell gcc -v 2>&1 | grep ada | wc -l)
 UNAME := $(shell uname)
 VERSION=0.1
 
+CC=gcc
 exec = buildsupport
 
 sources = $(wildcard ada/*.ad? c/*.c include/*.h)
@@ -36,7 +37,7 @@ endif
 # We have to compile in C99 to support "long long" integers, as imposed by the "aadlinteger" type
 # -Wall -Werror -Wextra -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wctor-dtor-privacy -Wnon-virtual-dtor -Woverloaded-virtual -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wold-style-cast -Wno-error=old-style-cast -Wsign-promo -Wundef
 	#clang -c -Wall -Werror -Iinclude c/*.c
-	gcc -c -W -g3 -g -Wall -Werror -Wextra -Werror=format-security -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wno-error=old-style-cast -Wundef -std=c99 -pedantic -Iinclude c/*.c
+	$(CC) -c -W -g3 -g -Wall -Werror -Wextra -Werror=format-security -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wno-error=old-style-cast -Wundef -std=c99 -pedantic -Iinclude c/*.c
 	mv *.o tmpBuild/
 	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gnatmake -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
 #	strip $(exec)
