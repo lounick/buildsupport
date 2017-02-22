@@ -46,7 +46,7 @@ void vdm_gw_preamble(FV * fv)
                       "{\n"
                       "    //%s_const_init();\n"
                       "    //%s_static_init();\n"
-                      "    %s = _Z%u%sEV(NULL);\n"
+                      "    %s = _Z%lu%sEV(NULL);\n"
                       "    CALL_FUNC(%s, %s, %s, CLASS_%s__Z7StartupEV);\n"
                       "}\n\n",
                       fv->name,
