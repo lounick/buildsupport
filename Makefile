@@ -18,7 +18,7 @@ $(exec): $(sources)
 ifeq ($(UNAME), Linux)
 	@echo "package buildsupport_version is" > ada/buildsupport_version.ads.new
 	@echo -n "buildsupport_release : constant string := \"" >> ada/buildsupport_version.ads.new
-	@svnversion -n . >> ada/buildsupport_version.ads.new
+	@git log --oneline | head -1 | cut -f1 -d' ' >> ada/buildsupport_version.ads.new
 	@echo "\";" >> ada/buildsupport_version.ads.new
 	@echo -n "end buildsupport_version;" >> ada/buildsupport_version.ads.new
 	@if [ ! -f "ada/buildsupport_version.ads" ] ; then                \
