@@ -4,7 +4,7 @@
 
 --  Set of helper functions for buildsupport
 with Ocarina,
-     Types,
+     Ocarina.Types,
      Ada.Containers.Indefinite_Ordered_Maps;
 
 use Ocarina,
@@ -12,7 +12,7 @@ use Ocarina,
 
 package Buildsupport_Utils is
 
-   use Types;
+   use Ocarina.Types;
 
    procedure Banner;
 

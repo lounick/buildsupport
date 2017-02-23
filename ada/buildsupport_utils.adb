@@ -5,7 +5,7 @@
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 
-with Namet;
+with Ocarina.Namet;
 with Ocarina.Configuration;
 with Ocarina.AADL_Values;
 with Ocarina.Instances.Queries;
@@ -19,7 +19,7 @@ package body Buildsupport_Utils is
    use Ada.Text_IO;
    use GNAT.OS_Lib;
 
-   use Namet;
+   use Ocarina.Namet;
    use Ocarina.Instances.Queries;
    use Ocarina.ME_AADL.AADL_Instances.Nodes;
    use Ocarina.ME_AADL.AADL_Instances.Nutils;
@@ -37,8 +37,8 @@ package body Buildsupport_Utils is
         "buildsupport - contact: Maxime.Perrotin@esa.int or "
         & "Thanassis.Tsiodras@esa.int "
         & ASCII.LF & ASCII.CR
-        & "Based on Ocarina: " & Ocarina.Configuration.Ocarina_Version
-        & " (" & Ocarina.Configuration.Ocarina_SVN_Revision & ")";
+        & "Based on Ocarina: " & Ocarina.Configuration.Ocarina_Version;
+--        & " (" & Ocarina.Configuration.Ocarina_SVN_Revision & ")";
    begin
       Put_Line (The_Banner);
    end Banner;
