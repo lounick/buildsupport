@@ -55,7 +55,7 @@ void vdm_gw_preamble(FV * fv)
                       fv->name,
                       fv->name,
                       fv->name,
-                      strlen(fv->name),
+                      (long unsigned int) strlen(fv->name),
                       fv->name,
                       fv->name,
                       fv->name,
