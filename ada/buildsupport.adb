@@ -236,8 +236,7 @@ procedure BuildSupport is
                   if not Is_Empty (Subcomponents (CI)) then
                      FV_Subco := First_Node (Subcomponents (CI));
                      while Present (FV_Subco) loop
-                        if Get_Category_Of_Component (FV_Subco) =
-                           CC_Data
+                        if Get_Category_Of_Component (FV_Subco) = CC_Data
                         then
                            --  Check that the value of the FS is set
                            Exit_On_Error (Get_String_Property

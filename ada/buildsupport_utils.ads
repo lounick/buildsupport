@@ -5,7 +5,8 @@
 --  Set of helper functions for buildsupport
 with Ocarina,
      Ocarina.Types,
-     Ada.Containers.Indefinite_Ordered_Maps;
+     Ada.Containers.Indefinite_Ordered_Maps,
+     Ada.Containers.Vectors;
 
 use Ocarina,
     Ada.Containers;
@@ -59,6 +60,9 @@ package Buildsupport_Utils is
                                       ASN1_String,
                                       ASN1_Unknown);
 
+   package Property_Maps is new Indefinite_Ordered_Maps (String, String);
+   package String_Vectors is new Vectors (Natural, String);
+
    function Get_ASN1_Basic_Type (E : Node_Id) return Supported_ASN1_Basic_Type;
 
    function Get_Ada_Package_Name (D : Node_Id) return Name_Id;
@@ -69,10 +73,27 @@ package Buildsupport_Utils is
 
    function Get_ASN1_Module_Name (D : Node_Id) return String;
 
-   package Property_Maps is new Indefinite_Ordered_Maps (String, String);
-
-   use Property_Maps;
-
    function Get_Properties_Map (D : Node_Id) return Property_Maps.Map;
+
+   type Taste_Interface is
+       record
+           null;
+       end record;
+
+   subtype Taste_Provided_Interface is Taste_Interface;
+   subtype Taste_Required_Interface is Taste_Interface;
+
+   package Interfaces is new Vectors (Natural, Taste_Interface);
+
+   type Taste_Function is
+       record
+           Name_Full_Case : String;
+           Language       : Supported_Source_Language;
+           Zip_File       : String;
+           Context_Params : Property_Maps.Map;
+           Timers         : String_Vectors.Vector;
+           Provided       : Interfaces.Vector;
+           Required       : Interfaces.Vector;
+       end record;
 
 end Buildsupport_Utils;
