@@ -4,16 +4,22 @@
 
 --  Set of helper functions for buildsupport
 with Ocarina,
-     Ocarina.Types,
+     --  Ocarina.Types,
+     Types,
+     Ocarina.Backends.Properties,
      Ada.Containers.Indefinite_Ordered_Maps,
-     Ada.Containers.Vectors;
+     Ada.Containers.Indefinite_Vectors,
+     Ada.Strings.Unbounded;
 
 use Ocarina,
-    Ada.Containers;
+    Ocarina.Backends.Properties,
+    Ada.Containers,
+    Ada.Strings.Unbounded;
 
 package Buildsupport_Utils is
 
-   use Ocarina.Types;
+--   use Ocarina.Types;
+   use Types;
 
    procedure Banner;
 
@@ -33,8 +39,7 @@ package Buildsupport_Utils is
                                          Sporadic_Operation,
                                          Unknown_Operation);
 
-   function Get_RCM_Operation_Kind
-     (E : Node_Id)
+   function Get_RCM_Operation_Kind (E : Node_Id)
      return Supported_RCM_Operation_Kind;
 
    function Get_RCM_Operation (E : Node_Id) return Node_Id;
@@ -61,7 +66,8 @@ package Buildsupport_Utils is
                                       ASN1_Unknown);
 
    package Property_Maps is new Indefinite_Ordered_Maps (String, String);
-   package String_Vectors is new Vectors (Natural, String);
+   use Property_Maps;
+   package String_Vectors is new Indefinite_Vectors (Natural, String);
 
    function Get_ASN1_Basic_Type (E : Node_Id) return Supported_ASN1_Basic_Type;
 
@@ -75,25 +81,64 @@ package Buildsupport_Utils is
 
    function Get_Properties_Map (D : Node_Id) return Property_Maps.Map;
 
-   type Taste_Interface is
+   --  Types needed to build the AST of the TASTE Interface View in Ada
+   type Parameter_Direction is (param_in, param_out);
+
+   type ASN1_Parameter is
        record
-           null;
+           Name            : Unbounded_String;
+           Sort            : Unbounded_String;
+           ASN1_Module     : Unbounded_String;
+           ASN1_Basic_Type : Supported_ASN1_Basic_Type;
+           ASN1_File_Name  : Unbounded_String;
+           Encoding        : Supported_ASN1_Encoding;
+           Direction       : Parameter_Direction;
        end record;
 
-   subtype Taste_Provided_Interface is Taste_Interface;
-   subtype Taste_Required_Interface is Taste_Interface;
+   package Parameters is new Indefinite_Vectors (Natural, ASN1_Parameter);
 
-   package Interfaces is new Vectors (Natural, Taste_Interface);
-
-   type Taste_Function is
+   type Taste_Interface is
        record
-           Name_Full_Case : String;
+           Name           : Unbounded_String;
+           In_Parameters  : Parameters.Vector;
+           Out_Parameters : Parameters.Vector;
+           RCM            : Supported_RCM_Operation_Kind;
+           Period_Or_MIAT : Natural;
+           WCET           : Natural;
+           WCET_Unit      : Unbounded_String;
+           Queue_Size     : Natural;
+       end record;
+
+   package Interfaces is new Indefinite_Vectors (Natural, Taste_Interface);
+
+   type Taste_Terminal_Function is
+       record
+           Name           : Unbounded_String;
            Language       : Supported_Source_Language;
-           Zip_File       : String;
+           Zip_File       : Unbounded_String;
            Context_Params : Property_Maps.Map;
            Timers         : String_Vectors.Vector;
            Provided       : Interfaces.Vector;
            Required       : Interfaces.Vector;
+       end record;
+
+   package Functions is new Indefinite_Vectors (Natural,
+                                                Taste_Terminal_Function);
+
+   type Connection is
+       record
+           Source_Function : Taste_Terminal_Function;
+           Dest_Function   : Taste_Terminal_Function;
+           Source_RI       : Taste_Interface;
+           Dest_PI         : Taste_Interface;
+       end record;
+
+   package Channels is new Indefinite_Vectors (Natural, Connection);
+
+   type Complete_Interface_View is limited
+       record
+           Flat_Functions : Functions.Vector;
+           Connections    : Channels.Vector;
        end record;
 
 end Buildsupport_Utils;

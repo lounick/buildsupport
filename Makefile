@@ -16,11 +16,11 @@ checkVersion:
 
 $(exec): $(sources)
 ifeq ($(UNAME), Linux)
-	@echo "package buildsupport_version is" > ada/buildsupport_version.ads.new
-	@echo -n "buildsupport_release : constant string := \"" >> ada/buildsupport_version.ads.new
+	@echo "package Buildsupport_Version is" > ada/buildsupport_version.ads.new
+	@echo -n "   Buildsupport_Release : constant String := \"" >> ada/buildsupport_version.ads.new
 	@git log --oneline | head -1 | cut -f1 -d' ' | tr -d '\012' >> ada/buildsupport_version.ads.new
 	@echo "\";" >> ada/buildsupport_version.ads.new
-	@echo -n "end buildsupport_version;" >> ada/buildsupport_version.ads.new
+	@echo -n "end Buildsupport_Version;" >> ada/buildsupport_version.ads.new
 	@if [ ! -f "ada/buildsupport_version.ads" ] ; then                \
 		mv ada/buildsupport_version.ads.new ada/buildsupport_version.ads;          \
 	else                                            \
@@ -39,7 +39,8 @@ endif
 	#clang -c -Wall -Werror -Iinclude c/*.c
 	$(CC) -c -W -g3 -g -Wall -Werror -Wextra -Werror=format-security -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wno-error=old-style-cast -Wundef -std=c99 -pedantic -Iinclude c/*.c
 	mv *.o tmpBuild/
-	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gnatmake -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
+	#ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gnatmake -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
+	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
 #	strip $(exec)
 
 install:

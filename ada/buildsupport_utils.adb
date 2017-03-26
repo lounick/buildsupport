@@ -5,7 +5,8 @@
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 
-with Ocarina.Namet;
+--  with Ocarina.Namet;
+with Namet;
 with Ocarina.Configuration;
 with Ocarina.AADL_Values;
 with Ocarina.Instances.Queries;
@@ -19,7 +20,8 @@ package body Buildsupport_Utils is
    use Ada.Text_IO;
    use GNAT.OS_Lib;
 
-   use Ocarina.Namet;
+--   use Ocarina.Namet;
+   use Namet;
    use Ocarina.Instances.Queries;
    use Ocarina.ME_AADL.AADL_Instances.Nodes;
    use Ocarina.ME_AADL.AADL_Instances.Nutils;
