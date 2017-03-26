@@ -6,12 +6,11 @@ with Ada.Text_IO;
 with GNAT.OS_Lib;
 
 --  with Ocarina.Namet;
-with Namet;
 with Ocarina.Configuration;
 with Ocarina.AADL_Values;
 with Ocarina.Instances.Queries;
-with Ocarina.ME_AADL.AADL_Tree.Nodes;
-with Ocarina.ME_AADL.AADL_Instances.Nodes;
+--  with Ocarina.ME_AADL.AADL_Tree.Nodes;
+--  with Ocarina.ME_AADL.AADL_Instances.Nodes;
 with Ocarina.ME_AADL.AADL_Instances.Nutils;
 with Ada.Characters.Latin_1;
 
@@ -21,14 +20,13 @@ package body Buildsupport_Utils is
    use GNAT.OS_Lib;
 
 --   use Ocarina.Namet;
-   use Namet;
    use Ocarina.Instances.Queries;
-   use Ocarina.ME_AADL.AADL_Instances.Nodes;
+--   use Ocarina.ME_AADL.AADL_Instances.Nodes;
    use Ocarina.ME_AADL.AADL_Instances.Nutils;
    use Ada.Characters.Latin_1;
-   package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
-   package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
-   use type ATN.Node_Kind;
+--  package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
+--  package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
+--   use type ATN.Node_Kind;
 
    ------------
    -- Banner --
@@ -115,8 +113,6 @@ package body Buildsupport_Utils is
    RCM_Operation_Kind : Name_Id;
    Unprotected_Name   : Name_Id;
    Protected_Name     : Name_Id;
-   Variator_Name      : Name_Id;
-   Modifier_Name      : Name_Id;
    Cyclic_Name        : Name_Id;
    Sporadic_Name      : Name_Id;
 
@@ -136,12 +132,6 @@ package body Buildsupport_Utils is
          elsif RCM_Operation_Kind_N =  Protected_Name then
             return Protected_Operation;
 
-         elsif RCM_Operation_Kind_N =  Variator_Name then
-            return Variator_Operation;
-
-         elsif RCM_Operation_Kind_N =  Modifier_Name then
-            return Modifier_Operation;
-
          elsif RCM_Operation_Kind_N =  Cyclic_Name then
             return Cyclic_Operation;
 
@@ -149,7 +139,7 @@ package body Buildsupport_Utils is
             return Sporadic_Operation;
          end if;
       end if;
-      return Unknown_Operation;
+      Exit_On_Error (True, "Could not determine interface kind");
    end Get_RCM_Operation_Kind;
 
    -----------------------
@@ -256,10 +246,9 @@ package body Buildsupport_Utils is
    -- Input parameter is an AADL instance    --
    --------------------------------------------
    function Get_Properties_Map (D : Node_Id) return Property_Maps.Map is
-      properties : constant List_Id :=
-                          Ocarina.ME_AADL.AADL_Instances.Nodes.Properties (D);
+      properties : constant List_Id  := AIN.Properties (D);
       result     : Property_Maps.Map := Empty_Map;
-      property   : Node_Id := First_Node (properties);
+      property   : Node_Id           := AIN.First_Node (properties);
       prop_value : Node_Id;
       single_val : Node_Id;
    begin
@@ -268,8 +257,7 @@ package body Buildsupport_Utils is
          if Present (ATN.Single_Value (prop_value)) then
             --  Only support single-value properties for now
             single_val := ATN.Single_Value (prop_value);
-            result.Insert (Key => Get_Name_String
-                                      (Display_Name (Identifier (property))),
+            result.Insert (Key => AIN_Case (property),
                         New_Item =>
               (case ATN.Kind (single_val) is
                  when ATN.K_Signed_AADLNumber =>
@@ -294,7 +282,7 @@ package body Buildsupport_Utils is
                  when others => "ERROR! Unsupported kind: "
                                 & ATN.Kind (single_val)'Img));
          end if;
-         property := Next_Node (property);
+         property := AIN.Next_Node (property);
       end loop;
       return result;
    end Get_Properties_Map;
@@ -426,8 +414,6 @@ package body Buildsupport_Utils is
 
       Unprotected_Name := Get_String_Name ("unprotected");
       Protected_Name   := Get_String_Name ("protected");
-      Variator_Name    := Get_String_Name ("variator");
-      Modifier_Name    := Get_String_Name ("modifier");
       Cyclic_Name      := Get_String_Name ("cyclic");
       Sporadic_Name    := Get_String_Name ("sporadic");
 

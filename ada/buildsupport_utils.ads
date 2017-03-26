@@ -6,20 +6,29 @@
 with Ocarina,
      --  Ocarina.Types,
      Types,
+     Namet,
      Ocarina.Backends.Properties,
      Ada.Containers.Indefinite_Ordered_Maps,
      Ada.Containers.Indefinite_Vectors,
+     Ocarina.ME_AADL.AADL_Tree.Nodes,
+     Ocarina.ME_AADL.AADL_Instances.Nodes,
      Ada.Strings.Unbounded;
 
 use Ocarina,
+    Types,
+    Namet,
     Ocarina.Backends.Properties,
+    Ocarina.ME_AADL.AADL_Tree.Nodes,
+    Ocarina.ME_AADL.AADL_Instances.Nodes,
     Ada.Containers,
     Ada.Strings.Unbounded;
 
 package Buildsupport_Utils is
 
---   use Ocarina.Types;
-   use Types;
+   package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
+   package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
+   function US (Source : in String) return Unbounded_String renames
+       To_Unbounded_String;
 
    procedure Banner;
 
@@ -33,11 +42,8 @@ package Buildsupport_Utils is
 
    type Supported_RCM_Operation_Kind is (Unprotected_Operation,
                                          Protected_Operation,
-                                         Variator_Operation,
-                                         Modifier_Operation,
                                          Cyclic_Operation,
-                                         Sporadic_Operation,
-                                         Unknown_Operation);
+                                         Sporadic_Operation);
 
    function Get_RCM_Operation_Kind (E : Node_Id)
      return Supported_RCM_Operation_Kind;
@@ -81,6 +87,22 @@ package Buildsupport_Utils is
 
    function Get_Properties_Map (D : Node_Id) return Property_Maps.Map;
 
+   --  Shortcut to read an identifier from the parser, in lowercase
+   function ATN_Lower (N : Node_Id) return String is
+       (Get_Name_String (ATN.Name (ATN.Identifier (N))));
+
+   --  Shortcut to read an identifier from the parser, with original case
+   function ATN_Case (N : Node_Id) return String is
+       (Get_Name_String (ATN.Display_Name (ATN.Identifier (N))));
+
+   --  Shortcut to read an identifier from the parser, in lowercase
+   function AIN_Lower (N : Node_Id) return String is
+       (Get_Name_String (AIN.Name (AIN.Identifier (N))));
+
+   --  Shortcut to read an identifier from the parser, with original case
+   function AIN_Case (N : Node_Id) return String is
+       (Get_Name_String (AIN.Display_Name (AIN.Identifier (N))));
+
    --  Types needed to build the AST of the TASTE Interface View in Ada
    type Parameter_Direction is (param_in, param_out);
 
@@ -99,27 +121,40 @@ package Buildsupport_Utils is
 
    type Taste_Interface is
        record
-           Name           : Unbounded_String;
-           In_Parameters  : Parameters.Vector;
-           Out_Parameters : Parameters.Vector;
-           RCM            : Supported_RCM_Operation_Kind;
-           Period_Or_MIAT : Natural;
-           WCET           : Natural;
-           WCET_Unit      : Unbounded_String;
-           Queue_Size     : Natural;
+           Name            : Unbounded_String;
+           In_Parameters   : Parameters.Vector;
+           Out_Parameters  : Parameters.Vector;
+           RCM             : Supported_RCM_Operation_Kind;
+           Period_Or_MIAT  : Natural;
+           WCET            : Natural;
+           WCET_Unit       : Unbounded_String;
+           Queue_Size      : Natural;
+           User_Properties : Property_Maps.Map;
        end record;
 
    package Interfaces is new Indefinite_Vectors (Natural, Taste_Interface);
 
-   type Taste_Terminal_Function is
+   type Context_Parameter is
        record
            Name           : Unbounded_String;
-           Language       : Supported_Source_Language;
-           Zip_File       : Unbounded_String;
-           Context_Params : Property_Maps.Map;
-           Timers         : String_Vectors.Vector;
-           Provided       : Interfaces.Vector;
-           Required       : Interfaces.Vector;
+           Sort           : Unbounded_String;
+           Default_Value  : Unbounded_String;
+           ASN1_Module    : Unbounded_String;
+           ASN1_File_Name : Unbounded_String;
+       end record;
+
+   package Ctxt_Params is new Indefinite_Vectors (Natural, Context_Parameter);
+
+   type Taste_Terminal_Function is
+       record
+           Name            : Unbounded_String;
+           Language        : Supported_Source_Language;
+           Zip_File        : Unbounded_String;
+           Context_Params  : Ctxt_Params.Vector;
+           User_Properties : Property_Maps.Map;
+           Timers          : String_Vectors.Vector;
+           Provided        : Interfaces.Vector;
+           Required        : Interfaces.Vector;
        end record;
 
    package Functions is new Indefinite_Vectors (Natural,

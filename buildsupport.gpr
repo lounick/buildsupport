@@ -1,4 +1,5 @@
 with "ocarina";
+with "templates_parser";  --  from libtemplates-parser11.10.1-dev
 
 project BuildSupport is
 
@@ -21,17 +22,17 @@ project BuildSupport is
 
    package binder is
      for default_switches ("Ada") use ("-E", "-t", "-static");
-   end binder;		 
+   end binder;
 
    package Compiler is
       for Default_Switches ("Ada") use
         ("-g",
-         "-gnat05",
+         "-gnat12",
          "-gnatf",
          "-gnaty",
-	 -- "-gnatwa",
+         "-gnatwa",
          "-gnatoa",
-	 "-gnatg",
+         "-gnatg",
          "-fstack-check");
 
       for Default_Switches ("C") use ("-g");
