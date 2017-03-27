@@ -140,6 +140,7 @@ package body Buildsupport_Utils is
          end if;
       end if;
       Exit_On_Error (True, "Could not determine interface kind");
+      return Sporadic_Operation;
    end Get_RCM_Operation_Kind;
 
    -----------------------

@@ -27,7 +27,7 @@ package Buildsupport_Utils is
 
    package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
    package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
-   function US (Source : in String) return Unbounded_String renames
+   function US (Source : String) return Unbounded_String renames
        To_Unbounded_String;
 
    procedure Banner;

@@ -300,6 +300,7 @@ procedure BuildSupport is
                                   Default_Value  => US (FS_value),
                                   ASN1_Module    => US (FS_module),
                                   ASN1_File_Name => FS_file);
+                           pragma Unreferenced (CP);
                         end;
                      end if;
                      FV_Subco := Next_Node (FV_Subco);
