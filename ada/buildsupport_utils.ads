@@ -38,8 +38,6 @@ package Buildsupport_Utils is
 
    type Synchronism is (Sync, Async);
 
-   procedure Init;
-
    type Supported_RCM_Operation_Kind is (Unprotected_Operation,
                                          Protected_Operation,
                                          Cyclic_Operation,
@@ -175,5 +173,8 @@ package Buildsupport_Utils is
            Flat_Functions : Functions.Vector;
            Connections    : Channels.Vector;
        end record;
+
+   --  Function to build up the Ada AST by transforming the one from Ocarina
+   function AADL_to_Ada_IV (System : Node_Id) return Complete_Interface_View;
 
 end Buildsupport_Utils;

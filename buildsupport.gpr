@@ -27,7 +27,7 @@ project BuildSupport is
    package Compiler is
       for Default_Switches ("Ada") use
         ("-g",
-         "-gnat12",
+         "-Ada2012",
          "-gnatf",
          "-gnaty",
          "-gnatwa",

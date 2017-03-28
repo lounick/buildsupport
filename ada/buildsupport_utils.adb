@@ -5,6 +5,7 @@
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 
+with Buildsupport_Version;
 --  with Ocarina.Namet;
 with Ocarina.Configuration;
 with Ocarina.AADL_Values;
@@ -34,11 +35,12 @@ package body Buildsupport_Utils is
 
    procedure Banner is
       The_Banner : constant String :=
-        "buildsupport - contact: Maxime.Perrotin@esa.int or "
-        & "Thanassis.Tsiodras@esa.int "
+        "TASTE Buildsupport (Version "
+        & Buildsupport_Version.Buildsupport_Release & ") "
+        & ASCII.LF & ASCII.CR
+        & "Contact: Maxime.Perrotin@esa.int or Thanassis.Tsiodras@esa.int"
         & ASCII.LF & ASCII.CR
         & "Based on Ocarina: " & Ocarina.Configuration.Ocarina_Version;
---        & " (" & Ocarina.Configuration.Ocarina_SVN_Revision & ")";
    begin
       Put_Line (The_Banner);
    end Banner;
@@ -110,17 +112,16 @@ package body Buildsupport_Utils is
    -- Get_RCM_Operation_Kind --
    ----------------------------
 
-   RCM_Operation_Kind : Name_Id;
-   Unprotected_Name   : Name_Id;
-   Protected_Name     : Name_Id;
-   Cyclic_Name        : Name_Id;
-   Sporadic_Name      : Name_Id;
-
    function Get_RCM_Operation_Kind
      (E : Node_Id) return Supported_RCM_Operation_Kind
    is
       RCM_Operation_Kind_N : Name_Id;
-
+      RCM_Operation_Kind : constant Name_Id :=
+          Get_String_Name ("taste::rcmoperationkind");
+      Unprotected_Name   : constant Name_Id := Get_String_Name ("unprotected");
+      Protected_Name     : constant Name_Id := Get_String_Name ("protected");
+      Cyclic_Name        : constant Name_Id := Get_String_Name ("cyclic");
+      Sporadic_Name      : constant Name_Id := Get_String_Name ("sporadic");
    begin
       if Is_Defined_Enumeration_Property (E, RCM_Operation_Kind) then
          RCM_Operation_Kind_N
@@ -147,9 +148,9 @@ package body Buildsupport_Utils is
    -- Get_RCM_Operation --
    -----------------------
 
-   RCM_Operation : Name_Id;
-
    function Get_RCM_Operation (E : Node_Id) return Node_Id is
+      RCM_Operation : constant Name_Id :=
+          Get_String_Name ("taste::rcmoperation");
    begin
       if Is_Subprogram_Access (E) then
          return Corresponding_Instance (E);
@@ -166,9 +167,9 @@ package body Buildsupport_Utils is
    -- Get_APLC_Binding --
    -----------------------
 
-   APLC_Binding : Name_Id;
-
    function Get_APLC_Binding (E : Node_Id) return List_Id is
+      APLC_Binding : constant Name_Id :=
+          Get_String_Name ("taste::aplc_binding");
    begin
       if Is_Defined_Property (E, APLC_Binding) then
          return Get_List_Property (E, APLC_Binding);
@@ -181,9 +182,8 @@ package body Buildsupport_Utils is
    -- Get_RCM_Period --
    --------------------
 
-   RCM_Period : Name_Id;
-
    function Get_RCM_Period (D : Node_Id) return Unsigned_Long_Long is
+      RCM_Period : constant Name_Id := Get_String_Name ("taste::rcmperiod");
    begin
       if Is_Defined_Integer_Property (D, RCM_Period) then
          return Get_Integer_Property (D, RCM_Period);
@@ -196,9 +196,9 @@ package body Buildsupport_Utils is
    -- Get_Ada_Package_Name --
    --------------------------
 
-   Ada_Package_Name : Name_id;
-
    function Get_Ada_Package_Name (D : Node_Id) return Name_Id is
+      Ada_Package_Name : constant Name_id :=
+         Get_String_Name ("taste::ada_package_name");
    begin
       return Get_String_Property (D, Ada_Package_Name);
    end Get_Ada_Package_Name;
@@ -207,9 +207,9 @@ package body Buildsupport_Utils is
    -- Get_Ellidiss_Tool_Version --
    -------------------------------
 
-   Ellidiss_Tool_Version : Name_id;
-
    function Get_Ellidiss_Tool_Version (D : Node_Id) return Name_Id is
+      Ellidiss_Tool_Version : constant Name_id :=
+         Get_String_Name ("taste::version");
    begin
       return Get_String_Property (D, Ellidiss_Tool_Version);
    end Get_Ellidiss_Tool_Version;
@@ -218,9 +218,9 @@ package body Buildsupport_Utils is
    -- Get_Interface_Name --
    ------------------------
 
-   Interface_Name : Name_id;
-
    function Get_Interface_Name (D : Node_Id) return Name_Id is
+      Interface_Name : constant Name_id :=
+         Get_String_Name ("taste::interfacename");
    begin
       return Get_String_Property (D, Interface_Name);
    end Get_Interface_Name;
@@ -229,10 +229,10 @@ package body Buildsupport_Utils is
    -- Get ASN.1 Module name --
    ---------------------------
 
-   ASN1_Module : Name_id;
-
    function Get_ASN1_Module_Name (D : Node_Id) return String is
       id : Name_Id := No_Name;
+      ASN1_Module : constant Name_id :=
+         Get_String_Name ("deployment::asn1_module_name");
    begin
       if Is_Defined_String_Property (D, ASN1_Module) then
          id := Get_String_Property (D, ASN1_Module);
@@ -292,13 +292,12 @@ package body Buildsupport_Utils is
    -- Get_ASN1_Encoding --
    -----------------------
 
-   ASN1_Encoding : Name_Id;
-   Native_Name   : Name_Id;
-   UPER_Name     : Name_Id;
-   ACN_Name      : Name_Id;
-
    function Get_ASN1_Encoding (E : Node_Id) return Supported_ASN1_Encoding is
       ASN1_Encoding_N : Name_Id;
+      ASN1_Encoding : constant Name_Id := Get_String_Name ("taste::encoding");
+      Native_Name   : constant Name_Id := Get_String_Name ("native");
+      UPER_Name     : constant Name_Id := Get_String_Name ("uper");
+      ACN_Name      : constant Name_Id := Get_String_Name ("acn");
    begin
       if Is_Defined_Enumeration_Property (E, ASN1_Encoding) then
          ASN1_Encoding_N := Get_Enumeration_Property (E, ASN1_Encoding);
@@ -321,118 +320,76 @@ package body Buildsupport_Utils is
    -- Get_ASN1_Basic_Type --
    -------------------------
 
-   ASN1_Basic_Type  : Name_Id;
-   Sequence_Name    : Name_Id;
-   SequenceOf_Name  : Name_Id;
-   Enumerated_Name  : Name_Id;
-   Set_Name         : Name_Id;
-   SetOf_Name       : Name_Id;
-   Integer_Name     : Name_Id;
-   Boolean_Name     : Name_Id;
-   Real_Name        : Name_Id;
-   OctetString_Name : Name_Id;
-   Choice_Name      : Name_Id;
-   String_Name      : Name_Id;
-
-   function Get_ASN1_Basic_Type
-     (E : Node_Id)
-     return Supported_ASN1_Basic_Type
+   function Get_ASN1_Basic_Type (E : Node_Id) return Supported_ASN1_Basic_Type
    is
+      ASN1_Basic_Type  : constant Name_Id :=
+                               Get_String_Name ("taste::asn1_basic_type");
+      Sequence_Name    : constant Name_Id := Get_String_Name ("asequence");
+      SequenceOf_Name  : constant Name_Id := Get_String_Name ("asequenceof");
+      Enumerated_Name  : constant Name_Id := Get_String_Name ("aenumerated");
+      Set_Name         : constant Name_Id := Get_String_Name ("aset");
+      SetOf_Name       : constant Name_Id := Get_String_Name ("asetof");
+      Integer_Name     : constant Name_Id := Get_String_Name ("ainteger");
+      Boolean_Name     : constant Name_Id := Get_String_Name ("aboolean");
+      Real_Name        : constant Name_Id := Get_String_Name ("areal");
+      OctetString_Name : constant Name_Id := Get_String_Name ("aoctetstring");
+      Choice_Name      : constant Name_Id := Get_String_Name ("achoice");
+      String_Name      : constant Name_Id := Get_String_Name ("astring");
       ASN1_Basic_Type_N : Name_Id;
-
    begin
       if Is_Defined_Enumeration_Property (E, ASN1_Basic_Type) then
          ASN1_Basic_Type_N := Get_Enumeration_Property (E, ASN1_Basic_Type);
 
-            if ASN1_Basic_Type_N = Sequence_Name then
-               return ASN1_Sequence;
+         if ASN1_Basic_Type_N = Sequence_Name then
+            return ASN1_Sequence;
 
-            elsif ASN1_Basic_Type_N = SequenceOf_Name then
-               return ASN1_SequenceOf;
+         elsif ASN1_Basic_Type_N = SequenceOf_Name then
+            return ASN1_SequenceOf;
 
-            elsif ASN1_Basic_Type_N = Enumerated_Name then
-               return ASN1_Enumerated;
+         elsif ASN1_Basic_Type_N = Enumerated_Name then
+            return ASN1_Enumerated;
 
-            elsif ASN1_Basic_Type_N = Set_Name then
-               return ASN1_Set;
+         elsif ASN1_Basic_Type_N = Set_Name then
+            return ASN1_Set;
 
-            elsif ASN1_Basic_Type_N = SetOf_Name then
-               return ASN1_SetOf;
+         elsif ASN1_Basic_Type_N = SetOf_Name then
+            return ASN1_SetOf;
 
-            elsif ASN1_Basic_Type_N = Integer_Name then
-               return ASN1_Integer;
+         elsif ASN1_Basic_Type_N = Integer_Name then
+            return ASN1_Integer;
 
-            elsif ASN1_Basic_Type_N = Boolean_Name then
-               return ASN1_Boolean;
+         elsif ASN1_Basic_Type_N = Boolean_Name then
+            return ASN1_Boolean;
 
-            elsif ASN1_Basic_Type_N = Real_Name then
-               return ASN1_Real;
+         elsif ASN1_Basic_Type_N = Real_Name then
+            return ASN1_Real;
 
-            elsif ASN1_Basic_Type_N = OctetString_Name then
-               return ASN1_OctetString;
+         elsif ASN1_Basic_Type_N = OctetString_Name then
+            return ASN1_OctetString;
 
-            elsif ASN1_Basic_Type_N = Choice_Name then
-               return ASN1_Choice;
+         elsif ASN1_Basic_Type_N = Choice_Name then
+            return ASN1_Choice;
 
-            elsif ASN1_Basic_Type_N = String_Name then
-               return ASN1_String;
+         elsif ASN1_Basic_Type_N = String_Name then
+            return ASN1_String;
 
-            else
-               raise Program_Error with "Undefined choice "
-                 & Get_Name_String (ASN1_Basic_Type_N);
-            end if;
+         else
+            raise Program_Error with "Undefined choice "
+              & Get_Name_String (ASN1_Basic_Type_N);
+         end if;
       end if;
       Exit_On_Error (True, "Error: ASN.1 Basic type undefined!");
       return ASN1_Unknown;
    end Get_ASN1_Basic_Type;
 
-   ----------
-   -- Init --
-   ----------
-
-   procedure Init is
+   function AADL_to_Ada_IV (System : Node_Id) return Complete_Interface_View is
+      pragma Unreferenced (System);
+      Funcs  : Functions.Vector;
+      Routes : Channels.Vector;
    begin
-      RCM_Operation_Kind :=
-         Get_String_Name ("taste::rcmoperationkind");
-
-      ASN1_Encoding := Get_String_Name ("taste::encoding");
-
-      ASN1_Basic_Type
-         := Get_String_Name ("taste::asn1_basic_type");
-
-      RCM_Period := Get_String_Name ("taste::rcmperiod");
-
-      RCM_Operation := Get_String_Name ("taste::rcmoperation");
-
-      APLC_Binding := Get_String_Name ("taste::aplc_binding");
-
-      Ellidiss_Tool_Version := Get_String_Name ("taste::version");
-      Interface_Name := Get_String_Name ("taste::interfacename");
-
-      Ada_Package_Name := Get_String_Name ("taste::ada_package_name");
-
-      ASN1_Module := Get_String_Name ("deployment::asn1_module_name");
-
-      Unprotected_Name := Get_String_Name ("unprotected");
-      Protected_Name   := Get_String_Name ("protected");
-      Cyclic_Name      := Get_String_Name ("cyclic");
-      Sporadic_Name    := Get_String_Name ("sporadic");
-
-      Native_Name   := Get_String_Name ("native");
-      UPER_Name     := Get_String_Name ("uper");
-      ACN_Name      := Get_String_Name ("acn");
-
-      Sequence_Name    := Get_String_Name ("asequence");
-      SequenceOf_Name  := Get_String_Name ("asequenceof");
-      Enumerated_Name  := Get_String_Name ("aenumerated");
-      Set_Name         := Get_String_Name ("aset");
-      SetOf_Name       := Get_String_Name ("asetof");
-      Integer_Name     := Get_String_Name ("ainteger");
-      Boolean_Name     := Get_String_Name ("aboolean");
-      Real_Name        := Get_String_Name ("areal");
-      OctetString_Name := Get_String_Name ("aoctetstring");
-      Choice_Name      := Get_String_Name ("achoice");
-      String_Name      := Get_String_Name ("astring");
-   end Init;
+      return IV_AST : constant Complete_Interface_View :=
+          (Flat_Functions => Funcs,
+           Connections    => Routes);
+   end AADL_to_Ada_IV;
 
 end Buildsupport_Utils;

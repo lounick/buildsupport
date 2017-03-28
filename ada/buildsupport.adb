@@ -31,7 +31,6 @@ with Ada.Strings.Unbounded,
      Ocarina.FE_AADL.Parser,
      Imported_Routines,
      Buildsupport_Utils,
-     buildsupport_version,
      Ocarina.Backends.Utils;
 
 use Ada.Strings.Unbounded,
@@ -190,8 +189,8 @@ procedure BuildSupport is
 
                declare
                   --  Read the name of the function
-                  FV_Name_L : constant String := ATN_Lower (Current_Function);
-                  FV_Name   : constant String := ATN_Case (Current_Function);
+                  FV_Name_L : constant String := AIN_Lower (Current_Function);
+                  FV_Name   : constant String := AIN_Case (Current_Function);
                   --  Read the source language
                   Source_Language : constant Supported_Source_Language :=
                       Get_Source_Language (CI);
@@ -794,7 +793,7 @@ procedure BuildSupport is
                   "programming_properties.aadl" &
                   "memory_properties.aadl" &
                   "modeling_properties.aadl" &
-                  "arinc653.aadl" &
+                  "arinc653_properties.aadl" &
                   "base_types.aadl" &
                   "data_model.aadl" &
                   "deployment.aadl";
@@ -1335,7 +1334,7 @@ procedure BuildSupport is
          elsif Ada.Command_Line.Argument (J) = "--version"
            or else Ada.Command_Line.Argument (J) = "-v"
          then
-            Put_Line (buildsupport_version.buildsupport_release);
+            OS_Exit (0);
 
          elsif Ada.Command_Line.Argument (J) = "--dataview"
            or else Ada.Command_Line.Argument (J) = "-d"
@@ -1351,6 +1350,7 @@ procedure BuildSupport is
            or else Ada.Command_Line.Argument (J) = "-h"
          then
             Usage;
+            OS_Exit (0);
 
          else
             Set_Str_To_Name_Buffer (Ada.Command_Line.Argument (J));
@@ -1414,8 +1414,6 @@ procedure BuildSupport is
       Parse_Command_Line;
 
       C_Set_AADLV2;
-
-      Buildsupport_Utils.Init;
 
       Exit_On_Error (Interface_View = 0, "Error: Missing Interface view!");
       Set_Str_To_Name_Buffer (Ada.Command_Line.Argument (Interface_View));
