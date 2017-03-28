@@ -383,10 +383,21 @@ package body Buildsupport_Utils is
    end Get_ASN1_Basic_Type;
 
    function AADL_to_Ada_IV (System : Node_Id) return Complete_Interface_View is
-      pragma Unreferenced (System);
-      Funcs  : Functions.Vector;
-      Routes : Channels.Vector;
+      Funcs             : Functions.Vector;
+      Routes            : Channels.Vector;
+      Current_Function  : Node_Id;
+      CI                : Node_Id;
+      pragma Unreferenced (CI);
    begin
+      Exit_On_Error (No (System), "Missing or erroneous interface view");
+
+      Current_Function := AIN.First_Node (AIN.Subcomponents (System));
+      while Present (Current_Function) loop
+         CI := Corresponding_Instance (Current_Function);
+         Put_Line ("Function " & AIN_Case (Current_Function));
+         Current_Function := AIN.Next_Node (Current_Function);
+      end loop;
+
       return IV_AST : constant Complete_Interface_View :=
           (Flat_Functions => Funcs,
            Connections    => Routes);

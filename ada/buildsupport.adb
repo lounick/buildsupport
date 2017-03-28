@@ -247,9 +247,7 @@ procedure BuildSupport is
                            "Error: Missing value for context parameter " &
                            Get_Name_String
                               (Name (Identifier (FV_Subco))) &
-                           " in function " &
-                           Get_Name_String
-                              (Name (Identifier (Current_Function))));
+                           " in function " & AIN_Case (Current_Function));
                         declare
                            --  Name of the variable
                            FS_name : constant String :=
@@ -1478,6 +1476,8 @@ procedure BuildSupport is
 
    end Initialize;
 
+   IV_Root : Node_Id;
+
 begin
    Banner;
 
@@ -1492,10 +1492,16 @@ begin
    Ocarina.Options.Root_System_Name :=
           Get_String_Name ("interfaceview.others");
 
-   --  Process_DataView (Dataview_root);
+   IV_Root := Root_System (Instantiate_Model (Root => Interface_Root));
+   declare
+      AST : Complete_Interface_View := AADL_to_Ada_IV (IV_Root);
+      pragma Unreferenced (AST);
+   begin
+      null;
+   end;
 
-   Process_Interface_View
-      (Root_System (Instantiate_Model (Root => Interface_Root)));
+   Process_Interface_View (IV_Root);
+--      (Root_System (Instantiate_Model (Root => Interface_Root)));
 
    --  Now, we are done with the interface view. We now analyze the
    --  deployment view.
