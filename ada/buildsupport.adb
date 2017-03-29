@@ -1477,6 +1477,7 @@ procedure BuildSupport is
    end Initialize;
 
    IV_Root : Node_Id;
+   AST : Complete_Interface_View;
 
 begin
    Banner;
@@ -1493,12 +1494,10 @@ begin
           Get_String_Name ("interfaceview.others");
 
    IV_Root := Root_System (Instantiate_Model (Root => Interface_Root));
-   declare
-      AST : Complete_Interface_View := AADL_to_Ada_IV (IV_Root);
-      pragma Unreferenced (AST);
-   begin
-      null;
-   end;
+   AST := AADL_to_Ada_IV (IV_Root);
+   for each of AST.Flat_Functions loop
+      Put_Line ("From New AST: " & To_String (Each.Name));
+   end loop;
 
    Process_Interface_View (IV_Root);
 --      (Root_System (Instantiate_Model (Root => Interface_Root)));

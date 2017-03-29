@@ -168,7 +168,7 @@ package Buildsupport_Utils is
 
    package Channels is new Indefinite_Vectors (Natural, Connection);
 
-   type Complete_Interface_View is limited
+   type Complete_Interface_View is
        record
            Flat_Functions : Functions.Vector;
            Connections    : Channels.Vector;
