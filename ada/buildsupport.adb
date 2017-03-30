@@ -269,8 +269,6 @@ procedure BuildSupport is
                            NA : constant Name_Array :=
                                                  Get_Source_Text (Asn1type);
                            FS_File : Unbounded_String;
-                           --  For the Ada AST:
-                           CP : Context_Parameter;
                         begin
                            --  Some special DATA components have no
                            --  Source_Text property in DataView.aadl
@@ -288,12 +286,6 @@ procedure BuildSupport is
                                              To_String (FS_file),
                                              To_String (FS_file)'Length,
                                              FS_Fullname);
-                           CP := (Name           => US (FS_Fullname),
-                                  Sort           => US (FS_type),
-                                  Default_Value  => US (FS_value),
-                                  ASN1_Module    => US (FS_module),
-                                  ASN1_File_Name => FS_file);
-                           pragma Unreferenced (CP);
                         end;
                      end if;
                      FV_Subco := Next_Node (FV_Subco);

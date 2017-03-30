@@ -105,6 +105,9 @@ package Buildsupport_Utils is
    --  Types needed to build the AST of the TASTE Interface View in Ada
    type Parameter_Direction is (param_in, param_out);
 
+   package Option_UString is new Option_Type (Unbounded_String);
+   use Option_UString;
+
    type ASN1_Parameter is
        record
            Name            : Unbounded_String;
@@ -139,18 +142,16 @@ package Buildsupport_Utils is
            Sort           : Unbounded_String;
            Default_Value  : Unbounded_String;
            ASN1_Module    : Unbounded_String;
-           ASN1_File_Name : Unbounded_String;
+           ASN1_File_Name : Option (Present => False);
        end record;
 
    package Ctxt_Params is new Indefinite_Vectors (Natural, Context_Parameter);
-   package Option_Zip is new Option_Type (Unbounded_String);
-   use Option_Zip;
 
    type Taste_Terminal_Function is
        record
            Name            : Unbounded_String;
            Language        : Supported_Source_Language;
-           Zip_File        : Option_Zip.Option (False) := Nothing;
+           Zip_File        : Option (Present => False);
            Context_Params  : Ctxt_Params.Vector;
            User_Properties : Property_Maps.Map;
            Timers          : String_Vectors.Vector;

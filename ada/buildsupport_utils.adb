@@ -400,12 +400,28 @@ package body Buildsupport_Utils is
          --  To get the optional zip filename where user code is stored:
          Source_Text : constant Name_Array := Get_Source_Text (Inst);
          Zip_Id      : Name_Id             := No_Name;
+         --  To get the context parameters
+         Subco       : Node_Id;
       begin
          Result.Name     := US (Name);
          Result.Language := Get_Source_Language (Inst);
          if Source_Text'Length /= 0 then
             Zip_Id          := Source_Text (1);
             Result.Zip_File := Just (US (Get_Name_String (Zip_Id)));
+         end if;
+         --  Parse context parameters
+         if Present (AIN.Subcomponents (Inst)) then
+            Subco := AIN.First_Node (AIN.Subcomponents (Inst));
+            while Present (Subco) loop
+               case Get_Category_Of_Component (Subco) is
+                  when CC_Data =>
+                     null;
+                  when others =>
+                     null;
+               end case;
+
+               Subco := AIN.Next_Node (Subco);
+            end loop;
          end if;
          return Result;
       end Parse_Function;
