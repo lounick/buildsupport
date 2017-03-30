@@ -407,29 +407,31 @@ package body Buildsupport_Utils is
       function Rec_Function (Prefix : String := "";
                              Func   : Node_Id) return Functions.Vector is
          Inner        : Node_Id;
-         Result       : Functions.Vector := Functions.Empty_Vector;
+         Res          : Functions.Vector := Functions.Empty_Vector;
          CI           : constant Node_Id := Corresponding_Instance (Func);
          Name         : constant String := Prefix &
             (if Prefix'Length > 0 then "_" else "") & AIN_Case (Func);
       begin
-         if Get_Category_Of_Component (CI) /= CC_System then
-            null;
-         elsif Present (AIN.Subcomponents (CI)) then
-            Inner := AIN.First_Node (AIN.Subcomponents (CI));
-            while Present (Inner) loop
-               Result := Result & Rec_Function (Prefix => Name,
-                                                Func => Inner);
-               Inner  := AIN.Next_Node (Inner);
-            end loop;
-         end if;
 
-         if Get_Category_Of_Component (CI) = CC_System and then
-             (No (AIN.Subcomponents (CI)) or Result = Functions.Empty_Vector)
-         then
-            Result := Result & Parse_Function (Name => Name,
-                                               Inst => CI);
-         end if;
-         return Result;
+         case Get_Category_Of_Component (CI) is
+            when CC_System =>
+               if Present (AIN.Subcomponents (CI)) then
+                  Inner := AIN.First_Node (AIN.Subcomponents (CI));
+                  while Present (Inner) loop
+                     Res := Res & Rec_Function (Prefix => Name, Func => Inner);
+                     Inner  := AIN.Next_Node (Inner);
+                  end loop;
+               end if;
+
+               if No (AIN.Subcomponents (CI)) or Res = Functions.Empty_Vector
+               then
+                  Res := Res & Parse_Function (Name => Name, Inst => CI);
+               end if;
+            when others =>
+               null;
+         end case;
+
+         return Res;
       end Rec_Function;
    begin
       Exit_On_Error (No (System), "Missing or erroneous interface view");
