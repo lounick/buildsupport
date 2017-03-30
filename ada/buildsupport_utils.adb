@@ -381,6 +381,7 @@ package body Buildsupport_Utils is
    function AADL_to_Ada_IV (System : Node_Id) return Complete_Interface_View is
       use type Functions.Vector;
       use type Channels.Vector;
+      use type Ctxt_Params.Vector;
       Funcs             : Functions.Vector := Functions.Empty_Vector;
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
@@ -402,6 +403,8 @@ package body Buildsupport_Utils is
          Zip_Id      : Name_Id             := No_Name;
          --  To get the context parameters
          Subco       : Node_Id;
+         CP          : Context_Parameter;
+         CP_ASN1     : Node_Id;
       begin
          Result.Name     := US (Name);
          Result.Language := Get_Source_Language (Inst);
@@ -415,7 +418,23 @@ package body Buildsupport_Utils is
             while Present (Subco) loop
                case Get_Category_Of_Component (Subco) is
                   when CC_Data =>
-                     null;
+                     CP_ASN1 := Corresponding_Instance (Subco);
+                     CP.Name := US (AIN_Case (Subco));
+                     CP.Sort :=
+                        US (Get_Name_String (Get_Type_Source_Name (CP_ASN1)));
+                     CP.Default_Value :=
+                        US (Get_Name_String (Get_String_Property
+                            (CP_ASN1, "taste::fs_default_value")));
+                     CP.ASN1_Module := US (Get_ASN1_Module_Name (CP_ASN1));
+                     declare
+                        NA : constant Name_Array := Get_Source_Text (CP_ASN1);
+                     begin
+                        if NA'Length > 0 then
+                           CP.ASN1_File_Name :=
+                               Just (US (Get_Name_String (NA (1))));
+                        end if;
+                     end;
+                     Result.Context_Params := Result.Context_Params & CP;
                   when others =>
                      null;
                end case;

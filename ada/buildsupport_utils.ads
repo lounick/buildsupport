@@ -142,7 +142,7 @@ package Buildsupport_Utils is
            Sort           : Unbounded_String;
            Default_Value  : Unbounded_String;
            ASN1_Module    : Unbounded_String;
-           ASN1_File_Name : Option (Present => False);
+           ASN1_File_Name : Option;
        end record;
 
    package Ctxt_Params is new Indefinite_Vectors (Natural, Context_Parameter);
@@ -151,7 +151,7 @@ package Buildsupport_Utils is
        record
            Name            : Unbounded_String;
            Language        : Supported_Source_Language;
-           Zip_File        : Option (Present => False);
+           Zip_File        : Option := Nothing;
            Context_Params  : Ctxt_Params.Vector;
            User_Properties : Property_Maps.Map;
            Timers          : String_Vectors.Vector;
