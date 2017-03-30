@@ -411,7 +411,7 @@ package body Buildsupport_Utils is
          if Get_Category_Of_Component (CI) = CC_System and then
              (No (AIN.Subcomponents (CI)) or Result = Functions.Empty_Vector)
          then
-            Put_Line ("Terminal: " & AIN_Case (Func));
+            -- Here, parse the full function
             AST_Function.Name := US (AIN_Case (Func));
             Result := Result & AST_Function;
          end if;
