@@ -382,6 +382,7 @@ package body Buildsupport_Utils is
       use type Functions.Vector;
       use type Channels.Vector;
       use type Ctxt_Params.Vector;
+      use type Interfaces.Vector;
       Funcs             : Functions.Vector := Functions.Empty_Vector;
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
@@ -405,6 +406,10 @@ package body Buildsupport_Utils is
          Subco       : Node_Id;
          CP          : Context_Parameter;
          CP_ASN1     : Node_Id;
+         --  To get the provided and required interfaces
+         PI_Or_RI    : Node_Id;
+         If_AST      : Taste_Interface;
+         pragma Unreferenced (If_AST);
       begin
          Result.Name     := US (Name);
          Result.Language := Get_Source_Language (Inst);
@@ -438,9 +443,19 @@ package body Buildsupport_Utils is
                   when others =>
                      null;
                end case;
-
                Subco := AIN.Next_Node (Subco);
             end loop;
+         end if;
+         --  Parse provided and required interfaces
+         if Present (AIN.Features (Inst)) then
+            PI_Or_RI := AIN.First_Node (AIN.Features (Inst));
+            while Present (PI_Or_RI) loop
+               --  If_AST.RCM := Get_RCM_Operation_Kind (PI_Or_RI);
+               PI_Or_RI := AIN.Next_Node (PI_Or_RI);
+               --  PI or RI - test to be added:
+               --  Result.Provided := Result.Provided & If_AST;
+            end loop;
+
          end if;
          return Result;
       end Parse_Function;
