@@ -2,35 +2,25 @@
 --  (c) 2008-2017 European Space Agency - maxime.perrotin@esa.int
 --  LGPL license, see LICENSE file
 
-with Ada.Text_IO;
-with GNAT.OS_Lib;
-
-with Buildsupport_Version;
---  with Ocarina.Namet;
-with Ocarina.Configuration;
-with Ocarina.AADL_Values;
-with Ocarina.Instances.Queries;
---  with Ocarina.ME_AADL.AADL_Tree.Nodes;
---  with Ocarina.ME_AADL.AADL_Instances.Nodes;
-with Ocarina.ME_AADL.AADL_Instances.Nutils;
-with Ocarina.ME_AADL.AADL_Instances.Entities;
-with Ada.Characters.Latin_1;
+with Ada.Text_IO,
+     GNAT.OS_Lib,
+     Buildsupport_Version,
+     Ocarina.Configuration,
+     Ocarina.AADL_Values,
+     Ocarina.Instances.Queries,
+     Ocarina.ME_AADL.AADL_Instances.Nutils,
+     Ocarina.ME_AADL.AADL_Instances.Entities,
+     Ada.Characters.Latin_1;
 
 package body Buildsupport_Utils is
 
-   use Ada.Text_IO;
-   use GNAT.OS_Lib;
-
---   use Ocarina.Namet;
-   use Ocarina.Instances.Queries;
---   use Ocarina.ME_AADL.AADL_Instances.Nodes;
-   use Ocarina.ME_AADL.AADL_Instances.Nutils;
-   use Ada.Characters.Latin_1;
-   use Ocarina.ME_AADL.AADL_Instances.Entities;
-   use Ocarina.ME_AADL;
---  package ATN renames Ocarina.ME_AADL.AADL_Tree.Nodes;
---  package AIN renames Ocarina.ME_AADL.AADL_Instances.Nodes;
---   use type ATN.Node_Kind;
+   use Ada.Text_IO,
+       GNAT.OS_Lib,
+       Ocarina.Instances.Queries,
+       Ocarina.ME_AADL.AADL_Instances.Nutils,
+       Ada.Characters.Latin_1,
+       Ocarina.ME_AADL.AADL_Instances.Entities,
+       Ocarina.ME_AADL;
 
    ------------
    -- Banner --
@@ -106,7 +96,6 @@ package body Buildsupport_Utils is
    begin
       if Error then
          Put_Line (Reason);
-         --  Imported_Routines.C_End;
          OS_Exit (1);
       end if;
    end Exit_On_Error;
@@ -385,6 +374,10 @@ package body Buildsupport_Utils is
       return ASN1_Unknown;
    end Get_ASN1_Basic_Type;
 
+   ---------------------------
+   -- AST Builder Functions --
+   ---------------------------
+
    function AADL_to_Ada_IV (System : Node_Id) return Complete_Interface_View is
       use type Functions.Vector;
       use type Channels.Vector;
@@ -392,28 +385,49 @@ package body Buildsupport_Utils is
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
 
+      --  Parse the content of a single function :
+      --  * Name
+      --  * Language
+      --  * Zip File
+      --  * Context Parameters
+      --  * User Properties (from TASTE_IV_Properties.aadl)
+      --  * Timers
+      --  * Provided and Required Interfaces
+      function Parse_Function (Name : String;
+                               Inst : Node_Id) return Taste_Terminal_Function
+      is
+         Result : Taste_Terminal_Function;
+         pragma Unreferenced (Inst);
+      begin
+         Result.Name := US (Name);
+         return Result;
+      end Parse_Function;
+
       --  Recursive parsing of a system made of nested functions (TASTE v2)
-      function Rec_Function (Func : Node_Id) return Functions.Vector is
+      function Rec_Function (Prefix : String := "";
+                             Func   : Node_Id) return Functions.Vector is
          Inner        : Node_Id;
          Result       : Functions.Vector := Functions.Empty_Vector;
          CI           : constant Node_Id := Corresponding_Instance (Func);
-         AST_Function : Taste_Terminal_Function;
+         Name         : constant String := Prefix &
+            (if Prefix'Length > 0 then "_" else "") & AIN_Case (Func);
       begin
          if Get_Category_Of_Component (CI) /= CC_System then
             null;
          elsif Present (AIN.Subcomponents (CI)) then
             Inner := AIN.First_Node (AIN.Subcomponents (CI));
             while Present (Inner) loop
-               Result := Result & Rec_Function (Inner);
-               Inner := AIN.Next_Node (Inner);
+               Result := Result & Rec_Function (Prefix => Name,
+                                                Func => Inner);
+               Inner  := AIN.Next_Node (Inner);
             end loop;
          end if;
+
          if Get_Category_Of_Component (CI) = CC_System and then
              (No (AIN.Subcomponents (CI)) or Result = Functions.Empty_Vector)
          then
-            -- Here, parse the full function
-            AST_Function.Name := US (AIN_Case (Func));
-            Result := Result & AST_Function;
+            Result := Result & Parse_Function (Name => Name,
+                                               Inst => CI);
          end if;
          return Result;
       end Rec_Function;
@@ -422,9 +436,7 @@ package body Buildsupport_Utils is
 
       Current_Function := AIN.First_Node (AIN.Subcomponents (System));
       while Present (Current_Function) loop
-         --  Put_Line ("Function (Top level) " & AIN_Case (Current_Function));
-         --  CI := Corresponding_Instance (Current_Function);
-         Funcs := Funcs & Rec_Function (Current_Function);
+         Funcs := Funcs & Rec_Function (Func => Current_Function);
          Current_Function := AIN.Next_Node (Current_Function);
       end loop;
 
