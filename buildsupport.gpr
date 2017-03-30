@@ -14,6 +14,7 @@ project BuildSupport is
                          "buildsupport.adb",
                          "buildsupport_utils.ads",
                          "buildsupport_utils.adb",
+                         "option_type.ads",
                          "buildsupport_version.ads");
 
    package Builder is

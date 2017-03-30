@@ -12,7 +12,8 @@ with Ocarina,
      Ada.Containers.Indefinite_Vectors,
      Ocarina.ME_AADL.AADL_Tree.Nodes,
      Ocarina.ME_AADL.AADL_Instances.Nodes,
-     Ada.Strings.Unbounded;
+     Ada.Strings.Unbounded,
+     Option_Type;
 
 use Ocarina,
     Types,
@@ -142,12 +143,14 @@ package Buildsupport_Utils is
        end record;
 
    package Ctxt_Params is new Indefinite_Vectors (Natural, Context_Parameter);
+   package Option_Zip is new Option_Type (Unbounded_String);
+   use Option_Zip;
 
    type Taste_Terminal_Function is
        record
            Name            : Unbounded_String;
            Language        : Supported_Source_Language;
-           Zip_File        : Unbounded_String;
+           Zip_File        : Option_Zip.Option (False) := Nothing;
            Context_Params  : Ctxt_Params.Vector;
            User_Properties : Property_Maps.Map;
            Timers          : String_Vectors.Vector;

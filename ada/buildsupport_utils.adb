@@ -396,10 +396,17 @@ package body Buildsupport_Utils is
       function Parse_Function (Name : String;
                                Inst : Node_Id) return Taste_Terminal_Function
       is
-         Result : Taste_Terminal_Function;
-         pragma Unreferenced (Inst);
+         Result      : Taste_Terminal_Function;
+         --  To get the optional zip filename where user code is stored:
+         Source_Text : constant Name_Array := Get_Source_Text (Inst);
+         Zip_Id      : Name_Id             := No_Name;
       begin
-         Result.Name := US (Name);
+         Result.Name     := US (Name);
+         Result.Language := Get_Source_Language (Inst);
+         if Source_Text'Length /= 0 then
+            Zip_Id          := Source_Text (1);
+            Result.Zip_File := Just (US (Get_Name_String (Zip_Id)));
+         end if;
          return Result;
       end Parse_Function;
 
@@ -419,7 +426,7 @@ package body Buildsupport_Utils is
                   Inner := AIN.First_Node (AIN.Subcomponents (CI));
                   while Present (Inner) loop
                      Res := Res & Rec_Function (Prefix => Name, Func => Inner);
-                     Inner  := AIN.Next_Node (Inner);
+                     Inner := AIN.Next_Node (Inner);
                   end loop;
                end if;
 
