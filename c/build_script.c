@@ -47,7 +47,7 @@ void Create_script()
                      "# If you need additional preprocessing, create a file named 'user_init_pre.sh'\n"
                      "# and/or 'user_init_post.sh - They will never get overwritten.'\n\n"
                      "# Inside these files you may set some environment variables:\n"
-                     "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:$C_INCLUDE_PATH\n"
+                     "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:${C_INCLUDE_PATH}\n"
                      "#    unset USE_POHIC   \n\n"
                      "CWD=$(pwd)\n\n"
                      "if [ -t 0 ] ; then\n"
