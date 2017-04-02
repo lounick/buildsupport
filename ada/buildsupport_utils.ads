@@ -107,6 +107,7 @@ package Buildsupport_Utils is
 
    package Option_UString is new Option_Type (Unbounded_String);
    use Option_UString;
+   subtype Optional_Unbounded_String is Option_UString.Option;
 
    type ASN1_Parameter is
        record
@@ -142,7 +143,7 @@ package Buildsupport_Utils is
            Sort           : Unbounded_String;
            Default_Value  : Unbounded_String;
            ASN1_Module    : Unbounded_String;
-           ASN1_File_Name : Option;
+           ASN1_File_Name : Optional_Unbounded_String := Nothing;
        end record;
 
    package Ctxt_Params is new Indefinite_Vectors (Natural, Context_Parameter);
@@ -151,7 +152,7 @@ package Buildsupport_Utils is
        record
            Name            : Unbounded_String;
            Language        : Supported_Source_Language;
-           Zip_File        : Option := Nothing;
+           Zip_File        : Optional_Unbounded_String := Nothing;
            Context_Params  : Ctxt_Params.Vector;
            User_Properties : Property_Maps.Map;
            Timers          : String_Vectors.Vector;
