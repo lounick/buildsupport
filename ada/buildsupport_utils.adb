@@ -387,6 +387,52 @@ package body Buildsupport_Utils is
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
 
+      --  Parse an individual context parameter
+      function Parse_CP (Subco : Node_Id) return Context_Parameter is
+         CP_ASN1 : constant Node_Id    := Corresponding_Instance (Subco);
+         NA      : constant Name_Array := Get_Source_Text (CP_ASN1);
+      begin
+         return (Name => US (AIN_Case (Subco)),
+                 Sort => US (Get_Name_String (Get_Type_Source_Name (CP_ASN1))),
+                 Default_Value  => US (Get_Name_String (Get_String_Property
+                                     (CP_ASN1, "taste::fs_default_value"))),
+                 ASN1_Module    => US (Get_ASN1_Module_Name (CP_ASN1)),
+                 ASN1_File_Name => (if NA'Length > 0 then
+                                      Just (US (Get_Name_String (NA (1))))
+                                    else Nothing));
+      end Parse_CP;
+
+      --  Parse a function interface :
+      --  * Name (Unbounded string)
+      --  * In_Parameters (Parameters.Vector)
+      --  * Out_Parameters (Parameters.Vector)
+      --  * RCM (Supported_RCM_Operation_Kind)
+      --  * Period_Or_MIAT (Natural)
+      --  * WCET (Natural)
+      --  * WCET unit (Unbounded string)
+      --  * Queue_Size (Natural)
+      --  * User_Properties (Property_Maps.Map)
+      function Parse_Interface (If_I : Node_Id) return Taste_Interface is
+         Name   : constant Name_Id := Get_Interface_Name (If_I);
+         CI     : constant Node_Id := Corresponding_Instance (If_I);
+         Result : Taste_Interface;
+      begin
+         --  Keep compatibility with 1.2 models for the interface name
+         Result.Name := (if Name = No_Name then US (AIN_Case (If_I)) else
+                         US (Get_Name_String (Name)));
+         Result.Queue_Size := (if Kind (If_I) = K_Subcomponent_Access_Instance
+                               and then Is_Defined_Property
+                                   (CI, "taste::associated_queue_size")
+                               then Just (Get_Integer_Property
+                                   (CI, " taste::associated_queue_size"))
+                               else Nothing);
+         Result.RCM := Get_RCM_Operation_Kind (If_I);
+         Result.Period_Or_MIAT := Get_RCM_Period (If_I);
+         --  Still to do: WCET (& unit), and Parameters
+         return Result;
+      end Parse_Interface;
+      pragma Unreferenced (Parse_Interface);
+
       --  Parse the content of a single function :
       --  * Name
       --  * Language
@@ -404,8 +450,6 @@ package body Buildsupport_Utils is
          Zip_Id      : Name_Id             := No_Name;
          --  To get the context parameters
          Subco       : Node_Id;
-         CP          : Context_Parameter;
-         CP_ASN1     : Node_Id;
          --  To get the provided and required interfaces
          PI_Or_RI    : Node_Id;
          If_AST      : Taste_Interface;
@@ -423,23 +467,8 @@ package body Buildsupport_Utils is
             while Present (Subco) loop
                case Get_Category_Of_Component (Subco) is
                   when CC_Data =>
-                     CP_ASN1 := Corresponding_Instance (Subco);
-                     CP.Name := US (AIN_Case (Subco));
-                     CP.Sort :=
-                        US (Get_Name_String (Get_Type_Source_Name (CP_ASN1)));
-                     CP.Default_Value :=
-                        US (Get_Name_String (Get_String_Property
-                            (CP_ASN1, "taste::fs_default_value")));
-                     CP.ASN1_Module := US (Get_ASN1_Module_Name (CP_ASN1));
-                     declare
-                        NA : constant Name_Array := Get_Source_Text (CP_ASN1);
-                     begin
-                        if NA'Length > 0 then
-                           CP.ASN1_File_Name :=
-                               Just (US (Get_Name_String (NA (1))));
-                        end if;
-                     end;
-                     Result.Context_Params := Result.Context_Params & CP;
+                     Result.Context_Params := Result.Context_Params
+                                              & Parse_CP (Subco);
                   when others =>
                      null;
                end case;

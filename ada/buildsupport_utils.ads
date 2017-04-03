@@ -108,6 +108,9 @@ package Buildsupport_Utils is
    package Option_UString is new Option_Type (Unbounded_String);
    use Option_UString;
    subtype Optional_Unbounded_String is Option_UString.Option;
+   package Option_Natural is new Option_Type (Unsigned_Long_Long);
+   use Option_Natural;
+   subtype Optional_Long_Long is Option_Natural.Option;
 
    type ASN1_Parameter is
        record
@@ -128,10 +131,10 @@ package Buildsupport_Utils is
            In_Parameters   : Parameters.Vector;
            Out_Parameters  : Parameters.Vector;
            RCM             : Supported_RCM_Operation_Kind;
-           Period_Or_MIAT  : Natural;
+           Period_Or_MIAT  : Unsigned_Long_Long;
            WCET            : Natural;
            WCET_Unit       : Unbounded_String;
-           Queue_Size      : Natural;
+           Queue_Size      : Optional_Long_Long;
            User_Properties : Property_Maps.Map;
        end record;
 
