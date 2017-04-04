@@ -42,7 +42,8 @@ package Buildsupport_Utils is
    type Supported_RCM_Operation_Kind is (Unprotected_Operation,
                                          Protected_Operation,
                                          Cyclic_Operation,
-                                         Sporadic_Operation);
+                                         Sporadic_Operation,
+                                         Any_Operation);
 
    function Get_RCM_Operation_Kind (E : Node_Id)
      return Supported_RCM_Operation_Kind;
@@ -128,12 +129,10 @@ package Buildsupport_Utils is
    type Taste_Interface is
        record
            Name            : Unbounded_String;
-           In_Parameters   : Parameters.Vector;
-           Out_Parameters  : Parameters.Vector;
+           Params          : Parameters.Vector;
            RCM             : Supported_RCM_Operation_Kind;
            Period_Or_MIAT  : Unsigned_Long_Long;
-           WCET            : Natural;
-           WCET_Unit       : Unbounded_String;
+           WCET_ms         : Optional_Long_Long;
            Queue_Size      : Optional_Long_Long;
            User_Properties : Property_Maps.Map;
        end record;

@@ -10,6 +10,7 @@ with Ada.Text_IO,
      Ocarina.Instances.Queries,
      Ocarina.ME_AADL.AADL_Instances.Nutils,
      Ocarina.ME_AADL.AADL_Instances.Entities,
+     Ocarina.Backends.Utils,
      Ada.Characters.Latin_1;
 
 package body Buildsupport_Utils is
@@ -20,7 +21,8 @@ package body Buildsupport_Utils is
        Ocarina.ME_AADL.AADL_Instances.Nutils,
        Ada.Characters.Latin_1,
        Ocarina.ME_AADL.AADL_Instances.Entities,
-       Ocarina.ME_AADL;
+       Ocarina.ME_AADL,
+       Ocarina.Backends.Utils;
 
    ------------
    -- Banner --
@@ -114,10 +116,11 @@ package body Buildsupport_Utils is
       Protected_Name     : constant Name_Id := Get_String_Name ("protected");
       Cyclic_Name        : constant Name_Id := Get_String_Name ("cyclic");
       Sporadic_Name      : constant Name_Id := Get_String_Name ("sporadic");
+      Any_Name           : constant Name_Id := Get_String_Name ("any");
    begin
       if Is_Defined_Enumeration_Property (E, RCM_Operation_Kind) then
-         RCM_Operation_Kind_N
-           := Get_Enumeration_Property (E, RCM_Operation_Kind);
+         RCM_Operation_Kind_N :=
+            Get_Enumeration_Property (E, RCM_Operation_Kind);
 
          if RCM_Operation_Kind_N = Unprotected_Name then
             return Unprotected_Operation;
@@ -130,9 +133,13 @@ package body Buildsupport_Utils is
 
          elsif RCM_Operation_Kind_N =  Sporadic_Name then
             return Sporadic_Operation;
+
+         elsif RCM_Operation_Kind_N =  Any_Name then
+            return Any_Operation;
          end if;
       end if;
-      Exit_On_Error (True, "Could not determine interface kind");
+      Exit_On_Error (True, "Could not determine interface kind: "
+                        & Get_Name_String (RCM_Operation_Kind_N));
       return Sporadic_Operation;
    end Get_RCM_Operation_Kind;
 
@@ -374,6 +381,20 @@ package body Buildsupport_Utils is
       return ASN1_Unknown;
    end Get_ASN1_Basic_Type;
 
+   ----------------------------------------------------------------
+   -- Get Optional Worse Case Execution Time (Upper bound in ms) --
+   ----------------------------------------------------------------
+
+   function Get_Upper_WCET (Func : Node_Id) return Optional_Long_Long is
+      (if Is_Subprogram_Access (Func) and then Sources (Func) /= No_List
+         and then AIN.First_Node (Sources (Func)) /= No_Node
+         and then Get_Execution_Time (Corresponding_Instance (AIN.Item
+                                           (AIN.First_Node (Sources (Func)))))
+                           /= Empty_Time_Array
+      then Just (To_Milliseconds (Get_Execution_Time (Corresponding_Instance
+                             (AIN.Item (AIN.First_Node (Sources (Func)))))(1)))
+         else Nothing);
+
    ---------------------------
    -- AST Builder Functions --
    ---------------------------
@@ -383,6 +404,7 @@ package body Buildsupport_Utils is
       use type Channels.Vector;
       use type Ctxt_Params.Vector;
       use type Interfaces.Vector;
+      use type Parameters.Vector;
       Funcs             : Functions.Vector := Functions.Empty_Vector;
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
@@ -402,21 +424,46 @@ package body Buildsupport_Utils is
                                     else Nothing));
       end Parse_CP;
 
-      --  Parse a function interface :
-      --  * Name (Unbounded string)
-      --  * In_Parameters (Parameters.Vector)
-      --  * Out_Parameters (Parameters.Vector)
-      --  * RCM (Supported_RCM_Operation_Kind)
-      --  * Period_Or_MIAT (Natural)
-      --  * WCET (Natural)
-      --  * WCET unit (Unbounded string)
-      --  * Queue_Size (Natural)
-      --  * User_Properties (Property_Maps.Map)
-      function Parse_Interface (If_I : Node_Id) return Taste_Interface is
-         Name   : constant Name_Id := Get_Interface_Name (If_I);
-         CI     : constant Node_Id := Corresponding_Instance (If_I);
-         Result : Taste_Interface;
+      --  Parse a single parameter of an interface
+      --  * Name                (Unbounded string)
+      --  * Sort                (Unbounded string)
+      --  * ASN1_Module         (Unbounded string)
+      --  * ASN1_Basic_Type     (Supported_ASN1_Basic_Type)
+      --  * ASN1_File_Name      (Unbounded string)
+      --  * Encoding            (Supported_ASN1_Encoding)
+      --  * Direction           (Parameter_Direction: IN or OUT)
+      function Parse_Parameter (Param_I : Node_Id) return ASN1_Parameter is
+         Asntype : constant Node_Id := Corresponding_Instance (Param_I);
       begin
+         return (
+             Name => US (AIN_Case (Param_I)),
+             Sort => US (Get_Name_String (Get_Type_Source_Name (Asntype))),
+             ASN1_Module =>
+                 US (Get_Name_String (Get_Ada_Package_Name (Asntype))),
+             ASN1_Basic_Type => Get_ASN1_Basic_Type (Asntype),
+             ASN1_File_Name =>
+                US (Get_Name_String (Get_Source_Text (Asntype)(1))),
+             Encoding => Get_ASN1_Encoding (Param_I),
+             Direction => (if AIN.Is_In (Param_I)
+                           then param_in else param_out));
+      end Parse_Parameter;
+
+      --  Parse a function interface :
+      --  * Name                (Unbounded string)
+      --  * Params              (Parameters.Vector)
+      --  * RCM                 (Supported_RCM_Operation_Kind)
+      --  * Period_Or_MIAT      (Unsigned long long)
+      --  * WCET_ms             (Optional unsigned long long)
+      --  * Queue_Size          (Optional unsigned long long)
+      --  * User_Properties     (Property_Maps.Map)
+      function Parse_Interface (If_I : Node_Id) return Taste_Interface is
+         Name    : constant Name_Id := Get_Interface_Name (If_I);
+         CI      : constant Node_Id := Corresponding_Instance (If_I);
+         Result  : Taste_Interface;
+         Sub_I   : constant Node_Id := Get_RCM_Operation (If_I);
+         Param_I : Node_Id;
+      begin
+         pragma Assert (Present (Sub_I));
          --  Keep compatibility with 1.2 models for the interface name
          Result.Name := (if Name = No_Name then US (AIN_Case (If_I)) else
                          US (Get_Name_String (Name)));
@@ -428,10 +475,19 @@ package body Buildsupport_Utils is
                                else Nothing);
          Result.RCM := Get_RCM_Operation_Kind (If_I);
          Result.Period_Or_MIAT := Get_RCM_Period (If_I);
-         --  Still to do: WCET (& unit), and Parameters
+         Result.WCET_ms := Get_Upper_WCET (If_I);
+         --  Parameters:
+         if not Is_Empty (AIN.Features (Sub_I)) then
+            Param_I := AIN.First_Node (AIN.Features (Sub_I));
+            while Present (Param_I) loop
+               if Kind (Param_I) = K_Parameter_Instance then
+                  Result.Params := Result.Params & Parse_Parameter (Param_I);
+               end if;
+               Param_I := AIN.Next_Node (Param_I);
+            end loop;
+         end if;
          return Result;
       end Parse_Interface;
-      pragma Unreferenced (Parse_Interface);
 
       --  Parse the content of a single function :
       --  * Name
@@ -479,10 +535,14 @@ package body Buildsupport_Utils is
          if Present (AIN.Features (Inst)) then
             PI_Or_RI := AIN.First_Node (AIN.Features (Inst));
             while Present (PI_Or_RI) loop
-               --  If_AST.RCM := Get_RCM_Operation_Kind (PI_Or_RI);
+               if AIN.Is_Provided (PI_Or_RI) then
+                  Result.Provided := Result.Provided
+                                        & Parse_Interface (PI_Or_RI);
+               else
+                  Result.Required := Result.Required
+                                        & Parse_Interface (PI_Or_RI);
+               end if;
                PI_Or_RI := AIN.Next_Node (PI_Or_RI);
-               --  PI or RI - test to be added:
-               --  Result.Provided := Result.Provided & If_AST;
             end loop;
 
          end if;

@@ -345,7 +345,7 @@ procedure BuildSupport is
                               when Cyclic_Operation =>
                                  C_Set_Cyclic_IF;
 
-                              when Sporadic_Operation =>
+                              when Sporadic_Operation | Any_Operation =>
                                  C_Set_Sporadic_IF;
 
                               when Protected_Operation =>
