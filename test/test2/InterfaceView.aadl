@@ -5,10 +5,10 @@
 -- generated code: do not edit
 ---------------------------------------------------
 
-PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Nested1
+PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear
 PUBLIC
 
-WITH interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2;
+WITH interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
@@ -17,6 +17,8 @@ FEATURES
   abcd : IN PARAMETER DataView::MyBool {
     Taste::encoding => NATIVE;
   };
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_hello;
 
 SUBPROGRAM IMPLEMENTATION PI_hello.others
@@ -37,14 +39,16 @@ END RI_world;
 SUBPROGRAM IMPLEMENTATION RI_world.others
 END RI_world.others;
 
-SYSTEM Nested1
+SYSTEM Nested1_Appear
 FEATURES
-  PI_hello : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1::PI_hello.others {
+  PI_hello : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear::PI_hello.others {
     Taste::coordinates => "136978 55732";
     Taste::RCMoperationKind => sporadic;
+    Taste::RCMperiod => 0 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "hello";
   };
-  RI_world : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2::PI_world.others {
+  RI_world : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear::PI_world.others {
     Taste::coordinates => "153203 65140";
     Taste::RCMoperationKind => any;
     Taste::InterfaceName => "world";
@@ -53,17 +57,17 @@ FEATURES
 PROPERTIES
   Source_Language => (Ada);
   Taste::Active_Interfaces => any;
-END Nested1;
+END Nested1_Appear;
 
-SYSTEM IMPLEMENTATION Nested1.others
-END Nested1.others;
+SYSTEM IMPLEMENTATION Nested1_Appear.others
+END Nested1_Appear.others;
 
-END interfaceview::IV::Function1_ShouldNotAppear::Nested1;
+END interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear;
 
-PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2
+PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear
 PUBLIC
 
-WITH interfaceview::IV::Level0;
+WITH interfaceview::IV::Level0_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
@@ -75,6 +79,8 @@ FEATURES
   outp : OUT PARAMETER DataView::MyInteger {
     Taste::encoding => UPER;
   };
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_world;
 
 SUBPROGRAM IMPLEMENTATION PI_world.others
@@ -82,48 +88,50 @@ PROPERTIES
   Compute_Execution_Time => 0 ms .. 0 ms;
 END PI_world.others;
 
-SUBPROGRAM RI_final_result
+SUBPROGRAM RI_my_final_result
 FEATURES
   hop : IN PARAMETER DataView::MyInteger {
     Taste::encoding => NATIVE;
   };
-END RI_final_result;
+END RI_my_final_result;
 
-SUBPROGRAM IMPLEMENTATION RI_final_result.others
-END RI_final_result.others;
+SUBPROGRAM IMPLEMENTATION RI_my_final_result.others
+END RI_my_final_result.others;
 
-SYSTEM Nested2
+SYSTEM Nested2_Appear
 FEATURES
-  PI_world : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2::PI_world.others {
+  PI_world : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear::PI_world.others {
     Taste::coordinates => "159788 76190";
     Taste::RCMoperationKind => unprotected;
+    Taste::RCMperiod => 0 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "world";
   };
-  RI_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0::PI_final_result.others {
+  RI_my_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0_Appear::PI_final_result.others {
     Taste::coordinates => "156260 82070";
     Taste::RCMoperationKind => any;
-    Taste::InterfaceName => "final_result";
+    Taste::InterfaceName => "my_final_result";
     Taste::labelInheritance => "true";
   };
 PROPERTIES
   Source_Language => (Ada);
   Taste::Active_Interfaces => any;
-END Nested2;
+END Nested2_Appear;
 
-SYSTEM IMPLEMENTATION Nested2.others
+SYSTEM IMPLEMENTATION Nested2_Appear.others
 SUBCOMPONENTS
   a_param : DATA DataView::MyBool {
     Taste::FS_Default_Value => "true";
   };
-END Nested2.others;
+END Nested2_Appear.others;
 
-END interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2;
+END interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear;
 
-PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Function1
+PACKAGE interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either
 PUBLIC
 
-WITH interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2;
-WITH interfaceview::IV::Level0;
+WITH interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear;
+WITH interfaceview::IV::Level0_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
@@ -135,6 +143,8 @@ FEATURES
   outp : OUT PARAMETER DataView::MyInteger {
     Taste::encoding => UPER;
   };
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_world;
 
 SUBPROGRAM IMPLEMENTATION PI_world.others
@@ -142,57 +152,61 @@ PROPERTIES
   Compute_Execution_Time => 0 ms .. 0 ms;
 END PI_world.others;
 
-SUBPROGRAM RI_final_result
+SUBPROGRAM RI_my_final_result
 FEATURES
   hop : IN PARAMETER DataView::MyInteger {
     Taste::encoding => NATIVE;
   };
-END RI_final_result;
+END RI_my_final_result;
 
-SUBPROGRAM IMPLEMENTATION RI_final_result.others
-END RI_final_result.others;
+SUBPROGRAM IMPLEMENTATION RI_my_final_result.others
+END RI_my_final_result.others;
 
-SYSTEM Function1
+SYSTEM Should_Not_Appear_Either
 FEATURES
-  PI_world : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2::PI_world.others {
+  PI_world : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear::PI_world.others {
     Taste::coordinates => "158967 70311";
     Taste::RCMoperationKind => unprotected;
+    Taste::RCMperiod => 0 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "world";
   };
-  RI_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0::PI_final_result.others {
+  RI_my_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0_Appear::PI_final_result.others {
     Taste::coordinates => "144855 80895";
     Taste::RCMoperationKind => any;
-    Taste::InterfaceName => "final_result";
+    Taste::InterfaceName => "my_final_result";
     Taste::labelInheritance => "true";
   };
 PROPERTIES
   Source_Language => (C);
   Taste::Active_Interfaces => any;
-END Function1;
+END Should_Not_Appear_Either;
 
-SYSTEM IMPLEMENTATION Function1.others
+SYSTEM IMPLEMENTATION Should_Not_Appear_Either.others
 SUBCOMPONENTS
-  Nested2 : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Function1::Nested2::Nested2.others {
+  Nested2_Appear : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Nested2_Appear::Nested2_Appear.others {
     Taste::coordinates => "156260 76190 172016 91710";
   };
 CONNECTIONS
-  Nested2_PI_world_Function1_RI_world : SUBPROGRAM ACCESS Nested2.PI_world -> PI_world {
+  Nested2_PI_world_Function1_RI_world : SUBPROGRAM ACCESS Nested2_Appear.PI_world -> PI_world {
     Taste::coordinates => "158967 70311 158967 73250 159788 73250 159788 76190";
   };
-  Function1_PI_final_result_Nested2_RI_final_result : SUBPROGRAM ACCESS RI_final_result -> Nested2.RI_final_result {
+  Function1_PI_my_final_result_Nested2_RI_my_final_result : SUBPROGRAM ACCESS RI_my_final_result -> Nested2_Appear.RI_my_final_result {
     Taste::coordinates => "156260 82070 150557 82070 150557 80895 144855 80895";
   };
-END Function1.others;
+END Should_Not_Appear_Either.others;
 
-END interfaceview::IV::Function1_ShouldNotAppear::Function1;
+END interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either;
 
-PACKAGE interfaceview::IV::Function1_ShouldNotAppear::MotherClass
+PACKAGE interfaceview::IV::Function1_ShouldNotAppear::MotherClass_Appear
 PUBLIC
 
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
 SUBPROGRAM PI_run
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_run;
 
 SUBPROGRAM IMPLEMENTATION PI_run.others
@@ -200,31 +214,32 @@ PROPERTIES
   Compute_Execution_Time => 0 ms .. 0 ms;
 END PI_run.others;
 
-SYSTEM MotherClass
+SYSTEM MotherClass_Appear
 FEATURES
-  PI_run : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::MotherClass::PI_run.others {
+  PI_run : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::MotherClass_Appear::PI_run.others {
     Taste::coordinates => "169195 53145";
     Taste::RCMoperationKind => cyclic;
     Taste::RCMperiod => 1000 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "run";
   };
 PROPERTIES
   Source_Language => (SDL);
   Taste::Active_Interfaces => any;
-END MotherClass;
+END MotherClass_Appear;
 
-SYSTEM IMPLEMENTATION MotherClass.others
-END MotherClass.others;
+SYSTEM IMPLEMENTATION MotherClass_Appear.others
+END MotherClass_Appear.others;
 
-END interfaceview::IV::Function1_ShouldNotAppear::MotherClass;
+END interfaceview::IV::Function1_ShouldNotAppear::MotherClass_Appear;
 
 PACKAGE interfaceview::IV::Function1_ShouldNotAppear
 PUBLIC
 
-WITH interfaceview::IV::Function1_ShouldNotAppear::Nested1;
-WITH interfaceview::IV::Function1_ShouldNotAppear::Function1;
-WITH interfaceview::IV::Function1_ShouldNotAppear::MotherClass;
-WITH interfaceview::IV::Level0;
+WITH interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear;
+WITH interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either;
+WITH interfaceview::IV::Function1_ShouldNotAppear::MotherClass_Appear;
+WITH interfaceview::IV::Level0_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
@@ -233,6 +248,8 @@ FEATURES
   abcd : IN PARAMETER DataView::MyBool {
     Taste::encoding => NATIVE;
   };
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_hello;
 
 SUBPROGRAM IMPLEMENTATION PI_hello.others
@@ -240,27 +257,29 @@ PROPERTIES
   Compute_Execution_Time => 0 ms .. 0 ms;
 END PI_hello.others;
 
-SUBPROGRAM RI_final_result
+SUBPROGRAM RI_my_final_result
 FEATURES
   hop : IN PARAMETER DataView::MyInteger {
     Taste::encoding => NATIVE;
   };
-END RI_final_result;
+END RI_my_final_result;
 
-SUBPROGRAM IMPLEMENTATION RI_final_result.others
-END RI_final_result.others;
+SUBPROGRAM IMPLEMENTATION RI_my_final_result.others
+END RI_my_final_result.others;
 
 SYSTEM Function1_ShouldNotAppear
 FEATURES
-  PI_hello : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1::PI_hello.others {
+  PI_hello : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear::PI_hello.others {
     Taste::coordinates => "124279 55614";
     Taste::RCMoperationKind => sporadic;
+    Taste::RCMperiod => 0 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "hello";
   };
-  RI_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0::PI_final_result.others {
+  RI_my_final_result : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Level0_Appear::PI_final_result.others {
     Taste::coordinates => "124279 80311";
     Taste::RCMoperationKind => any;
-    Taste::InterfaceName => "final_result";
+    Taste::InterfaceName => "my_final_result";
     Taste::labelInheritance => "true";
   };
 PROPERTIES
@@ -270,53 +289,45 @@ END Function1_ShouldNotAppear;
 
 SYSTEM IMPLEMENTATION Function1_ShouldNotAppear.others
 SUBCOMPONENTS
-  Nested1 : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Nested1::Nested1.others {
+  Nested1_Appear : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear::Nested1_Appear.others {
     Taste::coordinates => "136978 52204 153203 66548";
-    TASTE_IV_Properties::is_Component_Type => false;
+    TASTE_IV_Properties::is_Component_Type => FALSE;
   };
-  Function1 : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Function1::Function1.others {
+  Should_Not_Appear_Either : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Should_Not_Appear_Either::Should_Not_Appear_Either.others {
     Taste::coordinates => "144855 70311 180952 95943";
   };
-  MotherClass : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::MotherClass::MotherClass.others {
+  MotherClass_Appear : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::MotherClass_Appear::MotherClass_Appear.others {
     Taste::coordinates => "163315 53145 177777 65961";
-    TASTE_IV_Properties::is_Component_Type => true;
+    TASTE_IV_Properties::is_Component_Type => TRUE;
   };
 CONNECTIONS
-  Nested1_PI_hello_Function1_ShouldNotAppear_RI_hello : SUBPROGRAM ACCESS Nested1.PI_hello -> PI_hello {
-    Taste::coordinates => "124279 55614 131746 55614 131746 55732 136978 55732";
+  Nested1_PI_hello_Function1_ShouldNotAppear_RI_hello : SUBPROGRAM ACCESS Nested1_Appear.PI_hello -> PI_hello {
+    Taste::coordinates => "124279 55614 130628 55614 130628 55732 136978 55732";
   };
-  Function1_PI_world_Nested1_RI_world : SUBPROGRAM ACCESS Function1.PI_world -> Nested1.RI_world {
+  Function1_PI_world_Nested1_RI_world : SUBPROGRAM ACCESS Should_Not_Appear_Either.PI_world -> Nested1_Appear.RI_world {
     Taste::coordinates => "153203 65140 158967 65140 158967 70311";
   };
-  Function1_ShouldNotAppear_PI_final_result_Function1_RI_final_result : SUBPROGRAM ACCESS RI_final_result -> Function1.RI_final_result {
+  Function1_ShouldNotAppear_PI_my_final_result_Function1_RI_my_final_result : SUBPROGRAM ACCESS RI_my_final_result -> Should_Not_Appear_Either.RI_my_final_result {
     Taste::coordinates => "144855 80895 134567 80895 134567 80311 124279 80311";
   };
 END Function1_ShouldNotAppear.others;
 
 END interfaceview::IV::Function1_ShouldNotAppear;
 
-PACKAGE interfaceview::IV::Level0
+PACKAGE interfaceview::IV::Level0_Appear
 PUBLIC
 
-WITH interfaceview::IV::Function1_ShouldNotAppear::Nested1;
+WITH interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
-SUBPROGRAM RI_hello
-FEATURES
-  abcd : IN PARAMETER DataView::MyBool {
-    Taste::encoding => NATIVE;
-  };
-END RI_hello;
-
-SUBPROGRAM IMPLEMENTATION RI_hello.others
-END RI_hello.others;
-
 SUBPROGRAM PI_final_result
 FEATURES
   hop : IN PARAMETER DataView::MyInteger {
     Taste::encoding => NATIVE;
   };
+PROPERTIES
+  Taste::Associated_Queue_Size => 1;
 END PI_final_result;
 
 SUBPROGRAM IMPLEMENTATION PI_final_result.others
@@ -324,34 +335,46 @@ PROPERTIES
   Compute_Execution_Time => 0 ms .. 0 ms;
 END PI_final_result.others;
 
-SYSTEM Level0
+SUBPROGRAM RI_I_say_hello
 FEATURES
-  RI_hello : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1::PI_hello.others {
-    Taste::coordinates => "99353 67961";
-    Taste::RCMoperationKind => any;
-    Taste::InterfaceName => "hello";
-    Taste::labelInheritance => "true";
+  abcd : IN PARAMETER DataView::MyBool {
+    Taste::encoding => NATIVE;
   };
-  PI_final_result : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Level0::PI_final_result.others {
+END RI_I_say_hello;
+
+SUBPROGRAM IMPLEMENTATION RI_I_say_hello.others
+END RI_I_say_hello.others;
+
+SYSTEM Level0_Appear
+FEATURES
+  PI_final_result : PROVIDES SUBPROGRAM ACCESS interfaceview::IV::Level0_Appear::PI_final_result.others {
     Taste::coordinates => "99353 83249";
     Taste::RCMoperationKind => sporadic;
+    Taste::RCMperiod => 0 ms;
+    Taste::Deadline => 0 ms;
     Taste::InterfaceName => "final_result";
+  };
+  RI_I_say_hello : REQUIRES SUBPROGRAM ACCESS interfaceview::IV::Function1_ShouldNotAppear::Nested1_Appear::PI_hello.others {
+    Taste::coordinates => "99353 67961";
+    Taste::RCMoperationKind => any;
+    Taste::InterfaceName => "I_say_hello";
+    Taste::labelInheritance => "true";
   };
 PROPERTIES
   Source_Language => (GUI);
   Taste::Active_Interfaces => any;
-END Level0;
+END Level0_Appear;
 
-SYSTEM IMPLEMENTATION Level0.others
-END Level0.others;
+SYSTEM IMPLEMENTATION Level0_Appear.others
+END Level0_Appear.others;
 
-END interfaceview::IV::Level0;
+END interfaceview::IV::Level0_Appear;
 
 PACKAGE interfaceview::IV
 PUBLIC
 
 WITH interfaceview::IV::Function1_ShouldNotAppear;
-WITH interfaceview::IV::Level0;
+WITH interfaceview::IV::Level0_Appear;
 WITH Taste;
 WITH DataView;
 WITH TASTE_IV_Properties;
@@ -363,14 +386,14 @@ SUBCOMPONENTS
   Function1_ShouldNotAppear : SYSTEM interfaceview::IV::Function1_ShouldNotAppear::Function1_ShouldNotAppear.others {
     Taste::coordinates => "124279 48559 182010 102410";
   };
-  Level0 : SYSTEM interfaceview::IV::Level0::Level0.others {
+  Level0_Appear : SYSTEM interfaceview::IV::Level0_Appear::Level0_Appear.others {
     Taste::coordinates => "81834 63257 99353 90064";
   };
 CONNECTIONS
-  Function1_ShouldNotAppear_PI_hello_Level0_RI_hello : SUBPROGRAM ACCESS Function1_ShouldNotAppear.PI_hello -> Level0.RI_hello {
-    Taste::coordinates => "99353 67961 112934 67961 112934 55614 124279 55614";
+  Function1_ShouldNotAppear_PI_hello_Level0_RI_I_say_hello : SUBPROGRAM ACCESS Function1_ShouldNotAppear.PI_hello -> Level0_Appear.RI_I_say_hello {
+    Taste::coordinates => "99353 67961 111816 67961 111816 55614 124279 55614";
   };
-  Level0_PI_final_result_Function1_ShouldNotAppear_RI_final_result : SUBPROGRAM ACCESS Level0.PI_final_result -> Function1_ShouldNotAppear.RI_final_result {
+  Level0_PI_final_result_Function1_ShouldNotAppear_RI_my_final_result : SUBPROGRAM ACCESS Level0_Appear.PI_final_result -> Function1_ShouldNotAppear.RI_my_final_result {
     Taste::coordinates => "124279 80311 111816 80311 111816 83249 99353 83249";
   };
 END interfaceview.others;
