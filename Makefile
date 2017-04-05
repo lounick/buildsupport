@@ -3,9 +3,9 @@ UNAME := $(shell uname)
 CC=gcc
 exec = buildsupport
 
-all: $(exec)
+all: build
 
-$(exec):
+build:
 ifeq ($(UNAME), Linux)
 	@echo "package Buildsupport_Version is" > ada/buildsupport_version.ads.new
 	@echo -n "   Buildsupport_Release : constant String := \"" >> ada/buildsupport_version.ads.new
@@ -35,4 +35,4 @@ install:
 clean:
 	rm -rf tmpBuild $(exec) *~
 
-.PHONY: install clean
+.PHONY: install clean build
