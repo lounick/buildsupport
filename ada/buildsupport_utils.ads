@@ -109,9 +109,9 @@ package Buildsupport_Utils is
    package Option_UString is new Option_Type (Unbounded_String);
    use Option_UString;
    subtype Optional_Unbounded_String is Option_UString.Option;
-   package Option_Natural is new Option_Type (Unsigned_Long_Long);
-   use Option_Natural;
-   subtype Optional_Long_Long is Option_Natural.Option;
+   package Option_ULL is new Option_Type (Unsigned_Long_Long);
+   use Option_ULL;
+   subtype Optional_Long_Long is Option_ULL.Option;
 
    type ASN1_Parameter is
        record
@@ -132,8 +132,8 @@ package Buildsupport_Utils is
            Params          : Parameters.Vector;
            RCM             : Supported_RCM_Operation_Kind;
            Period_Or_MIAT  : Unsigned_Long_Long;
-           WCET_ms         : Optional_Long_Long;
-           Queue_Size      : Optional_Long_Long;
+           WCET_ms         : Optional_Long_Long := Nothing;
+           Queue_Size      : Optional_Long_Long := Nothing;
            User_Properties : Property_Maps.Map;
        end record;
 
@@ -167,10 +167,10 @@ package Buildsupport_Utils is
 
    type Connection is
        record
-           Source_Function : Taste_Terminal_Function;
-           Dest_Function   : Taste_Terminal_Function;
-           Source_RI       : Taste_Interface;
-           Dest_PI         : Taste_Interface;
+           Source_Function : Unbounded_String;
+           Dest_Function   : Unbounded_String;
+           Source_RI_Name  : Unbounded_String;
+           Dest_PI_Name    : Unbounded_String;
        end record;
 
    package Channels is new Indefinite_Vectors (Natural, Connection);

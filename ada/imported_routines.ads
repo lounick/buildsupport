@@ -291,35 +291,4 @@ private
    pragma Import (C, C_Set_ASN1_BasicType_OctetString,
                   "Set_ASN1_BasicType_OctetString");
 
-   pragma Linker_Options ("c_backend.o");
-   pragma Linker_Options ("sdl_gateway.o");
-   pragma Linker_Options ("build_sdl_glue.o");
-   pragma Linker_Options ("simulink_gateway.o");
-   pragma Linker_Options ("concurrency_view.o");
-   pragma Linker_Options ("vertical_transformation.o");
-   pragma Linker_Options ("practical_functions.o");
-   pragma Linker_Options ("build_c_glue.o");
-   pragma Linker_Options ("build_gui_glue.o");
-   pragma Linker_Options ("ada_wrappers_backend.o");
-   pragma Linker_Options ("c_wrappers_backend.o");
-   pragma Linker_Options ("build_c_skeletons.o");
-   pragma Linker_Options ("build_ada_skeletons.o");
-   pragma Linker_Options ("preprocessing_backend.o");
-   pragma Linker_Options ("semantic_checks.o");
-   pragma Linker_Options ("build_rtds_glue.o");
-   pragma Linker_Options ("c_ast_construction.o");
-   pragma Linker_Options ("build_protected_glue.o");
-   pragma Linker_Options ("build_script.o");
-   pragma Linker_Options ("system_config.o");
-   pragma Linker_Options ("build_scade_skeletons.o");
-   pragma Linker_Options ("build_vdm_skeletons.o");
-   pragma Linker_Options ("build_vhdl_skeletons.o");
-   pragma Linker_Options ("build_rtds_skeletons.o");
-   pragma Linker_Options ("build_driver_skeletons.o");
-   pragma Linker_Options ("asn2datamodel.o");
-   pragma Linker_Options ("context_parameters.o");
-   pragma Linker_Options ("aadl_cv_unparser.o");
-   pragma Linker_Options ("driver_configuration.o");
-   pragma Linker_Options ("taste_directives.o");
-   pragma Linker_Options ("python_ast_backend.o");
 end Imported_Routines;

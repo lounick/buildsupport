@@ -414,14 +414,16 @@ package body Buildsupport_Utils is
          CP_ASN1 : constant Node_Id    := Corresponding_Instance (Subco);
          NA      : constant Name_Array := Get_Source_Text (CP_ASN1);
       begin
-         return (Name => US (AIN_Case (Subco)),
-                 Sort => US (Get_Name_String (Get_Type_Source_Name (CP_ASN1))),
-                 Default_Value  => US (Get_Name_String (Get_String_Property
-                                     (CP_ASN1, "taste::fs_default_value"))),
-                 ASN1_Module    => US (Get_ASN1_Module_Name (CP_ASN1)),
-                 ASN1_File_Name => (if NA'Length > 0 then
-                                      Just (US (Get_Name_String (NA (1))))
-                                    else Nothing));
+         return Context_Parameter'(
+            Name           => US (AIN_Case (Subco)),
+            Sort           => US (Get_Name_String
+                                        (Get_Type_Source_Name (CP_ASN1))),
+            Default_Value  => US (Get_Name_String (Get_String_Property
+                                        (CP_ASN1, "taste::fs_default_value"))),
+            ASN1_Module    => US (Get_ASN1_Module_Name (CP_ASN1)),
+            ASN1_File_Name => (if NA'Length > 0 then
+                               Just (US (Get_Name_String (NA (1))))
+                               else Nothing));
       end Parse_CP;
 
       --  Parse a single parameter of an interface
@@ -435,7 +437,7 @@ package body Buildsupport_Utils is
       function Parse_Parameter (Param_I : Node_Id) return ASN1_Parameter is
          Asntype : constant Node_Id := Corresponding_Instance (Param_I);
       begin
-         return (
+         return ASN1_Parameter'(
              Name => US (AIN_Case (Param_I)),
              Sort => US (Get_Name_String (Get_Type_Source_Name (Asntype))),
              ASN1_Module =>
@@ -544,7 +546,6 @@ package body Buildsupport_Utils is
                end if;
                PI_Or_RI := AIN.Next_Node (PI_Or_RI);
             end loop;
-
          end if;
          return Result;
       end Parse_Function;
@@ -583,10 +584,13 @@ package body Buildsupport_Utils is
       Exit_On_Error (No (System), "Missing or erroneous interface view");
 
       Current_Function := AIN.First_Node (AIN.Subcomponents (System));
+      --  Parse functions
       while Present (Current_Function) loop
          Funcs := Funcs & Rec_Function (Func => Current_Function);
          Current_Function := AIN.Next_Node (Current_Function);
       end loop;
+
+      --  Parse connections
 
       return IV_AST : constant Complete_Interface_View :=
           (Flat_Functions => Funcs,

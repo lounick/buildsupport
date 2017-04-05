@@ -33,15 +33,7 @@ ifeq ($(UNAME), Linux)
 		fi ;                                    \
 	fi
 endif
-	mkdir -p tmpBuild
-# We have to compile in C99 to support "long long" integers, as imposed by the "aadlinteger" type
-# -Wall -Werror -Wextra -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wctor-dtor-privacy -Wnon-virtual-dtor -Woverloaded-virtual -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wold-style-cast -Wno-error=old-style-cast -Wsign-promo -Wundef
-	#clang -c -Wall -Werror -Iinclude c/*.c
-	$(CC) -c -W -g3 -g -Wall -Werror -Wextra -Werror=format-security -Wconversion -Wno-deprecated -Winit-self -Wsign-conversion -Wredundant-decls -Wvla -Wshadow -Wlogical-op -Wmissing-include-dirs -Winit-self -Wpointer-arith -Wcast-qual -Wcast-align -Wno-error=old-style-cast -Wundef -std=c99 -pedantic -Iinclude c/*.c
-	mv *.o tmpBuild/
-	#ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gnatmake -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
 	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
-#	strip $(exec)
 
 install:
 	$(MAKE)
@@ -49,35 +41,6 @@ install:
 	cp misc/driveGnuPlotsStreams.pl `ocarina-config --prefix`/bin/
 
 clean:
-	rm -rf tmpBuild
-	rm -f $(exec)
-	rm -f *~
+	rm -rf tmpBuild $(exec) *~
 
-
-release: clean
-	rm -rf tmp/ release/
-	mkdir release/
-	mkdir -p tmp/buildsupport-$(VERSION)
-	mkdir -p tmp/buildsupport-$(VERSION)/c
-	mkdir -p tmp/buildsupport-$(VERSION)/ada
-	mkdir -p tmp/buildsupport-$(VERSION)/include
-	mkdir -p tmp/buildsupport-$(VERSION)/misc
-	cp -f c/*.c tmp/buildsupport-$(VERSION)/c/
-	cp -f ada/*.ads tmp/buildsupport-$(VERSION)/ada/
-	cp -f ada/*.adb tmp/buildsupport-$(VERSION)/ada/
-	cp -f include/*.h tmp/buildsupport-$(VERSION)/include/
-	cp -f Makefile tmp/buildsupport-$(VERSION)/
-	cp -f buildsupport.gpr tmp/buildsupport-$(VERSION)/
-	cp -f misc/driveGnuPlotsStreams.pl tmp/buildsupport-$(VERSION)/misc/driveGnuPlotsStreams.pl
-	( cd tmp && tar cvvfz buildsupport-$(VERSION).tar.gz buildsupport-$(VERSION) )
-	mv tmp/buildsupport-$(VERSION).tar.gz release/
-	mkdir -p tmp/buildsupport-`uname -m`-$(VERSION)/bin
-	mkdir -p tmp/buildsupport-`uname -m`-$(VERSION)/misc/
-	$(MAKE)
-	cp -f buildsupport tmp/buildsupport-`uname -m`-$(VERSION)/bin
-	cp -f misc/driveGnuPlotsStreams.pl tmp/buildsupport-`uname -m`-$(VERSION)/misc/
-	( cd tmp && tar cvvfz buildsupport-`uname -m`-$(VERSION).tgz buildsupport-`uname -m`-$(VERSION)/)
-	( cp -f tmp/buildsupport-`uname -m`-$(VERSION).tgz release/)
-	rm -rf tmp/
-
-.PHONY: release
+.PHONY: install clean
