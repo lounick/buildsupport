@@ -167,10 +167,10 @@ package Buildsupport_Utils is
 
    type Connection is
        record
-           Source_Function : Unbounded_String;
-           Dest_Function   : Unbounded_String;
-           Source_RI_Name  : Unbounded_String;
-           Dest_PI_Name    : Unbounded_String;
+           Caller  : Unbounded_String;
+           Callee  : Unbounded_String;
+           RI_Name : Unbounded_String;
+           PI_Name : Unbounded_String;
        end record;
 
    package Channels is new Indefinite_Vectors (Natural, Connection);
@@ -178,7 +178,7 @@ package Buildsupport_Utils is
    type Complete_Interface_View is
        record
            Flat_Functions : Functions.Vector;
-           --  Connections    : Channels.Vector;
+           Connections    : Channels.Vector;
        end record;
 
    --  Function to build up the Ada AST by transforming the one from Ocarina

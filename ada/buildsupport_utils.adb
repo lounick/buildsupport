@@ -408,8 +408,46 @@ package body Buildsupport_Utils is
       Funcs             : Functions.Vector := Functions.Empty_Vector;
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
-      Conn              : Node_Id;
-      pragma Unreferenced (Routes);
+
+      --  Parse a connection
+      function Parse_Connection (Conn : Node_Id) return Connection is
+         Caller  : constant Node_Id := AIN.Item (AIN.First_Node
+                                         (AIN.Path (AIN.Destination (Conn))));
+         Callee  : constant Node_Id := AIN.Item (AIN.First_Node
+                                         (AIN.Path (AIN.Source (Conn))));
+         PI_Name : constant Name_Id := Get_Interface_Name
+                                   (Get_Referenced_Entity (AIN.Source (Conn)));
+         RI_Name : constant Name_Id := Get_Interface_Name
+                              (Get_Referenced_Entity (AIN.Destination (Conn)));
+      begin
+         Put_Line ("Caller function (has RI) : " & AIN_Case (Caller));
+         Put_Line ("Callee (has PI) : " & AIN_Case (Callee));
+         Put_Line ("PI Name: " & Get_Name_String (PI_Name));
+         Put_Line ("RI Name: " & Get_Name_String (RI_Name));
+         return Connection'(Caller => US (AIN_Case (Caller)),
+                            Callee => US (AIN_Case (Callee)),
+                            PI_Name => US (Get_Name_String (PI_Name)),
+                            RI_Name => US (Get_Name_String (RI_Name)));
+      end Parse_Connection;
+
+      --  Create a vector of connections for a given system
+      --  This vector will then be filtered to connect end-to-end functions
+      --  once the system is flattened
+      function Parse_System_Connections (System : Node_Id)
+         return Channels.Vector
+      is
+         Conn   : Node_Id;
+         Result : Channels.Vector;
+      begin
+         if Present (AIN.Connections (System)) then
+            Conn := AIN.First_Node (AIN.Connections (System));
+            while Present (Conn) loop
+               Result := Result & Parse_Connection (Conn);
+               Conn := AIN.Next_Node (Conn);
+            end loop;
+         end if;
+         return Result;
+      end Parse_System_Connections;
 
       --  Parse an individual context parameter
       function Parse_CP (Subco : Node_Id) return Context_Parameter is
@@ -480,6 +518,7 @@ package body Buildsupport_Utils is
          Result.RCM := Get_RCM_Operation_Kind (If_I);
          Result.Period_Or_MIAT := Get_RCM_Period (If_I);
          Result.WCET_ms := Get_Upper_WCET (If_I);
+         Result.User_Properties := Get_Properties_Map (If_I);
          --  Parameters:
          if not Is_Empty (AIN.Features (Sub_I)) then
             Param_I := AIN.First_Node (AIN.Features (Sub_I));
@@ -490,11 +529,6 @@ package body Buildsupport_Utils is
                Param_I := AIN.Next_Node (Param_I);
             end loop;
          end if;
-         --  Parse the connection (if RI)
---        if not AIN.Is_Provided (If_I) then
---           Put_Line ("Required Interface " & To_String (Result.Name));
---           Put_Line ("Connected to " & AIN_Case (CI));
---        end if;
          return Result;
       end Parse_Interface;
 
@@ -517,8 +551,6 @@ package body Buildsupport_Utils is
          Subco       : Node_Id;
          --  To get the provided and required interfaces
          PI_Or_RI    : Node_Id;
-         If_AST      : Taste_Interface;
-         pragma Unreferenced (If_AST);
       begin
          Result.Name     := US (Name);
          Result.Language := Get_Source_Language (Inst);
@@ -554,6 +586,7 @@ package body Buildsupport_Utils is
                PI_Or_RI := AIN.Next_Node (PI_Or_RI);
             end loop;
          end if;
+         Result.User_Properties := Get_Properties_Map (Inst);
          return Result;
       end Parse_Function;
 
@@ -577,6 +610,8 @@ package body Buildsupport_Utils is
                   end loop;
                end if;
 
+               Routes := Routes & Parse_System_Connections (CI);
+
                if No (AIN.Subcomponents (CI)) or Res = Functions.Empty_Vector
                then
                   Res := Res & Parse_Function (Name => Name, Inst => CI);
@@ -597,17 +632,11 @@ package body Buildsupport_Utils is
          Current_Function := AIN.Next_Node (Current_Function);
       end loop;
 
-      --  Parse connections
-      if Present (AIN.Connections (System)) then
-         Conn := AIN.First_Node (AIN.Connections (System));
-         while Present (Conn) loop
-            Conn := AIN.Next_Node (Conn);
-         end loop;
-      end if;
+      Routes := Routes & Parse_System_Connections (System);
 
       return IV_AST : constant Complete_Interface_View :=
-          (Flat_Functions => Funcs);
---           Connections    => Routes);
+          (Flat_Functions => Funcs,
+           Connections    => Routes);
    end AADL_to_Ada_IV;
 
 end Buildsupport_Utils;
