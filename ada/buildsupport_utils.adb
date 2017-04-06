@@ -409,6 +409,7 @@ package body Buildsupport_Utils is
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
       Current_Function  : Node_Id;
       Conn              : Node_Id;
+      pragma Unreferenced (Routes);
 
       --  Parse an individual context parameter
       function Parse_CP (Subco : Node_Id) return Context_Parameter is
@@ -490,10 +491,10 @@ package body Buildsupport_Utils is
             end loop;
          end if;
          --  Parse the connection (if RI)
-         if not AIN.Is_Provided (If_I) then
-            Put_Line ("Required Interface " & To_String (Result.Name));
-            Put_Line ("Connected to " & AIN_Case (CI));
-         end if;
+--        if not AIN.Is_Provided (If_I) then
+--           Put_Line ("Required Interface " & To_String (Result.Name));
+--           Put_Line ("Connected to " & AIN_Case (CI));
+--        end if;
          return Result;
       end Parse_Interface;
 
@@ -600,17 +601,13 @@ package body Buildsupport_Utils is
       if Present (AIN.Connections (System)) then
          Conn := AIN.First_Node (AIN.Connections (System));
          while Present (Conn) loop
-            Put_Line ("Connection " &
-             Get_Interface_Name (Get_Referenced_Entity (AIN.Source (Conn)))'Img
-                     & " -> " &
-      Get_Interface_Name (Get_Referenced_Entity (AIN.Destination (Conn)))'Img);
             Conn := AIN.Next_Node (Conn);
          end loop;
       end if;
 
       return IV_AST : constant Complete_Interface_View :=
-          (Flat_Functions => Funcs,
-           Connections    => Routes);
+          (Flat_Functions => Funcs);
+--           Connections    => Routes);
    end AADL_to_Ada_IV;
 
 end Buildsupport_Utils;
