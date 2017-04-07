@@ -420,12 +420,13 @@ package body Buildsupport_Utils is
          RI_Name : constant Name_Id := Get_Interface_Name
                               (Get_Referenced_Entity (AIN.Destination (Conn)));
       begin
-         Put_Line ("Caller function (has RI) : " & AIN_Case (Caller));
-         Put_Line ("Callee (has PI) : " & AIN_Case (Callee));
-         Put_Line ("PI Name: " & Get_Name_String (PI_Name));
-         Put_Line ("RI Name: " & Get_Name_String (RI_Name));
-         return Connection'(Caller => US (AIN_Case (Caller)),
-                            Callee => US (AIN_Case (Callee)),
+         --  Put_Line (AIN.Node_Kind'Image (Kind (Caller)));
+         return Connection'(Caller =>
+           (if Kind (Caller) = K_Subcomponent_Access_Instance then US ("_env")
+            else US (AIN_Case (Caller))),
+                            Callee =>
+           (if Kind (Callee) = K_Subcomponent_Access_Instance then US ("_env")
+            else US (AIN_Case (Callee))),
                             PI_Name => US (Get_Name_String (PI_Name)),
                             RI_Name => US (Get_Name_String (RI_Name)));
       end Parse_Connection;
@@ -540,8 +541,9 @@ package body Buildsupport_Utils is
       --  * User Properties (from TASTE_IV_Properties.aadl)
       --  * Timers
       --  * Provided and Required Interfaces
-      function Parse_Function (Name : String;
-                               Inst : Node_Id) return Taste_Terminal_Function
+      function Parse_Function (Prefix : String;
+                               Name   : String;
+                               Inst   : Node_Id) return Taste_Terminal_Function
       is
          Result      : Taste_Terminal_Function;
          --  To get the optional zip filename where user code is stored:
@@ -553,6 +555,8 @@ package body Buildsupport_Utils is
          PI_Or_RI    : Node_Id;
       begin
          Result.Name     := US (Name);
+         Result.Prefix   := (if Prefix'Length > 0 then Just (US (Prefix))
+                             else Nothing);
          Result.Language := Get_Source_Language (Inst);
          if Source_Text'Length /= 0 then
             Zip_Id          := Source_Text (1);
@@ -596,8 +600,9 @@ package body Buildsupport_Utils is
          Inner        : Node_Id;
          Res          : Functions.Vector := Functions.Empty_Vector;
          CI           : constant Node_Id := Corresponding_Instance (Func);
-         Name         : constant String := Prefix &
-            (if Prefix'Length > 0 then "_" else "") & AIN_Case (Func);
+         Name         : constant String := AIN_Case (Func);
+         Next_Prefix  : constant String := Prefix &
+                           (if Prefix'Length > 0 then "_" else "") & Name;
       begin
 
          case Get_Category_Of_Component (CI) is
@@ -605,7 +610,8 @@ package body Buildsupport_Utils is
                if Present (AIN.Subcomponents (CI)) then
                   Inner := AIN.First_Node (AIN.Subcomponents (CI));
                   while Present (Inner) loop
-                     Res := Res & Rec_Function (Prefix => Name, Func => Inner);
+                     Res := Res & Rec_Function (Prefix => Next_Prefix,
+                                                Func   => Inner);
                      Inner := AIN.Next_Node (Inner);
                   end loop;
                end if;
@@ -614,7 +620,9 @@ package body Buildsupport_Utils is
 
                if No (AIN.Subcomponents (CI)) or Res = Functions.Empty_Vector
                then
-                  Res := Res & Parse_Function (Name => Name, Inst => CI);
+                  Res := Res & Parse_Function (Prefix => Prefix,
+                                               Name   => Name,
+                                               Inst   => CI);
                end if;
             when others =>
                null;
@@ -633,6 +641,11 @@ package body Buildsupport_Utils is
       end loop;
 
       Routes := Routes & Parse_System_Connections (System);
+      for Each of Routes loop
+         Put_Line (To_String (Each.Caller) & "." & To_String (Each.RI_Name)
+                  & " -> " & To_String (Each.Callee) & "." &
+                  To_String (Each.PI_Name));
+      end loop;
 
       return IV_AST : constant Complete_Interface_View :=
           (Flat_Functions => Funcs,
