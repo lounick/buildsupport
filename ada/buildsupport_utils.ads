@@ -175,11 +175,15 @@ package Buildsupport_Utils is
        end record;
 
    package Channels is new Indefinite_Vectors (Natural, Connection);
+   package Connection_Maps is new Indefinite_Ordered_Maps (String,
+                                                           Channels.Vector,
+                                                          "=" => Channels."=");
 
    type Complete_Interface_View is
        record
-           Flat_Functions : Functions.Vector;
-           Connections    : Channels.Vector;
+           Flat_Functions  : Functions.Vector;
+           End_To_End_Conn : Channels.Vector;
+           Nested_Conn     : Connection_Maps.Map;
        end record;
 
    --  Function to build up the Ada AST by transforming the one from Ocarina

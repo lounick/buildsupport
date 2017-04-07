@@ -247,7 +247,7 @@ package body Buildsupport_Utils is
    --------------------------------------------
    function Get_Properties_Map (D : Node_Id) return Property_Maps.Map is
       properties : constant List_Id  := AIN.Properties (D);
-      result     : Property_Maps.Map := Empty_Map;
+      result     : Property_Maps.Map := Property_Maps.Empty_Map;
       property   : Node_Id           := AIN.First_Node (properties);
       prop_value : Node_Id;
       single_val : Node_Id;
@@ -405,8 +405,10 @@ package body Buildsupport_Utils is
       use type Ctxt_Params.Vector;
       use type Interfaces.Vector;
       use type Parameters.Vector;
+      use type Connection_Maps.Map;
       Funcs             : Functions.Vector := Functions.Empty_Vector;
       Routes            : Channels.Vector; --  := Channels.Empty_Vector;
+      Routes_Map        : Connection_Maps.Map;
       Current_Function  : Node_Id;
 
       --  Parse a connection
@@ -616,7 +618,9 @@ package body Buildsupport_Utils is
                   end loop;
                end if;
 
-               Routes := Routes & Parse_System_Connections (CI);
+               --  Routes := Routes & Parse_System_Connections (CI);
+               Routes_Map.Insert (Key => Name,
+                                  New_Item => Parse_System_Connections (CI));
 
                if No (AIN.Subcomponents (CI)) or Res = Functions.Empty_Vector
                then
@@ -640,16 +644,23 @@ package body Buildsupport_Utils is
          Current_Function := AIN.Next_Node (Current_Function);
       end loop;
 
-      Routes := Routes & Parse_System_Connections (System);
-      for Each of Routes loop
-         Put_Line (To_String (Each.Caller) & "." & To_String (Each.RI_Name)
-                  & " -> " & To_String (Each.Callee) & "." &
-                  To_String (Each.PI_Name));
+      --  Routes := Routes & Parse_System_Connections (System);
+      Routes_Map.Insert (Key => "_Root",
+                         New_Item => Parse_System_Connections (System));
+      for C in Routes_Map.Iterate loop
+         Put_Line ("Routes of Function " & Connection_Maps.Key (C));
+         for Each of Connection_Maps.Element (C) loop
+            Put_Line ("   " & To_String (Each.Caller)
+                     & "." & To_String (Each.RI_Name)
+                     & " -> " & To_String (Each.Callee) & "." &
+                     To_String (Each.PI_Name));
+         end loop;
       end loop;
 
       return IV_AST : constant Complete_Interface_View :=
-          (Flat_Functions => Funcs,
-           Connections    => Routes);
+          (Flat_Functions  => Funcs,
+           End_To_End_Conn => Routes,
+           Nested_Conn     => Routes_Map);
    end AADL_to_Ada_IV;
 
 end Buildsupport_Utils;
