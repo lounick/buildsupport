@@ -5,8 +5,8 @@
 --  Set of helper functions for buildsupport
 with Ocarina,
      --  Ocarina.Types,
-     Types,
-     Namet,
+     Ocarina.Types,
+     Ocarina.Namet,
      Ocarina.Backends.Properties,
      Ada.Containers.Indefinite_Ordered_Maps,
      Ada.Containers.Indefinite_Vectors,
@@ -16,8 +16,8 @@ with Ocarina,
      Option_Type;
 
 use Ocarina,
-    Types,
-    Namet,
+    Ocarina.Types,
+    Ocarina.Namet,
     Ocarina.Backends.Properties,
     Ocarina.ME_AADL.AADL_Tree.Nodes,
     Ocarina.ME_AADL.AADL_Instances.Nodes,

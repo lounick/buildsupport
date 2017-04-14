@@ -604,7 +604,7 @@ package body Buildsupport_Utils is
          CI           : constant Node_Id := Corresponding_Instance (Func);
          Name         : constant String := AIN_Case (Func);
          Next_Prefix  : constant String := Prefix &
-                           (if Prefix'Length > 0 then "_" else "") & Name;
+                           (if Prefix'Length > 0 then "." else "") & Name;
       begin
 
          case Get_Category_Of_Component (CI) is
@@ -619,7 +619,7 @@ package body Buildsupport_Utils is
                end if;
 
                --  Routes := Routes & Parse_System_Connections (CI);
-               Routes_Map.Insert (Key => Name,
+               Routes_Map.Insert (Key      => Name,
                                   New_Item => Parse_System_Connections (CI));
 
                if No (AIN.Subcomponents (CI)) or Res = Functions.Empty_Vector
@@ -644,8 +644,7 @@ package body Buildsupport_Utils is
          Current_Function := AIN.Next_Node (Current_Function);
       end loop;
 
-      --  Routes := Routes & Parse_System_Connections (System);
-      Routes_Map.Insert (Key => "_Root",
+      Routes_Map.Insert (Key      => "_Root",
                          New_Item => Parse_System_Connections (System));
       for C in Routes_Map.Iterate loop
          Put_Line ("Routes of Function " & Connection_Maps.Key (C));

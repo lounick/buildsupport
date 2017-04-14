@@ -11,8 +11,8 @@ with Ada.Strings.Unbounded,
      GNAT.OS_Lib,
      Errors,
      Locations,
-     Namet,
-     Types,
+     Ocarina.Namet,
+     Ocarina.Types,
      System.Assertions,
      Ocarina.Analyzer,
      Ocarina.Backends.Properties,
@@ -35,8 +35,8 @@ use Ada.Strings.Unbounded,
     Ada.Text_IO,
     Ada.Characters.Handling,
     Locations,
-    Namet,
-    Types,
+    Ocarina.Namet,
+    Ocarina.Types,
     Ocarina,
     Ocarina.Analyzer,
     Ocarina.Backends.Properties,
@@ -779,7 +779,8 @@ procedure BuildSupport is
                   "programming_properties.aadl" &
                   "memory_properties.aadl" &
                   "modeling_properties.aadl" &
-                  "arinc653_properties.aadl" &
+                  "arinc653.aadl" &
+                  --  "arinc653_properties.aadl" &
                   "base_types.aadl" &
                   "data_model.aadl" &
                   "deployment.aadl";

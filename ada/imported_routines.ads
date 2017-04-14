@@ -2,8 +2,8 @@
 --  (c) 2015 European Space Agency - maxime.perrotin@esa.int
 --  LGPL license, see LICENSE file
 
---  with Ocarina.Types; use Ocarina.Types;
-with Types; use Types;
+with Ocarina.Types; use Ocarina.Types;
+--  with Types; use Types;
 
 package Imported_Routines is
 
