@@ -1,5 +1,5 @@
 with "ocarina";
-with "templates_parser";  --  from libtemplates-parser11.10.1-dev
+--  with "templates_parser";  --  from libtemplates-parser11.10.1-dev
 
 project BuildSupport is
 
