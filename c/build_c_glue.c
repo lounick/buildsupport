@@ -291,7 +291,9 @@ void add_PI_to_c_vm_if(Interface * i)
     FOREACH(p, Parameter, i->in, {
             fprintf(vm_if,
                     "    if (0 != Decode_%s_%s (&IN_%s, pmy_%s, size_my_%s)) {\n"
-                    "        printf(\"\\nError Decoding %s\\n\");\n"
+                    "        #ifdef __unix__\n"
+                    "            printf(\"\\nError Decoding %s\\n\");\n"
+                    "        #endif\n"
                     "        return;\n"
                     "    }\n\n",
                     BINARY_ENCODING(p),
