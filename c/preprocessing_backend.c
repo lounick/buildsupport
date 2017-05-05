@@ -903,16 +903,16 @@ void Add_api(Process *node, FV_list *all_fv)
                      "#define __AUTO_CODE_H_%s__\n\n"
                      "#include \"C_ASN1_Types.h\"\n"
                      "#ifdef __cplusplus\n"
-                     "extern \"C\" {\n"
+                     "    extern \"C\" {\n"
                      "#endif\n\n",
                      fv->name,
                      fv->name);
 
     /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
     fprintf (header, "#ifdef __unix__\n"
-                     "#include <stdbool.h>\n"
-                     "#include <stdlib.h>\n"
-                     "static bool debugCheckQ = false;\n"
+                     "    #include <stdbool.h>\n"
+                     "    #include <stdlib.h>\n"
+                     "    static bool debugCheckQ = false;\n"
                      "#endif\n\n");
 
     fprintf (code,   "#ifdef __unix__\n"
@@ -952,9 +952,9 @@ void Add_api(Process *node, FV_list *all_fv)
                               "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
                               "        *res = 1;\n"
                               "        #ifdef __unix__\n"
-                              "        if (debugCheckQ) {\n"
-                              "            printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
-                              "        }\n"
+                              "            if (debugCheckQ) {\n"
+                              "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
+                              "            }\n"
                               "        #endif\n"
                               "    }\n",
                               string_to_lower(task_id),

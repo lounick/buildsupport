@@ -49,7 +49,11 @@ void driver_gw_preamble(FV * fv)
         "#ifndef __DRIVER_CODE_H_%s__\n#define __DRIVER_CODE_H_%s__\n\n",
         fv->name, fv->name);
 
-    fprintf(driver_h, "#include <stdlib.h>\n\n");
+    fprintf(driver_h, "#ifdef __unix__\n"
+                      "    #include <stdlib.h>\n"
+                      "#else\n"
+                      "    typedef unsigned size_t;\n"
+                      "#endif\n\n");
 
     fprintf(driver_h, "void init_%s();\n\n", fv->name);
 

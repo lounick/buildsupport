@@ -41,7 +41,12 @@ void c_preamble(FV * fv)
     fprintf(vm_if_h, "#ifndef VM_IF_%s\n", fv->name);
     fprintf(vm_if_h, "#define VM_IF_%s\n\n", fv->name);
 
-    fprintf(vm_if, "#include <stdlib.h>\n" "#include <stdio.h>\n\n");
+    fprintf(vm_if, "#ifdef __unix__\n"
+                   "    #include <stdlib.h>\n"
+                   "    #include <stdio.h>\n"
+                   "#else\n"
+                   "    typedef unsigned size_t;\n"
+                   "#endif\n\n");
 
     fprintf(vm_if_h, "#ifdef __cplusplus\n"
             "extern \"C\" {\n" "#endif\n\n");
@@ -59,7 +64,7 @@ void c_preamble(FV * fv)
     }
 
     if (hasparam) {
-        fprintf(vm_if, "#include \"C_ASN1_Types.h\"\n\n");
+        fprintf(vm_if,   "#include \"C_ASN1_Types.h\"\n\n");
         fprintf(vm_if_h, "#include \"C_ASN1_Types.h\"\n\n");
 
     }
@@ -571,8 +576,9 @@ void add_RI_to_c_invoke_ri(Interface * i)
                     "#ifdef __unix__\n"
                     "        printf (\"** Encoding error in %s_RI_%s!!\\n\");\n"
                     "#endif\n"
-                    "        /* Major error, we must stop the application and let the FDIR/Watchdogs recover */\n"
-                    "        exit (-1);\n"
+                    "        /* Crash the application due to message loss */\n"
+                    "        extern void abort (void);\n"
+                    "        abort();\n"
                     "    }\n",
                     p->name,
                     BINARY_ENCODING(p),
