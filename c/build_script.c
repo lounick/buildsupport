@@ -289,7 +289,14 @@ void Create_script()
     });
 
     /* Let user add custom orchestrator flags */
-    fprintf (script, " \\\n\t$ORCHESTRATOR_OPTIONS\n");
+    fprintf (script, " \\\n\t$ORCHESTRATOR_OPTIONS\n\n");
+
+    fprintf (script, "if [ -f user_init_last.sh ]\n"
+                     "then\n"
+                     "    echo -e \"${INFO} Executing user-defined post-build script\"\n"
+                     "    source user_init_last.sh\n"
+                     "fi\n\n");
+
     close_file(&script);
 
     if (chmod ("build-script.sh", S_IRWXG | S_IRWXO | S_IRWXU)) {
