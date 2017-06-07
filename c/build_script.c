@@ -127,7 +127,7 @@ void Create_script()
     fprintf (script, "if [ -z \"$DEPLOYMENTVIEW\" ]\n"
                      "then\n"
                      "    DEPLOYMENTVIEW=DeploymentView.aadl\n"
-                     "fi\n\n" 
+                     "fi\n\n"
                      "# Detect models from Ellidiss tools v2, and convert them to 1.3\n"
                      "grep \"version => \\\"2\" \"$DEPLOYMENTVIEW\" >/dev/null && {\n"
                      "    echo -e \"${INFO} Converting deployment view from V2 to V1.3\"\n"
@@ -138,8 +138,9 @@ void Create_script()
 
     fprintf (script, "SKELS=\"%s\"\n\n", OUTPUT_PATH);
 
-    fprintf (script, "# Update the data view with local paths\n"
-                     "taste-update-data-view\n\n");
+    fprintf (script, "# Check if Dataview references existing files \n"
+                     "taste-extract-asn-from-design.exe -i \"$INTERFACEVIEW\" -j /tmp/dv.asn\n\n");
+                     //"taste-update-data-view\n\n");
 
     /* OpenGEODE-specific: call code generator on the fly */
     FOREACH (fv, FV, get_system_ast()->functions, {
