@@ -738,8 +738,8 @@ void Preprocess_FV (FV *fv)
                  * define as unprotected */
                 else rcm = unprotected;
                 /* Create a new FV (thread) if there is more than
-                 * one PI in the function */
-                if (count_pro+count_unpro+count_thread>1) {
+                 * one PI in the function (unprotected don't count) */
+                if (count_pro+count_thread>1) {
                     ProcessArtificial_FV_Creation (i, rcm);
                 }
             }
