@@ -41,11 +41,13 @@ void Create_script()
 
     assert (NULL != script);
 
-    fprintf (script, "#!/bin/bash\n\n"
-                     "# This script will build your TASTE system (by default with the C runtime).\n\n"
+    fprintf (script, "#!/bin/bash -e\n\n"
+                     "# This script will build your TASTE system.\n\n"
                      "# You should not change this file as it was automatically generated.\n\n"
-                     "# If you need additional preprocessing, create a file named 'user_init_pre.sh'\n"
-                     "# and/or 'user_init_post.sh - They will never get overwritten.'\n\n"
+                     "# If you need additional preprocessing, there are three hook files\n"
+                     "# that you can provide and that are called dring the build:\n"
+                     "# user_init_pre.sh, user_init_post.sh and user_init_last.sh\n"
+                     "# These files will never get overwritten by TASTE.'\n\n"
                      "# Inside these files you may set some environment variables:\n"
                      "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:${C_INCLUDE_PATH}\n"
                      "#    unset USE_POHIC   \n\n"
@@ -250,7 +252,7 @@ void Create_script()
                 case qgenc: fprintf (script, "--subQGenC ");
                       break;
                 default:
-                     ERROR ("** Error: unsupported language (function %s)\n", fv->name);
+                     ERROR ("[ERROR] Unsupported language (function %s)\n", fv->name);
                      ERROR ("  -> please manually check the build-script.sh file\n");
                      break;
             }

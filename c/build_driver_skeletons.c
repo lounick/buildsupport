@@ -91,7 +91,7 @@ int Init_Driver_GW_Backend(FV * fv)
     if (!file_exists(path, filename))
     create_file(path, filename, &driver_c);
     else { 
-        ERROR ("** Information: driver code not overwritten\n");
+        ERROR ("[INFO] driver code not overwritten\n");
         driver_c = NULL;
     }
 
@@ -111,7 +111,7 @@ void close_driver_gw_files()
 {
     fprintf(driver_h, "\n#endif\n");
     close_file(&driver_h);
-    
+
     close_file(&driver_c);
 }
 

@@ -34,19 +34,19 @@ void Create_New_SDL_Structure(FV * fv)
         char *dataview_uniq = getASN1DataView();
         char *dataview_path = getDataViewPath();
     if (!file_exists (dataview_path, dataview_uniq)) {
-            ERROR ("[Information] %s/%s not found. Checking for dataview-uniq.asn\n", dataview_path, dataview_uniq);
+            ERROR ("[INFO] %s/%s not found. Checking for dataview-uniq.asn\n", dataview_path, dataview_uniq);
             free (dataview_uniq);
             dataview_uniq = make_string ("dataview-uniq.asn");
     }
 
     char *command = make_string("mono $(which asn1.exe) -customStg $(taste-config --prefix)/share/asn1scc/python.stg:%s/DataView.py -customStgAstVerion 4 %s/%s", path, dataview_path, dataview_uniq);
     if (system(command)) {
-        ERROR ("** Error: Command \"%s\" failed in generation of SDL skeleton\n", command);
+        ERROR ("[ERROR] Command \"%s\" failed in generation of SDL skeleton\n", command);
     }
     free(command);
     command = make_string("cp \"%s/%s\" %s/", dataview_path, dataview_uniq, path);
     if (system(command)) {
-        ERROR ("** Error: Command \"%s\" failed in generation of SDL skeleton\n", command);
+        ERROR ("[ERROR] Command \"%s\" failed in generation of SDL skeleton\n", command);
     }
     free(command);
 

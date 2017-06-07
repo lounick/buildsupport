@@ -80,7 +80,7 @@ void Call_asn2dataModel(FV * fv)
 
     if (!file_exists(dataview_path, dataview_uniq)) {
         printf
-            ("[Information] %s/%s not found. Checking for dataview-uniq.asn\n",
+            ("[INFO] %s/%s not found. Checking for dataview-uniq.asn\n",
              dataview_path, dataview_uniq);
         free(dataview_uniq);
         dataview_uniq = make_string("dataview-uniq.asn");

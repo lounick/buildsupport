@@ -113,9 +113,9 @@ void C_End()
            which possibly creates additional functions */
         FOREACH(fv, FV, get_system_ast()->functions, {
             if (get_context()->gw && NULL != fv->zipfile && !get_context()->glue) {
-                printf ("[Information] No skeleton is generated for function \"%s\"\n"
-                        "              because source code is provided in file \"%s\"\n"
-                        "              (as specified in the interface view)\n\n",
+                printf ("[INFO] No skeleton is generated for function \"%s\"\n"
+                        "       because source code is provided in file \"%s\"\n"
+                        "       (as specified in the interface view)\n\n",
                         fv->name,
                         fv->zipfile
                         );

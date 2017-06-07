@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2017 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /* build_ada_skeletons.c
@@ -6,23 +6,8 @@
   this program generates empty Ada functions respecting the interfaces defined
   in the interface view. it provides functions to invoke RI.
 
-  Note on the use of the Ada skeletons:
-   Generated functions for PI are called by C code with parameters passed as
-   pointers. In Ada, pointers are expressed using the "access" keyword instead
-   of "in" or "out". To access the variable values, the ".all" postfix can be
-   used. And to declare a variable for which an access is necessary, the type
-   must be "aliased". Complete example:
-
-     procedure Compute (my_input: access asn1sccT_SEQUENCE) is   -- Provided interface
-     my_output: aliased T_INTEGER;   -- Parameter of a Required Interface
-     begin
-       my_output := my_input.all.x + my_input.all.y;
-       required_interface (my_output'access); -- Call Required Interface
-     end Compute;
-     
   Copyright 2014-2015 IB Krates <info@krates.ee>
        QGenc code generator integration
-
 */
 
 #include <stdio.h>
@@ -105,8 +90,8 @@ int ada_gw_preamble(FV * fv)
             strcmp (cp->type.name, "Timer")) {
 
             fprintf(ads,
-                "\t%s : asn1Scc%s := context_%s.%s_ctxt.%s;\n"
-                "\tpragma export(C, %s, \"%s_%s\");\n",
+                "   %s : asn1Scc%s := context_%s.%s_ctxt.%s;\n"
+                "   pragma Export(C, %s, \"%s_%s\");\n",
                 cp->name,
                 asn2underscore(cp->type.name, strlen(cp->type.name)),
                 fv->name,
@@ -180,7 +165,7 @@ int Init_Ada_GW_Backend(FV * fv)
         create_file(path, filename, &adb);
         assert(NULL != adb);
     } else
-        INFO ("** Information: User code not overwritten for function %s\n",
+        INFO ("[INFO] User code not overwritten for function %s\n",
                fv->name);
 
     free(path);
@@ -231,10 +216,10 @@ void add_PI_to_Ada_gw(Interface * i)
         return;
 
     fprintf(ads,
-            "\t---------------------------------------------------------\n"
-            "\t-- Provided interface \"%s\"\n"
-            "\t---------------------------------------------------------\n"
-            "\tprocedure %s",
+            "   --  ----------------------------------------------------  --\n"
+            "   --  Provided interface \"%s\"\n"
+            "   --  ----------------------------------------------------  --\n"
+            "   procedure %s",
             i->name,
             i->name);
 
@@ -255,15 +240,15 @@ void add_PI_to_Ada_gw(Interface * i)
     }
 
     fprintf(ads, ";\n");
-    fprintf(ads, "\tpragma export(C, %s, \"%s_PI_%s\");\n\n", i->name,
+    fprintf(ads, "   pragma Export(C, %s, \"%s_PI_%s\");\n\n", i->name,
             i->parent_fv->name, i->name);
 
     if (NULL != adb) {
         fprintf(adb,
-                "\t---------------------------------------------------------\n"
-                "\t-- Provided interface \"%s\"\n"
-                "\t---------------------------------------------------------\n"
-                "\tprocedure %s",
+                "   --  ------------------------------------------------  --\n"
+                "   --  Provided interface \"%s\"\n"
+                "   --  ------------------------------------------------  --\n"
+                "   procedure %s",
                 i->name,
                 i->name);
     }
@@ -276,12 +261,12 @@ void add_PI_to_Ada_gw(Interface * i)
 
     if (NULL != adb) {
         fprintf(adb,
-            " is\n\tpragma suppress (all_checks);"
-            "\n\tbegin\n\n");
+            " is\n   pragma Suppress (All_Checks);"
+            "\n   begin\n\n");
 
         fprintf(adb,
-            "\t\tnull;"
-            " -- Replace \"null\" with your own code!\n\n\tend %s;\n\n",
+            "      null;"
+            " --  Replace \"null\" with your own code!\n\n   end %s;\n\n",
             i->name);
     }
 
@@ -300,10 +285,10 @@ void add_RI_to_Ada_gw(Interface * i)
         return;
 
     fprintf(ads,
-            "\t---------------------------------------------------------\n"
-            "\t-- Required interface \"%s\"\n"
-            "\t---------------------------------------------------------\n"
-            "\tprocedure %s",
+            "   --  --------------------------------------------------- --\n"
+            "   --  Required interface \"%s\"\n"
+            "   --  --------------------------------------------------- --\n"
+            "   procedure %s",
             i->name,
             i->name);
 
@@ -324,20 +309,17 @@ void add_RI_to_Ada_gw(Interface * i)
 
     fprintf(ads, ";\n");
 
-    fprintf(ads, "\tpragma import(C, %s, \"%s_RI_%s\");\n", i->name,
+    fprintf(ads, "   pragma Import(C, %s, \"%s_RI_%s\");\n", i->name,
             i->parent_fv->name, i->name);
 
-    fprintf(ads, "\tprocedure RIÜ%s", i->name);
+    fprintf(ads, "   procedure RIÜ%s", i->name);
     if (NULL != ada_params) {
         fprintf(ads, "(%s)", ada_params);
     }
     fprintf(ads, " renames %s;\n\n", i->name);
-    
+
     free(ada_params);
     ada_params = NULL;
-
-
-
 }
 
 /* Add timer declarations to the Ada code skeletons */
@@ -345,23 +327,23 @@ void Ada_Add_timers (FV *fv)
 {
     if (NULL != fv->timer_list) {
         fprintf (ads, 
-                "\t---------------------------------------------------------\n"
-                "\t--                   Timers management                 --\n"
-                "\t---------------------------------------------------------\n"
+                "   --  ------------------------------------------------  --\n"
+                "   --                  Timers management                 --\n"
+                "   --  ------------------------------------------------  --\n"
                 "\n\n");
     }
     FOREACH(timer, String, fv->timer_list, {
         fprintf(ads,
-            "\t--  This function is called when the timer \"%s\" expires\n"
-            "\tprocedure %s;\n"
-            "\tpragma export(C, %s, \"%s_PI_%s\");\n\n"
-            "\t-- Call this function to set (enable) the timer\n"
-            "\t-- Value is in milliseconds, and must be a multiple of 100\n"
-            "\tprocedure SET_%s(val: access asn1sccT_UInt32);\n\n"
-            "\tpragma import(C, SET_%s, \"%s_RI_SET_%s\");\n\n"
-            "\t-- Call this function to reset (disable) the timer\n"
-            "\tprocedure RESET_%s;\n\n"
-            "\tpragma import(C, RESET_%s, \"%s_RI_RESET_%s\");\n\n",
+            "   --  This function is called when the timer \"%s\" expires\n"
+            "   procedure %s;\n"
+            "   pragma Export(C, %s, \"%s_PI_%s\");\n\n"
+            "   -- Call this function to set (enable) the timer\n"
+            "   -- Value is in milliseconds, and must be a multiple of 100\n"
+            "   procedure Set_%s(val: access asn1sccT_UInt32);\n\n"
+            "   pragma Import(C, Set_%s, \"%s_RI_SET_%s\");\n\n"
+            "   -- Call this function to reset (disable) the timer\n"
+            "   procedure Reset_%s;\n\n"
+            "   pragma Import(C, Reset_%s, \"%s_RI_RESET_%s\");\n\n",
             timer,
             timer,
             timer,
@@ -377,11 +359,11 @@ void Ada_Add_timers (FV *fv)
             timer);
         if (NULL != adb) {
             fprintf(adb,
-              "\t-- This function is called when the timer \"%s\" expires \n"
-              "\tprocedure %s is\n"
-              "\tbegin\n"
-              "\t    null;  --  Replace \"null\" with your own code!\n"
-              "\tend;\n\n",
+              "   -- This function is called when the timer \"%s\" expires \n"
+              "   procedure %s is\n"
+              "   begin\n"
+              "       null;  --  Replace \"null\" with your own code!\n"
+              "   end;\n\n",
               timer,
               timer);
         }
@@ -412,9 +394,9 @@ void GW_Ada_Backend(FV * fv)
          * input queue of the process before executing continuous signals */
         if(get_context()->polyorb_hi_c) {
             fprintf(ads,
-                    "\t-- TASTE API to check if the input queue is empty\n"
-                    "\tprocedure check_queue(res: access asn1SccT_Boolean);\n"
-                    "\tpragma import(C, check_queue, \"%s_RI_check_queue\");\n",
+                    "   --  TASTE API to check if the input queue is empty\n"
+                    "   procedure Check_Queue(res: access asn1SccT_Boolean);\n"
+                    "   pragma Import(C, Check_Queue, \"%s_RI_check_queue\");\n",
                     fv->name);
         }
 

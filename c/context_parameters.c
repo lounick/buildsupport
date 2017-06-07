@@ -154,7 +154,7 @@ void Process_Context_Parameters(FV *fv)
     dataview_path = getDataViewPath();
 
     if (!file_exists (dataview_path, dataview_uniq)) {
-        ERROR ("[Information] %s/%s not found."
+        ERROR ("[INFO] %s/%s not found."
                " Checking for dataview-uniq.asn\n",
                dataview_path, dataview_uniq);
         free (dataview_uniq);
@@ -162,7 +162,7 @@ void Process_Context_Parameters(FV *fv)
     }
 
     if (!file_exists (dataview_path, dataview_uniq)) {
-        ERROR ("** Error: %s/%s not found\n",
+        ERROR ("[ERROR] %s/%s not found\n",
                dataview_path, dataview_uniq);
         exit (-1);
     }
@@ -190,7 +190,7 @@ void Process_Context_Parameters(FV *fv)
     }
 
     if (!will_fail && system (command)) {
-        ERROR ("The command failed. Try it yourself "
+        ERROR ("[ERROR] The command failed. Try it yourself "
                "(correct paths, access to files, etc.)\n");
         exit (-1);
     }
