@@ -31,7 +31,6 @@ void Process_Context_Parameters(FV *fv)
     FILE    *asn                    = NULL;
     char    *fv_no_underscore       = NULL;
     char    *cp_no_underscore       = NULL;
-    char    *asn1scc_path           = NULL;
     int     will_fail               = 0 ;
     char    *dataview_uniq          = NULL;
     char    *dataview_path          = NULL;
@@ -142,13 +141,6 @@ void Process_Context_Parameters(FV *fv)
     /* 
      * Next part: call asn1.exe with the newly-created ASN.1 file 
     */
-    asn1scc_path = getenv ("ASN1SCC");
-
-    if (NULL == asn1scc_path) { 
-        ERROR ("** Error: Environment variable ASN1SCC not set\n");
-        build_string (&asn1scc_path, "asn1.exe", strlen ("asn1.exe"));
-        will_fail = 1;
-    }
 
     dataview_uniq = getASN1DataView();
     dataview_path = getDataViewPath();
@@ -168,8 +160,7 @@ void Process_Context_Parameters(FV *fv)
     }
 
     command = make_string
-            ("mono %s -%s -typePrefix asn1Scc -o %s/%s %s %s/%s",
-            asn1scc_path,
+            ("mono $(which asn1.exe) -%s -typePrefix asn1Scc -o %s/%s %s %s/%s",
             ada==fv->language? "Ada": "c",
             OUTPUT_PATH,
             fv->name,

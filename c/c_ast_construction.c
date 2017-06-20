@@ -337,8 +337,8 @@ void Set_Context_Variable (char *name, size_t len1, char *type, size_t len2,
 
  /* First check the validity of the ASN.1 module name */
  if (!strncmp (mod, "nomodule", len4)) {
-     ERROR ("** Error: The dataview you are using was generated using an old version\n");
-     ERROR ("          of the toolchain. You must update it by calling taste-update-data-view\n");
+     ERROR ("[ERROR] The dataview you are using was generated using an old version\n");
+     ERROR ("        of the toolchain. You must update it by calling taste-update-data-view\n");
      exit (-1);
  }
  /* Temporary for the SMP2 support until version of taste-IV withtout obj suffixes */
@@ -451,7 +451,7 @@ void Set_Timer_Resolution(char *val, size_t len) {
         char *str = make_string("%.*s", len, val);
         int time_res = (int) strtol(str, (char **)NULL, 10);
         if (0 != errno) {
-            ERROR("** Error: Timer resolution must be a valid number\n");
+            ERROR("[ERROR] Timer resolution must be a valid number\n");
         }
         else {
             printf("[INFO] Set timer resolution to %d\n", time_res);
@@ -496,8 +496,8 @@ void Set_OutDir(char *o, size_t len)
     /* create the root output directory */
     if (-1 == mkdir((system_ast->context)->output, 0700)
         && EEXIST != errno) {
-        ERROR("** Error: output directory could not be created!\n");
-        ERROR("          Current directory will be used instead...\n");
+        ERROR("[ERROR] output directory could not be created!\n");
+        ERROR("        Current directory will be used instead...\n");
         free((system_ast->context)->output);
         (system_ast->context)->output = NULL;
     }
@@ -782,7 +782,7 @@ void Add_Binding(char *b, size_t length)
     Create_Aplc_binding(&binding);
 
     if (NULL == binding) {
-        ERROR ("** Error in Add_Binding->Create_Aplc_binding\n");
+        ERROR ("[ERROR] in Add_Binding->Create_Aplc_binding\n");
         return;
     }
 
@@ -802,7 +802,7 @@ void Add_Binding(char *b, size_t length)
         APPEND_TO_LIST(Aplc_binding, process->bindings, binding);
         result_fv->process = process;
     } else {
-        ERROR ("** Error: Binding references a non-existing FV...(%s)\n",
+        ERROR ("[ERROR] Binding references a non-existing FV...(%s)\n",
                binding_name);
         add_error();
     }

@@ -68,7 +68,7 @@ void Call_asn2dataModel(FV * fv)
         case EEXIST:
             break;
         default:
-            ERROR("Error creating directory %s\n", dataviewpath);
+            ERROR("[ERROR] Issue creating directory %s\n", dataviewpath);
             add_error();
             return;
             break;
@@ -87,7 +87,7 @@ void Call_asn2dataModel(FV * fv)
     }
 
     if (!file_exists(dataview_path, dataview_uniq)) {
-        ERROR("** Error: %s/%s not found\n", dataview_path, dataview_uniq);
+        ERROR("[ERROR] %s/%s not found\n", dataview_path, dataview_uniq);
         exit(-1);
     }
 
@@ -100,7 +100,7 @@ void Call_asn2dataModel(FV * fv)
 
     if (system(command)) {
         ERROR
-            ("** Error: Check this command line and make sure all files are valid:\n%s\n", command);
+            ("[ERROR] Check this command line and make sure all files are valid:\n%s\n", command);
         exit(-1);
     }
     free(command);

@@ -30,8 +30,6 @@ void Process_Directives(FV *fv)
         FILE    *main_c                 = NULL;
         char    *fv_no_underscore       = NULL;
         char    *cp_no_underscore       = NULL;
-        char    *asn1scc_path           = NULL;
-        int     will_fail               = 0 ;
         bool    directive_present       = false;
 
         ASN1_Filename *filename = NULL;
@@ -116,13 +114,6 @@ void Process_Directives(FV *fv)
         /*
          * Next part: call asn1.exe with the newly-created ASN.1 file 
         */
-        asn1scc_path = getenv ("ASN1SCC");
-
-        if (NULL == asn1scc_path) {
-            ERROR ("** Error: environment variable ASN1SCC not set\n");
-            build_string (&asn1scc_path, "asn1.exe", strlen ("asn1.exe"));
-            will_fail = 1;
-        }
 
         char *directives_file = make_string ("$(taste-config --directives)");
 
@@ -132,26 +123,15 @@ void Process_Directives(FV *fv)
         mkdir (directive_path, 0700);
         free (directive_path);
 
-        command = make_string ("mono %s -c -XER -o %s/%s/directives %s %s", 
-                asn1scc_path,
+        command = make_string ("mono $(which asn1.exe) -c -XER -o %s/%s/directives %s %s",
                 OUTPUT_PATH,
                 fv->name,
                 filename,
                 directives_file);
 
-        ERROR ("%s %s\n", 
-                will_fail? "Because of the above warning(s),"
-                           " the following command cannot be executed :\n":
-                "Executing",
-                command);
+        ERROR ("[INFO] Executing %s\n", command);
 
-        if (will_fail) {
-            ERROR("Fix the warnings and restart buildsupport,"
-                   " or run it manually, you need it!\n");
-            exit (-1);
-        }
-
-        if (!will_fail && system (command)) {
+        if (system (command)) {
             ERROR ("The command failed. Try it yourself"
                    " (correct paths, access to files, etc.)\n");
             exit (-1);

@@ -25,7 +25,7 @@ void Interface_Semantic_Check(Interface * i)
     if (PI == i->direction && cyclic == i->rcm && NULL != i->distant_fv) {
 
         ERROR
-            ("** Error: In Function \"%s\", interface \"%s\" is cyclic and should not be connected. \n",
+            ("[ERROR] In Function \"%s\", interface \"%s\" is cyclic and should not be connected. \n",
              i->parent_fv->name, i->name);
         add_error();
 
@@ -36,7 +36,7 @@ void Interface_Semantic_Check(Interface * i)
         && (NULL != i->in || NULL != i->out)) {
 
         ERROR
-            ("** Error: In Function \"%s\", interface \"%s\" is cyclic and should not have parameters. \n",
+            ("[ERROR] In Function \"%s\", interface \"%s\" is cyclic and should not have parameters. \n",
              i->parent_fv->name, i->name);
         add_error();
 
@@ -53,7 +53,7 @@ void Interface_Semantic_Check(Interface * i)
 
         if (count_param > 1) {
             ERROR
-                ("** Error: In Function \"%s\", sporadic interface \"%s\" cannot have more than 1 IN param.\n",
+                ("[ERROR] In Function \"%s\", sporadic interface \"%s\" cannot have more than 1 IN param.\n",
                  i->parent_fv->name, i->name);
             add_error();
         }
@@ -61,7 +61,7 @@ void Interface_Semantic_Check(Interface * i)
         /* Check that SPO interfaces don't have any OUT parameters */
         if (NULL != i->out) {
             ERROR
-                ("** Error:  In Function \"%s\", sporadic interface \"%s\" cannot have OUT parameters.\n",
+                ("[ERROR]  In Function \"%s\", sporadic interface \"%s\" cannot have OUT parameters.\n",
                  i->parent_fv->name, i->name);
             add_error();
         }
@@ -76,7 +76,7 @@ void Function_Semantic_Check(FV * fv)
 {
     if (fv->system_ast->context->glue && NULL == fv->process) {
         ERROR
-            ("** Error: Function \"%s\" is not bound to any partition.\n",
+            ("[ERROR] Function \"%s\" is not bound to any partition.\n",
              fv->name);
         add_error();
     }
@@ -97,7 +97,7 @@ void Function_Semantic_Check(FV * fv)
         );
         if (0 == count_pi) {
             ERROR
-                ("** Error: Function \"%s\" shall contain at least one provided interface.\n",
+                ("[ERROR] Function \"%s\" shall contain at least one provided interface.\n",
                  fv->name);
             add_error();
         }
@@ -119,7 +119,7 @@ void Function_Semantic_Check(FV * fv)
 
         if (1 != count_pi) {
             ERROR
-                ("** Error: %s function \"%s\" must contain ONE provided interface\n",
+                ("[ERROR] %s function \"%s\" must contain ONE provided interface\n",
                  scade == fv->language ? "SCADE" : "Simulink", fv->name);
             ERROR
                 ("** (but possibly several input and output parameters).\n");
@@ -128,7 +128,7 @@ void Function_Semantic_Check(FV * fv)
 
         if (0 != count_ri) {
             ERROR
-                ("** Error: %s function \"%s\" must NOT contain any required interface\n",
+                ("[ERROR] %s function \"%s\" must NOT contain any required interface\n",
                  scade == fv->language ? "SCADE" : "Simulink", fv->name);
             ERROR
                 ("** (use OUT parameters in the interface specification).\n");
@@ -148,7 +148,7 @@ void Function_Semantic_Check(FV * fv)
             else {
                 if (asynch == i->synchronism) {
                     ERROR
-                    ("** Error: Required interface %s of function %s should be PROTECTED or UNPROTECTED\n",
+                    ("[ERROR] Required interface %s of function %s should be PROTECTED or UNPROTECTED\n",
                      i->name, fv->name);
                     ERROR
                     ("   because it is connected to a function that is using QGen as a source language\n");
@@ -161,7 +161,7 @@ void Function_Semantic_Check(FV * fv)
 
         if (0 != count_ri) {
             ERROR
-                ("** Error: %s function \"%s\" must NOT contain any required interface\n",
+                ("[ERROR] %s function \"%s\" must NOT contain any required interface\n",
                  qgenc == fv->language ? "QGenC" : "QGenAda", fv->name);
             ERROR
                 ("** (use OUT parameters in the interface specification).\n");
@@ -181,7 +181,7 @@ void Function_Semantic_Check(FV * fv)
 
         if (strcmp(i->name, fv->name)) {
             ERROR
-            ("** Error: PI \"%s\" should have the same name as SCADE function \"%s\"\n",
+            ("[ERROR] PI \"%s\" should have the same name as SCADE function \"%s\"\n",
              i->name, fv->name);
             add_error();
         }
@@ -196,7 +196,7 @@ void Function_Semantic_Check(FV * fv)
         FOREACH(i, Interface, fv->interfaces, {
             if (RI == i->direction) {
                 if (NULL == i->in) {
-                    ERROR("** Error: in GUI function \"%s\",\n"
+                    ERROR("[ERROR] in GUI function \"%s\",\n"
                            "**    interface \"%s\" must contain a parameter.\n",
                            fv->name,
                            i->name); 
@@ -204,7 +204,7 @@ void Function_Semantic_Check(FV * fv)
                 }
                 /* Undefined RCM corresponds to "any type" (=inherited from PI) */ 
                 if (undefined != i->rcm && sporadic != i->rcm && variator != i->rcm) {
-                    ERROR("** Error: All interfaces of GUI \"%s\"\n"
+                    ERROR("[ERROR] All interfaces of GUI \"%s\"\n"
                            "**       must be SPORADIC (e.g. %s is not).\n",
                            fv->name,
                            i->name);
@@ -225,7 +225,7 @@ void Function_Semantic_Check(FV * fv)
                     if (!strcmp(function->name, i->distant_fv)
                         && function->process != fv->process) {
                     ERROR
-                    ("** Error: Required interface %s of function %s should be SPORADIC\n",
+                    ("[ERROR] Required interface %s of function %s should be SPORADIC\n",
                      i->name, fv->name);
                     ERROR
                     ("   because it is connected to a function that is bound to a different\n");
@@ -259,7 +259,7 @@ void Semantic_Checks()
                     if (vhdl == binding->fv->language) count++;}
             ); if (count > 1) {
             ERROR
-            ("** Error: in a distributed system, a partition can contain only ONE\n");
+            ("[ERROR] in a distributed system, a partition can contain only ONE\n");
             ERROR("   VHDL component. Partition \"%s\" has %d.\n",
                    process->name, count); add_error();}
 

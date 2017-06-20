@@ -375,7 +375,7 @@ void Add_Artificial_Function (Interface *duplicate_pi,
 
    /* 2) Add the new FV to the binding list of the Process */
    if (NULL == fv->process) {
-      ERROR ("** Error: function %s is not bound to any process\n",
+      ERROR ("[ERROR] function %s is not bound to any process\n",
               fv->name);
       add_error();
       return;

@@ -657,9 +657,9 @@ void add_RI_to_ada_wrappers(Interface * i)
                 fprintf(b, "%d", calltmp->value->thread_id);
                 }
                 else if (0 == count) {
-                ERROR ("** Error: function \"%s\" is not called by anyone (dead code)!\n", i->parent_fv->name);
+                ERROR ("[ERROR] Function \"%s\" is not called by anyone (dead code)!\n", i->parent_fv->name);
                         ERROR ("** This is not supported by the Ada runtime. You may have to change two things:\n");
-                        ERROR ("**    1) (In any case) use the -p flag when calling the TASTE orchestrator, and\n");
+                        ERROR ("**    1) Use the -p flag when calling the TASTE orchestrator to use the C runtime, and\n");
                         ERROR ("**    2) In your deployment view, if applicable, choose a non-Ada runtime\n");
                         ERROR ("**       (do not use \"LEON_ORK\" ; \"Native\" or \"LEON_RTEMS\" are OK)\n\n");
                         exit(-1);
