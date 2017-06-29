@@ -8,8 +8,10 @@ all: build
 build:
 ifeq ($(UNAME), Linux)
 	@echo "package Buildsupport_Version is" > ada/buildsupport_version.ads.new
-	@echo -n "   Buildsupport_Release : constant String := \"" >> ada/buildsupport_version.ads.new
+	@echo -n "   Buildsupport_Release : constant String :=\n      \"" >> ada/buildsupport_version.ads.new
 	@git log --oneline | head -1 | cut -f1 -d' ' | tr -d '\012' >> ada/buildsupport_version.ads.new
+	@echo " ; Commit " | tr -d '\r\n' >> ada/buildsupport_version.ads.new
+	@git log | head -3 | tail -1 | cut -f1 -d"+" | tr -d '\r\n' >>  ada/buildsupport_version.ads.new
 	@echo "\";" >> ada/buildsupport_version.ads.new
 	@echo -n "end Buildsupport_Version;" >> ada/buildsupport_version.ads.new
 	@if [ ! -f "ada/buildsupport_version.ads" ] ; then                \
