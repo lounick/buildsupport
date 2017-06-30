@@ -272,7 +272,7 @@ void Create_script()
                 fprintf (script, ":\"$SKELS\"/%s/%s.zip", fv->name, fv->name);
             }
             else if (NULL != fv->zipfile) {
-                fprintf (script, ":\"$SKELS\"/%s", fv->zipfile);
+                fprintf (script, ":%s", fv->zipfile);
             }
             else if (vhdl != fv->language) {
                 fprintf(script, ":\"$SKELS\"/%s.zip", fv->name);
