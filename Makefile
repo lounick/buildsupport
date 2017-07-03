@@ -27,7 +27,7 @@ ifeq ($(UNAME), Linux)
 	fi
 endif
 	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH \
-            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" --target=x86_64-linux
+            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
 
 install:
 	$(MAKE)
