@@ -79,7 +79,7 @@ void Process_Node_Driver_Configuration(Device *device, char *node)
         if (-1 == ret) {
             switch (errno) {
                 case EEXIST : break;
-                default : ERROR ("** Error: Impossible to create directory %s\n", driver_conf_path);
+                default : ERROR ("[ERROR] Impossible to create directory %s\n", driver_conf_path);
                           exit (-1);
                           return;
                           break;
@@ -90,24 +90,23 @@ void Process_Node_Driver_Configuration(Device *device, char *node)
          if (-1 == ret) {
             switch (errno) {
                 case EEXIST : break;
-                default : ERROR ("** Error: Impossible to create directory %s\n", driver_conf_path);
+                default : ERROR ("[ERROR] Impossible to create directory %s\n", driver_conf_path);
                           exit (-1);
                           return;
                           break;
             }
         }
 
-
-        command = make_string ("mono $(which asn1.exe) %s -%s -o %s %s %s", 
+        command = make_string ("mono $(which asn1.exe) -%s -o %s %s %s", 
                 C_DRIVER ? "c -typePrefix __po_hi_c_": "Ada",
                 driver_conf_path,
                 filename,
                 device->asn1_filename);
 
-        ERROR ("Executing %s\n", command);
+        ERROR ("[INFO] Executing %s\n", command);
 
         if (system (command)) {
-            ERROR ("The command failed. Try it yourself (correct paths, access to files, etc.)\n");
+            ERROR ("[ERROR] The command failed. Try it yourself (correct paths, access to files, etc.)\n");
             exit (-1);
         }
         else if (!get_context()->test) {
