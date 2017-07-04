@@ -267,15 +267,15 @@ void add_sync_PI_to_c_wrappers(Interface * i)
 
     /* body of the function: */
     if (protected == i->rcm) {
-        fprintf(cfile, "\textern %staste_protected_object %s_protected;\n",
+        fprintf(cfile, "   extern %staste_protected_object %s_protected;\n",
                        get_context()->aadlv2 ? "process_package__" : "",
                        i->parent_fv->name);
         fprintf(cfile,
-                "\t__po_hi_protected_lock (%s_protected.protected_id);\n",
+                "   __po_hi_protected_lock (%s_protected.protected_id);\n",
                 i->parent_fv->name);
     }
 
-    fprintf(cfile, "\t%s_%s(", i->parent_fv->name, i->name);
+    fprintf(cfile, "   %s_%s(", i->parent_fv->name, i->name);
 
     FOREACH(p, Parameter, i->in, {
         fprintf(cfile, "%s%s, %s_len", p == i->in->value ? "" : ", ",
@@ -297,7 +297,7 @@ void add_sync_PI_to_c_wrappers(Interface * i)
 
     if (protected == i->rcm) {
         fprintf(cfile,
-                "\t__po_hi_protected_unlock (%s_protected.protected_id);\n",
+                "   __po_hi_protected_unlock (%s_protected.protected_id);\n",
                 i->parent_fv->name);
     }
 
@@ -365,11 +365,11 @@ void add_async_PI_to_c_wrappers(Interface * i)
                 distant_fv = interface->distant_fv;
             }
         });
-        fprintf(cfile, "\tsync_%s_%s (",
+        fprintf(cfile, "   sync_%s_%s (",
                        distant_fv,
                        i->distant_name);
     } else {
-        fprintf(cfile, "\t%s_%s(", i->parent_fv->name, i->name);
+        fprintf(cfile, "   %s_%s(", i->parent_fv->name, i->name);
     }
     if (NULL != i->in) {
         fprintf(cfile, "buf.buffer, buf.length");
@@ -460,11 +460,11 @@ void add_RI_to_c_wrappers(Interface * i)
          */
         if (thread_runtime == i->parent_fv->runtime_nature) {
             /* Current FV is a thread -> send the message to PolyORB */
-            fprintf(b, "\t__po_hi_request_t request;\n\n");
+            fprintf(b, "   __po_hi_request_t request;\n\n");
 
             /* If the message has parameters, then copy it to POHIC buffers */
             if (NULL != i->in) {
-                fprintf(b, "\t__po_hi_copy_array"
+                fprintf(b, "   __po_hi_copy_array"
                            "(&(request.vars.%s_global_outport_%s."
                            "%s_global_outport_%s.buffer),"
                            " %s, %s_len);\n",
@@ -475,7 +475,7 @@ void add_RI_to_c_wrappers(Interface * i)
                            i->in->value->name, /* unique IN parameter buffer */
                            i->in->value->name);/* unique IN parameter size   */
 
-                fprintf(b, "\trequest.vars.%s_global_outport_%s"
+                fprintf(b, "   request.vars.%s_global_outport_%s"
                            ".%s_global_outport_%s.length = %s_len;\n",
                            i->parent_fv->name,  /* sending port identifier */
                            ri_name,             /* data identifier */
@@ -485,10 +485,10 @@ void add_RI_to_c_wrappers(Interface * i)
             }
 
             /* Also set the port number to identify the message */
-            fprintf(b, "\trequest.port = %s_global_outport_%s;\n",
+            fprintf(b, "   request.port = %s_global_outport_%s;\n",
                     i->parent_fv->name, ri_name);
 
-            fprintf(b, "\t__po_hi_gqueue_store_out("
+            fprintf(b, "   __po_hi_gqueue_store_out("
                        "%s_%s_k, %s_local_outport_%s, &request);\n",
                        i->parent_fv->process->identifier, /* sending node */
                        i->parent_fv->name,
@@ -496,7 +496,7 @@ void add_RI_to_c_wrappers(Interface * i)
                        ri_name);
 
             /* Direct invocation of RI */
-            fprintf(b, "\t__po_hi_send_output("
+            fprintf(b, "   __po_hi_send_output("
                        "%s_%s_k, %s_global_outport_%s);\n",
                        i->parent_fv->process->identifier,
                        i->parent_fv->name,
@@ -528,7 +528,7 @@ void add_RI_to_c_wrappers(Interface * i)
                 count ++;
             });
             if (1 == count) {
-                fprintf(b, "\tvm_async_%s_%s_vt(",
+                fprintf(b, "   vm_async_%s_%s_vt(",
                            calltmp->value->name,
                            i->name);
 
@@ -542,9 +542,9 @@ void add_RI_to_c_wrappers(Interface * i)
             }
             else if (count > 1) {
                 /* Several possible callers: get current thread id */
-                fprintf(b, "\tswitch(__po_hi_get_task_id()) {\n");
+                fprintf(b, "   switch(__po_hi_get_task_id()) {\n");
                 FOREACH(caller, FV, calltmp, {
-                    fprintf(b, "\t\tcase %s_%s_k: vm_async_%s_%s_vt(",
+                    fprintf(b, "      case %s_%s_k: vm_async_%s_%s_vt(",
                             caller->process->identifier,
                             caller->name,
                             caller->name,
@@ -557,15 +557,15 @@ void add_RI_to_c_wrappers(Interface * i)
                         }
                         fprintf(b, "); break;\n");
                 });
-                fprintf(b, "\t\tdefault: break;\n");
-                fprintf(b, "\t}\n");
+                fprintf(b, "      default: break;\n");
+                fprintf(b, "   }\n");
             }
         }
     }
 
     else {   /* Synchronous RI: direct call to remote polyorb_interface.c */
 
-        fprintf(b, "\tsync_%s_%s(",
+        fprintf(b, "   sync_%s_%s(",
                 i->distant_fv,
                 NULL != i->distant_name ? i->distant_name : i->name);
 

@@ -49,7 +49,7 @@ void Add_With_AsyncRI(FV * fv, FILE ** file)
     })
 
     if (result)
-        fprintf(*file, "with %s_async_ri_wrappers;\n", fv->name);
+        fprintf(*file, "with %s_Async_RI_Wrappers;\n", fv->name);
 }
 
 
@@ -115,16 +115,21 @@ void ada_wrappers_preamble(FV * fv)
         fprintf(ads, "with taste_dataview;\n");
         fprintf(ads, "use taste_dataview;\n");
         switch (i->direction) {
-            case RI: fprintf(adb, "with %s_QGenAda_wrapper;\nuse %s_QGenAda_wrapper;\n\n",
-                i->distant_name, i->distant_name); break;
+            case RI:
+                fprintf(adb, "with %s_QGenAda_wrapper;\n"
+                             "use %s_QGenAda_wrapper;\n\n",
+                             i->distant_name, i->distant_name);
+                break;
             case PI: break;
             default: break;
         }
     })}
 
-    /* 
-     * Include the calling threads wrappers to the wrappers of the passive functions, to have access to their "vm_" functions
-     * (only if the calling thread in question has some async RI). This is also extended to threads that contain at least 
+    /*
+     * Include the calling threads wrappers to the wrappers of the passive
+     * functions, to have access to their "vm_" functions
+     * (only if the calling thread in question has some async RI).
+     * This is also extended to threads that contain at least
      * one unpro function (see the C wrapper generation for more details).
      */
      if (thread_runtime == fv->runtime_nature) {
@@ -138,7 +143,7 @@ void ada_wrappers_preamble(FV * fv)
         });
     }
 
-    fprintf(ads, "\npackage %s_wrappers is\n\n", fv->name);
+    fprintf(ads, "\npackage %s_Wrappers is\n\n", fv->name);
     // To debug backdoor-related misuse of the passive functions stack:
      fprintf(adb, "with PolyORB_HI.Output;\n\n");
 
@@ -146,15 +151,15 @@ void ada_wrappers_preamble(FV * fv)
 
     //char *path = NULL;
     //path = make_string ("%s/%s", OUTPUT_PATH, fv->name);
-    
+
     //if (!file_exists(path, "_hook")) {
     if (!fv->artificial) {
-        fprintf(ads, "\tprocedure C_Init_%s;\n\n", fv->name);
-        fprintf(adb, "\tprocedure C_Init_%s is\n", fv->name);
-        fprintf(adb, "\t\tprocedure Init_%s;\n", fv->name);
-        fprintf(adb, "\t\tpragma Import (C, Init_%s, \"init_%s\");\n\n",
+        fprintf(ads, "   procedure C_Init_%s;\n\n", fv->name);
+        fprintf(adb, "   procedure C_Init_%s is\n", fv->name);
+        fprintf(adb, "      procedure Init_%s;\n", fv->name);
+        fprintf(adb, "      pragma Import (C, Init_%s, \"init_%s\");\n\n",
             fv->name, fv->name);
-        fprintf(adb, "\tbegin\n\t\tInit_%s;\n\tend C_Init_%s;\n\n",
+        fprintf(adb, "   begin\n      Init_%s;\n   end C_Init_%s;\n\n",
             fv->name, fv->name);
     }
 
@@ -162,38 +167,39 @@ void ada_wrappers_preamble(FV * fv)
     FOREACH(i, Interface, fv->interfaces, {
     if (qgenada == i->distant_qgen->language
         && RI == i->direction && NULL != i->distant_qgen->qgen_init) {
-        fprintf(ads, "\tprocedure QGen_Init_%s;\n\n", i->distant_name);
-        fprintf(ads, "\tpragma Export (C, QGen_Init_%s, \"vm_QGen_Init_%s\");\n\n", i->distant_name, i->distant_name);
-        fprintf(adb, "\tprocedure QGen_Init_%s is\n", i->distant_name);
-        fprintf(adb, "\tbegin\n\t\t%s.init;\n\tend QGen_Init_%s;\n\n",
+        fprintf(ads, "   procedure QGen_Init_%s;\n\n", i->distant_name);
+        fprintf(ads, "   pragma Export (C, QGen_Init_%s, \"vm_QGen_Init_%s\");\n\n", i->distant_name, i->distant_name);
+        fprintf(adb, "   procedure QGen_Init_%s is\n", i->distant_name);
+        fprintf(adb, "   begin\n      %s.init;\n   end QGen_Init_%s;\n\n",
             i->distant_name, i->distant_name);
     })}
 
     if (NULL != async_ads && NULL != async_adb) {
 
         fprintf(async_ads,
-                "--  This file was generated automatically: DO NOT MODIFY IT !\n\n");
-        fprintf(async_ads,
-                "pragma Style_Checks (Off);\npragma Warnings (Off);\n\n");
-        fprintf(async_ads, "with Interfaces.C;\n");
+                "--  This file was generated automatically: DO NOT MODIFY IT !\n\n"
+                "pragma Style_Checks (Off);\npragma Warnings (Off);\n\n"
+                "with Interfaces.C;\n");
 
-        if (hasparam)
+        if (hasparam) {
             fprintf(async_ads, "with PolyORB_HI_Generated.Types;\n");
+        }
 
-        fprintf(async_ads, "with PolyORB_HI_Generated.Deployment;\n");
-        fprintf(async_ads, "use PolyORB_HI_Generated.Deployment;\n\n");
-
-        fprintf(async_ads, "\npackage %s_async_ri_wrappers is\n\n",
+        fprintf(async_ads,
+                "with PolyORB_HI_Generated.Deployment;\n"
+                "use PolyORB_HI_Generated.Deployment;\n\n"
+                "\npackage %s_async_ri_wrappers is\n\n",
                 fv->name);
 
         fprintf(async_adb,
-                "--  This file was generated automatically: DO NOT MODIFY IT !\n\n");
-        fprintf(async_adb,
-                "pragma Style_Checks (Off);\npragma Warnings (Off);\n\nwith PolyORB_HI_Generated.Activity;\nuse PolyORB_HI_Generated.Activity;\n");
-        fprintf(async_adb, "with PolyORB_HI.Errors;\n\n");
-        fprintf(async_adb, "package body %s_async_ri_wrappers is\n\n",
+                "--  This file was generated automatically: DO NOT MODIFY IT !\n\n"
+                "pragma Style_Checks (Off);\n"
+                "pragma Warnings     (Off);\n\n"
+                "with PolyORB_HI_Generated.Activity;\n"
+                "use PolyORB_HI_Generated.Activity;\n"
+                "with PolyORB_HI.Errors;\n\n"
+                "package body %s_Async_RI_Wrappers is\n\n",
                 fv->name);
-
     }
 }
 
@@ -251,10 +257,10 @@ int Init_Ada_Wrappers_Backend(FV * fv)
         }
     }
 
-
     free(path);
-    if (NULL == ads || NULL == adb)
+    if (NULL == ads || NULL == adb) {
         return -1;
+    }
 
     ada_wrappers_preamble(fv);
 
@@ -286,114 +292,135 @@ void add_PI_to_ada_wrappers(Interface * i)
 
     // b. wrappers.ads : declare the function
     fprintf(ads,
-            "\t------------------------------------------------------\n");
-    fprintf(ads, "\t--  Provided Interface \"%s\"\n", i->name);
-    fprintf(ads,
-            "\t------------------------------------------------------\n");
-    fprintf(ads, "\tprocedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type", i->name);
+            "   ------------------------------------------------------\n"
+            "   --  Provided Interface \"%s\"\n"
+            "   ------------------------------------------------------\n"
+            "   procedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
+            i->name,
+            i->name);
+
     if (NULL != i->in) {
-        fprintf(ads,";\n\t\t ");
-         fprintf(ads,
-            "%sBuffer:PolyORB_HI_Generated.Types.%s_Buffer_Impl",
-            i->in->value->name,
-            i->in->value->type);
-    } 
-    fprintf(ads,");\n\n");
-    
+        fprintf(ads,
+                ";\n      "
+                "%sBuffer:PolyORB_HI_Generated.Types.%s_Buffer_Impl",
+                i->in->value->name,
+                i->in->value->type);
+    }
+    fprintf(ads, ");\n\n");
+
 
     // c. wrappers.adb : define the function
     fprintf(adb,
-            "\t------------------------------------------------------\n");
-    fprintf(adb, "\t--  Asynchronous Provided Interface \"%s\"\n",
+            "   ------------------------------------------------------\n"
+            "   --  Asynchronous Provided Interface \"%s\"\n"
+            "   ------------------------------------------------------\n"
+            "   procedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
+            i->name,
             i->name);
-    fprintf(adb,
-            "\t------------------------------------------------------\n");
-    fprintf(adb, "\tprocedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type", i->name);
+
     if (NULL != i->in) {
-        fprintf(adb,";\n\t\t ");
-        fprintf(adb,
-            "%sBuffer:PolyORB_HI_Generated.Types.%s_Buffer_Impl",
-            i->in->value->name,
-            i->in->value->type);
+        fprintf(adb,";\n      "
+                "%sBuffer:PolyORB_HI_Generated.Types.%s_Buffer_Impl",
+                i->in->value->name,
+                i->in->value->type);
     }
-    fprintf(adb, ")\n\t");
+    fprintf(adb,
+            ")\n"
+            "   is\n");
 
-
-    fprintf(adb, "is\n");
   // Make an Ada buffer for each input:
     if (NULL != i->in) {
         fprintf(adb,
-            "\t\t%s_AdaBuffer: Interfaces.C.Char_Array(1..Interfaces.C.size_t (%sBuffer.Length));\n",
-                i->in->value->name, i->in->value->name);
-        fprintf(adb, "\t\tpragma Import (Ada, %s_AdaBuffer);\n",
+                "      %s_AdaBuffer : Interfaces.C.Char_Array(1 .. Interfaces.C.size_t (%sBuffer.Length));\n",
+                i->in->value->name,
                 i->in->value->name);
         fprintf(adb,
-            "\t\tfor %s_AdaBuffer'Address use %sBuffer.Buffer'Address;\n\n",
-                i->in->value->name, i->in->value->name);
-   } 
- 
-    /* Update 26-10-2010 :  if we are in a thread created by the VT 
+                "      pragma Import (Ada, %s_AdaBuffer);\n",
+                i->in->value->name);
+
+        fprintf(adb,
+                "      for %s_AdaBuffer'Address use %sBuffer.Buffer'Address;\n\n",
+                i->in->value->name,
+                i->in->value->name);
+   }
+
+    /* Update 26-10-2010 :  if we are in a thread created by the VT
      * we must call directly the sync RI and NOT the function from vm_if.c
      */
-    //char *path = NULL;
-    //path = make_string ("%s/%s", OUTPUT_PATH, i->parent_fv->name);
     if (i->parent_fv->artificial) {
-    //if (file_exists(path, "_hook")) {
         char *distant_fv = NULL;
             RCM rcm = protected;
         FOREACH (interface, Interface, i->parent_fv->interfaces, {
             if (RI == interface->direction
-                    && !strcmp (interface->distant_name, i->distant_name) &&
-                    synch == interface->synchronism) { 
+                   && !strcmp (interface->distant_name, i->distant_name)
+                   && synch == interface->synchronism) {
                 distant_fv = interface->distant_fv;
                 rcm = interface->rcm;
             }
         });
 
-        /* Call sync (protected) function: */   
-        fprintf(adb, "\tbegin\n");
-        fprintf(adb, "\t\t%s_wrappers%s%s.%s(%d%s",
-                    distant_fv, 
-            protected == rcm ? ".protected_" : "",
-            protected == rcm ? distant_fv : "",
-            i->distant_name,
-            i->parent_fv->thread_id,
-            NULL != i->in ? ", ": "");
+        /* Call sync (protected) function: */
+        fprintf(adb,
+                "   begin\n"
+                "      %s_Wrappers%s%s.%s(%d%s",
+                distant_fv,
+                protected == rcm ? ".protected_" : "",
+                protected == rcm ? distant_fv : "",
+                i->distant_name,
+                i->parent_fv->thread_id,
+                NULL != i->in ? ", ": "");
+
         if (NULL != i->in) {
-            fprintf(adb, "%s_AdaBuffer, %s_AdaBuffer'Length",
-                i->in->value->name, 
-                i->in->value->name);
+            fprintf(adb,
+                    "%s_AdaBuffer, %s_AdaBuffer'Length",
+                    i->in->value->name,
+                    i->in->value->name);
             // ABOVE LINE TO BE CHECKED...
         }
+
         fprintf(adb, ");\n");
     }
 
     else {  /* User-defined function: call function in vm_if.c */
-         fprintf(adb, "\t\tprocedure C_%s_%s", i->parent_fv->name, i->name);
+         fprintf(adb,
+                 "      procedure C_%s_%s", i->parent_fv->name, i->name);
+
          if (NULL != i->in) {
-                fprintf(adb, "\n\t\t\t(");
                 fprintf(adb,
-                    "C_%sBuffer:Interfaces.C.char_array;\n\t\t\tC_%sMaxSize:Integer",
-                    i->in->value->name,
-                    i->in->value->name);
-                fprintf(adb, ")");
+                        "\n"
+                        "         (C_%sBuffer  : Interfaces.C.char_array;\n"
+                        "          C_%sMaxSize : Integer"
+                        ")",
+                        i->in->value->name,
+                        i->in->value->name);
          }
-         fprintf(adb, ";\n");
-        fprintf(adb, "\t\tpragma Import (C, C_%s_%s, \"%s_%s\");\n\n",
-            i->parent_fv->name, i->name, i->parent_fv->name, i->name);
+
+         fprintf(adb,
+                 ";\n"
+                 "      pragma Import (C, C_%s_%s, \"%s_%s\");\n\n",
+                 i->parent_fv->name,
+                 i->name,
+                 i->parent_fv->name,
+                 i->name);
 
         // Body of the procedure: make the call to the C function
-        fprintf(adb, "\tbegin\n\t\tC_%s_%s", i->parent_fv->name, i->name);
+        fprintf(adb,
+                "   begin\n"
+                "      C_%s_%s",
+                i->parent_fv->name,
+                i->name);
+
         if (NULL != i->in) {
-                fprintf(adb, " (");
-                fprintf(adb, "%s_AdaBuffer, %s_AdaBuffer'Length",
-                        i->in->value->name, 
-                        i->in->value->name);
-                fprintf(adb, ")");
+            fprintf(adb,
+                    " (%s_AdaBuffer, %s_AdaBuffer'Length)",
+                    i->in->value->name,
+                    i->in->value->name);
         }
         fprintf(adb, ";\n");
     }
-    fprintf(adb, "\tend %s;\n\n", i->name);
+    fprintf(adb,
+            "   end %s;\n\n",
+            i->name);
 
 }
 
@@ -418,13 +445,13 @@ void add_RI_to_ada_wrappers(Interface * i)
 
     // b. wrappers.ads : declare the function
     fprintf(s,
-            "\t------------------------------------------------------\n");
-    fprintf(s, "\t--  %s Required Interface \"%s\"\n",
+            "   ------------------------------------------------------\n"
+            "   --  %s Required Interface \"%s\"\n"
+            "   ------------------------------------------------------\n"
+            "   procedure vm_%s",
             asynch == i->synchronism ? "Asynchronous" : "Synchronous",
+            i->name,
             i->name);
-    fprintf(s,
-            "\t------------------------------------------------------\n");
-    fprintf(s, "\tprocedure vm_%s", i->name);
 
     if (NULL != i->in || NULL != i->out)
         fprintf(s, "(");
@@ -449,18 +476,22 @@ void add_RI_to_ada_wrappers(Interface * i)
         fprintf(s, ")");
     fprintf(s, ";\n");
 
-    fprintf(s, "\tpragma Export (C, vm_%s, \"vm_%s%s_%s\");\n\n",
-           i->name, asynch == i->synchronism?"async_":"",i->parent_fv->name, i->name);
+    fprintf(s,
+            "   pragma Export (C, VM_%s, \"vm_%s%s_%s\");\n\n",
+            i->name,
+            asynch == i->synchronism?"async_":"",
+            i->parent_fv->name,
+            i->name);
 
     // c. wrappers.b : definition of the function
     fprintf(b,
-            "\t------------------------------------------------------\n");
-    fprintf(b, "\t--  %s Required Interface \"%s\"\n",
+            "   ------------------------------------------------------\n"
+            "   --  %s Required Interface \"%s\"\n"
+            "   ------------------------------------------------------\n"
+            "   procedure vm_%s",
             asynch == i->synchronism ? "Asynchronous" : "Synchronous",
+            i->name,
             i->name);
-    fprintf(b,
-            "\t------------------------------------------------------\n");
-    fprintf(b, "\tprocedure vm_%s", i->name);
 
     if (NULL != i->in || NULL != i->out)
         fprintf(b, "(");
@@ -489,9 +520,10 @@ void add_RI_to_ada_wrappers(Interface * i)
     if (qgenada == i->distant_qgen->language) {
         char *qgen_args = NULL;
 
-        fprintf(b, "\tbegin\n");
-
-        fprintf(b, "\t\tExecute_%s_QGenAda(", i->distant_name);
+        fprintf(b,
+                "   begin\n"
+                "      Execute_%s_QGenAda(",
+                i->distant_name);
 
         /* Add IN and OUT parameters */
             FOREACH(p, Parameter, i->in, {
@@ -500,74 +532,87 @@ void add_RI_to_ada_wrappers(Interface * i)
             FOREACH(p, Parameter, i->out, {
                 Create_QGenAda_Argument(p->name, &qgen_args, false);
             })
-        if (qgen_args != NULL)
+
+        if (qgen_args != NULL) {
             fprintf(b, "%s", qgen_args);
+        }
+
         fprintf(b, ");\n\n");
 
     }
     else {
         if (asynch == i->synchronism) {
             /*
-             * Distant FV is a thread (asynchronous RI). This means that depending on the nature of the current FV (thread or passive)
-             * we have either to call the VM (if we are in a thread) or to switch-case the caller thread to call his own access to the VM
-             * We retrieve the caller thread ID using the "stack" 
+             * Distant FV is a thread (asynchronous RI). This means that
+             * depending on the nature of the current FV (thread or passive)
+             * we have either to call the VM (if we are in a thread) or to
+             * switch-case the caller thread to call his own access to the VM
+             * We retrieve the caller thread ID using the "stack"
              */
             if (thread_runtime == i->parent_fv->runtime_nature) {
 
-                fprintf(b, "\t\tValue: %s%s%s_%s_others_Interface \n\t\t(%s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
-                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                    i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",  // AADL v2 only
-                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                    i->parent_fv->name, i->name);
                 fprintf(b,
-                    "\t\tErr: PolyORB_HI.Errors.Error_Kind;\n\t\tuse type PolyORB_HI.Errors.Error_Kind;\n");
-                fprintf(b, "\tbegin\n");
+                        "      Value : %s%s%s_%s_others_Interface\n"
+                        "      (%s%s%s_%s_Others_Port_Type'(OUTPORT_%s));\n",
+                        i->parent_fv->name,
+                        "_CV_Thread_",
+                        i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
+                        i->parent_fv->name,
+                        i->parent_fv->name,
+                        "_CV_Thread_",
+                        i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
+                        i->parent_fv->name,
+                        i->name);
+
+                fprintf(b,
+                        "      Err : PolyORB_HI.Errors.Error_Kind;\n"
+                        "      use type PolyORB_HI.Errors.Error_Kind;\n"
+                        "   begin\n");
+
                 /* Copy the buffer(s) from C to Ada */
                 if (NULL != i->in) {
-                tmp = i->in;
-                while (NULL != tmp) {
-                    fprintf(b, "\t\tfor J in 1 .. IN_%s_size loop\n",
-                        tmp->value->name);
-                    fprintf(b,
-                        "\t\t\tValue.OUTPORT_%s_DATA.Buffer (J) := PolyORB_HI_Generated.Types.Stream_Element%s\n",
-                        i->name,
-                        get_context()->aadlv2?"_Buffer":"");
-                    fprintf(b,
-                        "\t\t\t\t(IN_%s (Interfaces.C.size_t (J - 1)));\n",
-                        tmp->value->name);
-                    fprintf(b, "\t\tend loop;\n");
-                    if (!(get_context()->aadlv2))
-                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.uint16 (IN_%s_size);\n",     // old V1
-                        i->name, tmp->value->name);
-                    else
-                    fprintf(b, "\t\tValue.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_32 (IN_%s_size);\n",        // AADL V2, should work with V1 but not supported by Ocarina yet also, otherwise put back previous line for V1
-                        i->name, tmp->value->name);
-                    tmp = tmp->next;
-                }
+                    tmp = i->in;
+                    while (NULL != tmp) {
+                        fprintf(b,
+                                "      for J in 1 .. IN_%s_size loop\n"
+                                "         Value.OUTPORT_%s_DATA.Buffer (J) := PolyORB_HI_Generated.Types.Stream_Element_Buffer\n"
+                                "            (IN_%s (Interfaces.C.size_t (J - 1)));\n"
+                                "      end loop;\n"
+                                "      Value.OUTPORT_%s_DATA.Length := PolyORB_HI_Generated.Types.Unsigned_32 (IN_%s_size);\n",
+                                tmp->value->name,
+                                i->name,
+                                tmp->value->name,
+                                i->name,
+                                tmp->value->name);
+                        tmp = tmp->next;
+                    }
                 }
 
 
                 if (NULL != i->parent_fv->process) {
-                fprintf(b, "\t\tPut_Value (%s_%s_K, Value);\n",
-                    i->parent_fv->process->identifier,
-                    i->parent_fv->name);
+                    fprintf(b,
+                            "      Put_Value (%s_%s_K, Value);\n",
+                            i->parent_fv->process->identifier,
+                            i->parent_fv->name);
 
                 /* Following is added only for the Backdoor backend : call the Send_Output to
                    flush immediately the output buffer */
-                fprintf(b, "\t\tErr:=Send_Output(%s_%s_K, %s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n", i->parent_fv->process->identifier, i->parent_fv->name, (get_context()->aadlv2) ? i->parent_fv->name : "",   // AADL v2 only
-                    (get_context()->aadlv2) ? "_CV_Thread_" : "",   // AADL v2 only
-                    i->parent_fv->name,     // fv->name should be replaced by the namespace (not supported 15/07/2009) (used to be aplc)
-                    i->parent_fv->name, i->name);
+                fprintf(b,
+                        "      Err := Send_Output (%s_%s_K, %s%s%s_%s_others_Port_Type'(OUTPORT_%s));\n",
+                        i->parent_fv->process->identifier,
+                        i->parent_fv->name,
+                        i->parent_fv->name,
+                        "_CV_Thread_",
+                        i->parent_fv->name,
+                        i->parent_fv->name,
+                        i->name);
                 }
             }
             else {                // Current FV = Passive function
-                fprintf(b, "\tbegin\n");
                 fprintf(b,
-                    "\t\t -- This function is passive, thus not have direct access to the VM\n");
-                fprintf(b,
-                    "\t\t -- It must use its calling thread to invoke this asynchronous RI\n\n");
+                        "   begin\n"
+                        "      --  This function is passive, thus not have direct access to the VM\n"
+                        "      --  It must use its calling thread to invoke this asynchronous RI\n\n");
 
                 /* Build the list of calling threads for this RI */
                 FV_list *calltmp = NULL;
@@ -587,9 +632,10 @@ void add_RI_to_ada_wrappers(Interface * i)
                 });
 
                 if (1 == count) {
-                    fprintf(b, "\t\t%s_async_ri_wrappers.vm_%s_vt",
-                        calltmp->value->name,
-                        i->name);
+                    fprintf(b,
+                            "      %s_Async_RI_Wrappers.VM_%s_VT",
+                            calltmp->value->name,
+                            i->name);
 
                     if (NULL != i->in) {        // Add parameters
                         fprintf(b, "(");
@@ -601,12 +647,12 @@ void add_RI_to_ada_wrappers(Interface * i)
                     fprintf(b, ";\n");
                 }
                 else if (count > 1) {
-                    fprintf(b, "\t\tcase callinglist.get_top_value is\n");
+                    fprintf(b, "      case callinglist.Get_Top_Value is\n");
                     FOREACH(caller, FV, calltmp, {
                         fprintf(b,
-                            "\t\t\twhen %d => %s_async_ri_wrappers.vm_%s_vt",
-                            caller->thread_id,
-                            caller->name, i->name);
+                                "         when %d => %s_Async_RI_Wrappers.VM_%s_VT",
+                                caller->thread_id,
+                                caller->name, i->name);
 
                         if (NULL != i->in) {    // Add parameters
                             fprintf(b, "(");
@@ -617,8 +663,9 @@ void add_RI_to_ada_wrappers(Interface * i)
                         }
                         fprintf(b, ";\n");
                     });
-                    fprintf(b, "\t\t\twhen others => null;\n");
-                    fprintf(b, "\t\tend case;\n");
+                    fprintf(b,
+                            "         when others => null;\n"
+                            "      end case;\n");
                 }
             }
         }
@@ -640,41 +687,52 @@ void add_RI_to_ada_wrappers(Interface * i)
                 count ++;
             });
 
-            fprintf(b, "\tbegin\n");
+            fprintf(b, "   begin\n");
 
             if (protected == i->rcm) {
-                fprintf(b, "\t\t%s_wrappers.protected_%s.%s(",
-                    i->distant_fv, i->distant_fv, NULL != i->distant_name? i->distant_name: i->name);
-            } else if (unprotected == i->rcm) {
-                fprintf(b, "\t\t%s_wrappers.%s(", i->distant_fv, NULL != i->distant_name? i->distant_name:i->name);
+                fprintf(b,
+                        "      %s_Wrappers.Protected_%s.%s (",
+                        i->distant_fv,
+                        i->distant_fv,
+                        NULL != i->distant_name? i->distant_name: i->name);
+
+            }
+            else if (unprotected == i->rcm) {
+                fprintf(b, "      %s_Wrappers.%s (",
+                        i->distant_fv,
+                        NULL != i->distant_name? i->distant_name:i->name);
             }
 
             if (passive_runtime == i->parent_fv->runtime_nature) {
                 if (count > 1) {
-                fprintf(b, "callinglist.get_top_value");
+                    fprintf(b, "Callinglist.Get_Top_Value");
                 }
                 else if (1 == count) {
-                fprintf(b, "%d", calltmp->value->thread_id);
+                    fprintf(b, "%d", calltmp->value->thread_id);
                 }
                 else if (0 == count) {
-                ERROR ("[ERROR] Function \"%s\" is not called by anyone (dead code)!\n", i->parent_fv->name);
-                        ERROR ("** This is not supported by the Ada runtime. You may have to change two things:\n");
-                        ERROR ("**    1) Use the -p flag when calling the TASTE orchestrator to use the C runtime, and\n");
-                        ERROR ("**    2) In your deployment view, if applicable, choose a non-Ada runtime\n");
-                        ERROR ("**       (do not use \"LEON_ORK\" ; \"Native\" or \"LEON_RTEMS\" are OK)\n\n");
-                        exit(-1);
+                    ERROR ("[ERROR] Function \"%s\" is not called by anyone (dead code)!\n",
+                            i->parent_fv->name);
+                    ERROR ("** This is not supported by the Ada runtime. You may have to change two things:\n");
+                    ERROR ("**    1) Use the -p flag when calling the TASTE orchestrator to use the C runtime, and\n");
+                    ERROR ("**    2) In your deployment view, if applicable, choose a non-Ada runtime\n");
+                    ERROR ("**       (do not use \"LEON_ORK\" ; \"Native\" or \"LEON_RTEMS\" are OK)\n\n");
+                    exit(-1);
                 }
             }
-            else
+            else {
                 fprintf(b, "%d", i->parent_fv->thread_id);
+            }
 
-            if (NULL != i->in || NULL != i->out)
+            if (NULL != i->in || NULL != i->out) {
                 fprintf(b, ",");
+            }
 
             /* Add IN and OUT parameters */
             FOREACH(p, Parameter, i->in, {
                 List_Ada_Param_Names(p, &b);
             })
+
             FOREACH(p, Parameter, i->out, {
                 List_Ada_Param_Names(p, &b);
             })
@@ -683,36 +741,43 @@ void add_RI_to_ada_wrappers(Interface * i)
         }
     }
 
-    fprintf(b, "\tend vm_%s;\n\n", i->name);
+    fprintf(b, "   end VM_%s;\n\n", i->name);
 }
 
 
 void End_Ada_Wrappers_Backend(FV * fv)
 {
     /* If necessary, add a protected object to the wrapper files */
-                                           
+
     Add_Protected_Interfaces(fv, ads, adb);
     Add_Unprotected_Interfaces(fv, ads, adb);
 
     /* Postamble to wrappers.ads/adb */
     if (contains_sync_interface && NULL != adb) {
-        fprintf(adb, "begin\n\tC_Init_%s;\n\n", fv->name);
+        fprintf(adb,
+                "begin\n"
+                "   C_Init_%s;\n\n",
+                fv->name);
     }
 
-    if (NULL != ads)
-        fprintf(ads, "end %s_wrappers;\n", fv->name);
-    if (NULL != adb)
-        fprintf(adb, "end %s_wrappers;\n", fv->name);
+    if (NULL != ads) {
+        fprintf(ads, "end %s_Wrappers;\n", fv->name);
+    }
+    if (NULL != adb) {
+        fprintf(adb, "end %s_Wrappers;\n", fv->name);
+    }
 
-    if (NULL != async_ads)
+    if (NULL != async_ads) {
         fprintf(async_ads, "end %s_async_ri_wrappers;\n", fv->name);
-    if (NULL != async_adb)
+    }
+    if (NULL != async_adb) {
         fprintf(async_adb, "end %s_async_ri_wrappers;\n", fv->name);
+    }
 
     close_ada_wrappers();
 }
 
-/* 
+/*
  * Generate the code of a stack that handle the calling thread list needed to transparently make sure that
  * when a sync PI has to call a RI, it does it through its calling thread.
  */
@@ -726,57 +791,65 @@ void Generate_Ada_CallingStack(FV * fv)
         (void) ct;
         count ++;
     })
+    printf("FV: %s has %d calling threads\n", fv->name, count);
 
     if (2 > count)
         return;
 
-    fprintf(ads, "\ttype t_stack is array (1..%d) of integer;\n\n", count);
-    fprintf(ads, "\tprotected callinglist is\n");
-    fprintf(ads, "\t\tprocedure push (value: integer);\n");
-    fprintf(ads, "\t\tprocedure pop;\n");
-    fprintf(ads, "\t\tfunction get_top_value return integer;\n");
-    fprintf(ads, "\t\tprivate\n\t\t\tstack: t_stack := (others=>0);\n");
-    fprintf(ads, "\tend callinglist;\n\n");
+    fprintf(ads, "   type t_stack is array (1..%d) of integer;\n\n", count);
+    fprintf(ads, "   protected callinglist is\n");
+    fprintf(ads, "      procedure push (value: integer);\n");
+    fprintf(ads, "      procedure pop;\n");
+    fprintf(ads, "      function get_top_value return integer;\n");
+    fprintf(ads, "      private\n         stack: t_stack := (others=>0);\n");
+    fprintf(ads, "   end callinglist;\n\n");
 
-    fprintf(adb, "\tprotected body callinglist is\n");
-    fprintf(adb, "\t\tprocedure push(value: integer) is\n\t\tbegin\n");
-    fprintf(adb, "\t\t\tif stack(1) /= 0 then\n\tPolyORB_HI.Output.Put_Line(\"### STACK ERROR (OVERFLOW), in %s\"); end if;\n", fv->name);      // Added for debug
-    fprintf(adb, "\t\t\tfor i in 1..%d loop\n", count);
+    fprintf(adb, "   protected body callinglist is\n");
+    fprintf(adb, "      procedure push(value: integer) is\n      begin\n");
+    fprintf(adb, "         if stack(1) /= 0 then\n"
+                 "            PolyORB_HI.Output.Put_Line(\"### STACK ERROR (OVERFLOW), in %s\");\n"
+                 "         end if;\n",
+                 fv->name);      // Added for debug
+    fprintf(adb, "         for i in 1..%d loop\n", count);
     fprintf(adb,
-            "\t\t\t\tif stack(i) /= 0 then if stack (i-1) = 0 then stack (i-1) := value; return; end if; end if;\n");
-    fprintf(adb, "\t\t\tend loop;\n");
-    fprintf(adb, "\t\t\tstack(%d) := value;\n", count);
-    fprintf(adb, "\t\tend push;\n\n");
+            "            if stack(i) /= 0 then if stack (i-1) = 0 then stack (i-1) := value; return; end if; end if;\n");
+    fprintf(adb, "         end loop;\n");
+    fprintf(adb, "         stack(%d) := value;\n", count);
+    fprintf(adb, "      end push;\n\n");
 
-    fprintf(adb, "\t\tprocedure pop is\n\t\tbegin\n");
-    fprintf(adb, "\t\t\tif stack(1) /= 0 then stack(1) := 0; return;\n");
+    fprintf(adb, "      procedure pop is\n      begin\n");
+    fprintf(adb, "         if stack(1) /= 0 then stack(1) := 0; return;\n");
     fprintf(adb,
-            "\t\t\telsif stack(%d) = 0 then\n\tPolyORB_HI.Output.Put_Line(\"### STACK ERROR (POP EMPTY STACK) in %s\"); return;\n",
+            "         elsif stack(%d) = 0 then\n"
+            "            PolyORB_HI.Output.Put_Line(\"### STACK ERROR (POP EMPTY STACK) in %s\");\n"
+            "            return;\n",
             count, fv->name);
-    fprintf(adb, "\t\t\telse\n");
-    fprintf(adb, "\t\t\t\tfor i in 1..%d loop\n", count);
+    fprintf(adb, "         else\n");
+    fprintf(adb, "            for i in 1 .. %d loop\n", count);
     fprintf(adb,
-            "\t\t\t\t\tif stack(i) /= 0 then if stack (i-1) = 0 then stack (i) := 0; return; end if; end if;\n");
-    fprintf(adb, "\t\t\t\tend loop;\n");
-    fprintf(adb, "\t\t\tend if;\n");
-    fprintf(adb, "\t\tend pop;\n\n");
+            "               if stack(i) /= 0 then if stack (i-1) = 0 then stack (i) := 0; return; end if; end if;\n");
+    fprintf(adb, "            end loop;\n");
+    fprintf(adb, "         end if;\n");
+    fprintf(adb, "      end pop;\n\n");
 
     fprintf(adb,
-            "\t\tfunction get_top_value return integer is\n\t\tbegin\n");
-    fprintf(adb, "\t\t\tif stack(1) /= 0 then return stack(1);\n");
+            "      function get_top_value return integer is\n      begin\n");
+    fprintf(adb, "         if stack(1) /= 0 then return stack(1);\n");
     fprintf(adb,
-            "\t\t\telsif stack(%d) = 0 then\n\tPolyORB_HI.Output.Put_Line(\"### STACK ERROR (GET_TOP EMPTY STACK) in %s. Check that your startup/init function does not call any RIs.\"); return 0;\n",
+            "         elsif stack(%d) = 0 then\n"
+            "            PolyORB_HI.Output.Put_Line(\"### STACK ERROR (GET_TOP EMPTY STACK) in %s. Check that your startup/init function does not call any RIs.\");\n"
+            "            return 0;\n",
             count, fv->name);
-    fprintf(adb, "\t\t\telse\n");
-    fprintf(adb, "\t\t\t\tfor i in 1..%d loop\n", count);
+    fprintf(adb, "         else\n");
+    fprintf(adb, "            for i in 1..%d loop\n", count);
     fprintf(adb,
-            "\t\t\t\t\tif stack(i) /= 0 then if stack (i-1) = 0 then return stack (i); end if; end if;\n");
-    fprintf(adb, "\t\t\t\tend loop;\n");
-    fprintf(adb, "\t\t\tend if;\n");
-    fprintf(adb, "\t\t\treturn(-1);\n");
-    fprintf(adb, "\t\tend get_top_value;\n\n");
+            "               if stack(i) /= 0 then if stack (i-1) = 0 then return stack (i); end if; end if;\n");
+    fprintf(adb, "            end loop;\n");
+    fprintf(adb, "         end if;\n");
+    fprintf(adb, "         return(-1);\n");
+    fprintf(adb, "      end get_top_value;\n\n");
 
-    fprintf(adb, "\tend callinglist;\n\n");
+    fprintf(adb, "   end callinglist;\n\n");
 }
 
 /* Function to process one interface of the FV */
@@ -805,21 +878,42 @@ void GLUE_Ada_Wrappers_Backend(FV * fv)
         }
     })
 
-        Init_Ada_Wrappers_Backend(fv);
+    Init_Ada_Wrappers_Backend(fv);
 
-        if (passive_runtime == fv->runtime_nature) {
-            Generate_Ada_CallingStack(fv);
-        }
+    /* The calling stack is needed with POHIAda because the runtime does not
+     * provide any API to determine the current thread of execution.
+     * Mantis ticket 509 is pending on resolution
+     * In the meantime, the calling stack must be generated if the following
+     * two conditions are met:
+     * (1) there is more than one syncrhronous PI in the current FV
+     * (2) in total, there is more than one possible calling thread
+     */
+    unsigned count = 0;
+    FOREACH (ct, FV, fv->calling_threads, {
+        (void) ct;
+        count ++;
+    });
+    if (1 < count) {
+        count = 0;
+        FOREACH (pi, Interface, fv->interfaces, {
+            if (synch == pi->synchronism) {
+                count ++;
+            }
+        });
+    }
+    if (1 < count) {
+        Generate_Ada_CallingStack(fv);
+    }
 
-        /*ForEach(fv->interfaces, GLUE_Ada_Wrappers_Interface);*/
-        FOREACH(i, Interface, fv->interfaces, {
-        if (!(qgenc == fv->language ||
-            qgenada == fv->language ||
-            qgenc == i->distant_qgen->language)) {
-            GLUE_Ada_Wrappers_Interface(i);
-        }
-        })
+    /*ForEach(fv->interfaces, GLUE_Ada_Wrappers_Interface);*/
+    FOREACH(i, Interface, fv->interfaces, {
+    if (!(qgenc == fv->language ||
+        qgenada == fv->language ||
+        qgenc == i->distant_qgen->language)) {
+        GLUE_Ada_Wrappers_Interface(i);
+    }
+    })
 
-        End_Ada_Wrappers_Backend(fv);
+    End_Ada_Wrappers_Backend(fv);
 
 }
