@@ -885,23 +885,21 @@ void GLUE_Ada_Wrappers_Backend(FV * fv)
      * Mantis ticket 509 is pending on resolution
      * In the meantime, the calling stack must be generated if the following
      * two conditions are met:
-     * (1) there is more than one syncrhronous PI in the current FV
+     * (1) there is at least one syncrhronous PI in the current FV
      * (2) in total, there is more than one possible calling thread
      */
-    unsigned count = 0;
+    unsigned count_ct      = 0;
+    unsigned count_sync_pi = 0;
     FOREACH (ct, FV, fv->calling_threads, {
         (void) ct;
-        count ++;
+        count_ct ++;
     });
-    if (1 < count) {
-        count = 0;
-        FOREACH (pi, Interface, fv->interfaces, {
-            if (synch == pi->synchronism) {
-                count ++;
-            }
-        });
-    }
-    if (1 < count) {
+    FOREACH (pi, Interface, fv->interfaces, {
+        if (synch == pi->synchronism) {
+    	count_sync_pi ++;
+        }
+    });
+    if (1 < count_ct && 0 < count_sync_pi) {
         Generate_Ada_CallingStack(fv);
     }
 
