@@ -1,5 +1,4 @@
 UNAME := $(shell uname)
-
 CC=gcc
 exec = buildsupport
 
@@ -27,8 +26,9 @@ ifeq ($(UNAME), Linux)
 		fi ;                                    \
 	fi
 endif
+	uname -a | grep x86_64 && EXTRAFLAG="--target=x86_64-linux" ; \
 	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH \
-            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug"
+            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG
 
 install:
 	$(MAKE)
