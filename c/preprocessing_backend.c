@@ -153,8 +153,11 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
                    timer_res);
 
     FOREACH (timer, String, all_timers, {
+        // sync_fetch_and_sub (atomic sub) is (1) not supported on all
+        // platforms (e.g. RTEMS) and (2) unnecessary since the PI is protected
         fprintf (code, "    if (timers[%s].state == active && "
-                       "1 == __sync_fetch_and_sub(&timers[%s].value, 1)) {\n"
+                       "0 == --timers[%s].value) {\n"
+                       //"1 == __sync_fetch_and_sub(&timers[%s].value, 1)) {\n"
                        "        %s_RI_%s();\n"
                        "        timers[%s].state = inactive;\n"
                        "    }\n\n",
@@ -201,7 +204,8 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                        "    /* Timer value must be multiple of %d ms */\n"
                        "    assert (*val %% %d == 0);\n"
                        "    timers[%s_%s].state = active;\n"
-                       "    __sync_lock_test_and_set(&timers[%s_%s].value, *val / %d);\n"
+                       "    timers[%s_%s].value = *val / %d;\n"
+                       //"    __sync_lock_test_and_set(&timers[%s_%s].value, *val / %d);\n"
                        "}\n\n",
                        timer_manager->name,
                        fv->name,
