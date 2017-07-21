@@ -52,7 +52,7 @@ void Create_script()
                      "#    C_INCLUDE_PATH=/usr/include/xenomai/analogy/:${C_INCLUDE_PATH}\n"
                      "#    unset USE_POHIC   \n\n"
                      "CWD=$(pwd)\n\n"
-                     "if [ -t 0 ] ; then\n"
+                     "if [ -t 1 ] ; then\n"
                      "    COLORON=\"\\e[1m\\e[32m\"\n"
                      "    COLOROFF=\"\\e[0m\"\n"
                      "else\n"
