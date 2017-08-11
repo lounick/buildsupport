@@ -252,6 +252,8 @@ void Create_script()
                       break;
                 case qgenc: fprintf (script, "--subQGenC ");
                       break;
+                case micropython: fprintf (script, "--subMicroPython ");
+                      break;
                 default:
                      ERROR ("[ERROR] Unsupported language (function %s)\n", fv->name);
                      ERROR ("  -> please manually check the build-script.sh file\n");

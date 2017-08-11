@@ -132,6 +132,7 @@ void C_End()
                     GW_SCADE_Backend(fv);
                     GW_RTDS_Backend(fv);
                     GW_Driver_Backend(fv);
+                    GW_MicroPython_Backend(fv);
             }
 
             /* Export to SMP2: generate glue code and Python AST */
@@ -201,6 +202,7 @@ void C_End()
                 GLUE_Ada_Wrappers_Backend(fv);
                 GLUE_C_Wrappers_Backend(fv); 
                 GLUE_VT_Backend(fv);
+                GLUE_MicroPython_Backend(fv);
             }
         })
 

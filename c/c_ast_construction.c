@@ -251,6 +251,12 @@ void Set_Language_To_System_C()
         fv->language = system_c;
 }
 
+void Set_Language_To_MicroPython()
+{
+    if (NULL != fv)
+        fv->language = micropython;
+}
+
 void Set_Zipfile (char *file, size_t len)
 {
     assert (NULL != file && 0 < len && NULL != fv);

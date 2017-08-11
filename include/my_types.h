@@ -73,6 +73,7 @@ typedef enum {
     system_c,
     blackbox_device,
     vdm,
+    micropython,
     other
 } Language;
 

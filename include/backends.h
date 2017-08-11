@@ -20,6 +20,7 @@ extern void GW_Ada_Backend(FV *);
 extern void GW_SCADE_Backend(FV *);
 extern void GW_RTDS_Backend(FV *);
 extern void GW_Driver_Backend(FV *);
+extern void GW_MicroPython_Backend(FV *);
 
 extern void Create_dataview_uniq();
 extern void Delete_dataview_uniq();
@@ -39,6 +40,7 @@ extern void  GLUE_GUI_Backend(FV *);
 extern void  GLUE_Ada_Wrappers_Backend(FV *);
 extern void  GLUE_C_Wrappers_Backend(FV *);
 extern void  GLUE_VT_Backend(FV *);
+extern void  GLUE_MicroPython_Backend(FV *);
 extern void  Backdoor_backend(System *);
 extern void  Generate_Build_Script();
 extern void  Generate_Full_ConcurrencyView(Process_list *, char *);

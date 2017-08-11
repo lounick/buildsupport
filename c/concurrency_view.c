@@ -27,6 +27,7 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
 
 #define ENCODING(i) (sdl==i->parent_fv->language)?"SDL":\
             (simulink==i->parent_fv->language)?"Simulink":\
+            (micropython==i->parent_fv->language)?"MicroPython":\
             (qgenc==i->parent_fv->language)?"QGenC":\
             (ada==i->parent_fv->language)?"Ada":\
             (vdm==i->parent_fv->language)?"Vdm":\
