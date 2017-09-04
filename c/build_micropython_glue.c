@@ -65,6 +65,7 @@ void micropython_mpy_bind_preamble(FV * fv)
 
     if (hasparam) {
         fprintf(mpy_bind_h, "#include \"C_ASN1_Types.h\"\n\n");
+        fprintf(mpy_bind_c, "#include \"MicroPython_ASN1_Types.h\"\n\n");
     }
 
     fprintf(mpy_bind_h,
@@ -103,7 +104,7 @@ void micropython_mpy_bind_preamble(FV * fv)
         }
     });
 
-    fprintf(mpy_bind_c, "void %s_startup()\n{\n", fv->name);
+    fprintf(mpy_bind_c, "void %s_startup() {\n", fv->name);
 
     fprintf(mpy_bind_c,
         "    /* MicroPython VM initialisation */\n"
@@ -188,12 +189,18 @@ void micropython_add_PI_to_glue(Interface * i)
         "    nlr_buf_t nlr;\n"
         "    if (nlr_push(&nlr) == 0) {\n"
     );
+
+    /* Convert the incoming IN parameters into MicroPython objects */
     n_args = 0;
     FOREACH (p, Parameter, i->in, {
         fprintf(mpy_bind_c,
-            "        args[%u] = mp_obj_new_int(*IN_%s);\n", n_args, p->name);
+            "        args[%u] = mp_obj_new_asn1Scc%s(IN_%s);\n", n_args, p->type, p->name);
         n_args += 1;
     });
+
+    /* TODO deal with out parameters */
+
+    /* Call the MicroPython function */
     fprintf(mpy_bind_c,
         "        mp_call_function_n_kw(mp_global_%s_PI_%s, %u, 0, args);\n"
         "        nlr_pop();\n"
