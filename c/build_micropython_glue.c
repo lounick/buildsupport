@@ -207,7 +207,7 @@ void micropython_add_PI_to_glue(Interface * i)
     fprintf(mpy_bind_h, ");\n\n");
     fprintf(mpy_bind_c, ")\n{\n");
     fprintf(mpy_bind_c, "    mp_current_ctx = &mp_ctx;\n");
-    fprintf(mpy_bind_c, "    mp_obj_t args[%u];\n", n_args);
+    fprintf(mpy_bind_c, "    mp_obj_t args[%zd];\n", n_args);
     fprintf(mpy_bind_c,
         "    mp_stack_ctrl_init();\n"
         "    mp_stack_set_limit(2048);\n"
@@ -221,9 +221,9 @@ void micropython_add_PI_to_glue(Interface * i)
         fprintf(mpy_bind_c,
             "        #ifdef MICROPY_TASTE_NEED_DATA_FOR_%s\n"
             "        mp_obj_asn1Scc%s_t IN_%s_data;\n"
-            "        args[%u] = mp_obj_encode_asn1Scc%s(IN_%s, &IN_%s_data);\n"
+            "        args[%zd] = mp_obj_encode_asn1Scc%s(IN_%s, &IN_%s_data);\n"
             "        #else\n"
-            "        args[%u] = mp_obj_encode_asn1Scc%s(IN_%s, NULL);\n"
+            "        args[%zd] = mp_obj_encode_asn1Scc%s(IN_%s, NULL);\n"
             "        #endif\n",
             p->type,
             p->type, p->name,
@@ -236,14 +236,14 @@ void micropython_add_PI_to_glue(Interface * i)
     /* Encode the incoming OUT data to MicroPython objects */
     FOREACH (p, Parameter, i->out, {
         fprintf(mpy_bind_c,
-            "        mp_obj_tuple_wrap_t wrap%u = {{&mp_type_mutable_attrtuple}, 1, {MP_OBJ_NULL, MP_OBJ_FROM_PTR(wrap_fields)}};\n"
+            "        mp_obj_tuple_wrap_t wrap%zu = {{&mp_type_mutable_attrtuple}, 1, {MP_OBJ_NULL, MP_OBJ_FROM_PTR(wrap_fields)}};\n"
             "        #ifdef MICROPY_TASTE_NEED_DATA_FOR_%s\n"
             "        mp_obj_asn1Scc%s_t OUT_%s_data;\n"
-            "        wrap%u.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, &OUT_%s_data);\n"
+            "        wrap%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, &OUT_%s_data);\n"
             "        #else\n"
-            "        wrap%u.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, NULL);\n"
+            "        wrap%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, NULL);\n"
             "        #endif\n"
-            "        args[%u] = &wrap%u;\n",
+            "        args[%zu] = &wrap%zu;\n",
             n_args,
             p->type,
             p->type, p->name,
@@ -256,7 +256,7 @@ void micropython_add_PI_to_glue(Interface * i)
 
     /* Call the MicroPython function */
     fprintf(mpy_bind_c,
-        "        mp_call_function_n_kw(mp_global_%s_PI_%s, %u, 0, args);\n",
+        "        mp_call_function_n_kw(mp_global_%s_PI_%s, %zu, 0, args);\n",
         i->parent_fv->name, i->name, n_args
     );
 
@@ -264,7 +264,7 @@ void micropython_add_PI_to_glue(Interface * i)
     n_args = n_in_args;
     FOREACH (p, Parameter, i->out, {
         fprintf(mpy_bind_c,
-            "        mp_obj_decode_asn1Scc%s(wrap%u.items[0], OUT_%s);\n",
+            "        mp_obj_decode_asn1Scc%s(wrap%zu.items[0], OUT_%s);\n",
             p->type, n_args, p->name);
         n_args += 1;
     });
@@ -328,7 +328,7 @@ void micropython_add_RI_to_glue(Interface * i)
     FOREACH (p, Parameter, i->in, {
         fprintf(mpy_bind_c,
             "    asn1Scc%s asn_IN_%s;\n"
-            "    mp_obj_decode_asn1Scc%s(args[%u], &asn_IN_%s);\n",
+            "    mp_obj_decode_asn1Scc%s(args[%zu], &asn_IN_%s);\n",
             p->type, p->name,
             p->type, n_args, p->name);
         n_args += 1;
@@ -361,7 +361,7 @@ void micropython_add_RI_to_glue(Interface * i)
     FOREACH (p, Parameter, i->out, {
         /* TODO verify that the argument objects are of the correct type */
         fprintf(mpy_bind_c,
-            "    ((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%u]))->items[0] = mp_obj_encode_asn1Scc%s(&asn_OUT_%s, MP_OBJ_TO_PTR(((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%u]))->items[0]));\n",
+            "    ((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%zu]))->items[0] = mp_obj_encode_asn1Scc%s(&asn_OUT_%s, MP_OBJ_TO_PTR(((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%zu]))->items[0]));\n",
             n_args, p->type, p->name, n_args);
         n_args += 1;
     });
@@ -369,7 +369,7 @@ void micropython_add_RI_to_glue(Interface * i)
     fprintf(mpy_bind_c, 
         "    return mp_const_none;\n"
         "}\n"
-        "STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(%s_RI_%s_obj, %u, %u, %s_RI_%s_wrap);\n"
+        "STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(%s_RI_%s_obj, %zu, %zu, %s_RI_%s_wrap);\n"
         "\n",
         i->parent_fv->name, i->name,
         n_args, n_args,
