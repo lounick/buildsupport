@@ -215,6 +215,8 @@ procedure BuildSupport is
                                              C_Set_Language_To_BlackBox_Device;
                      when Language_QGenAda       => C_Set_Language_To_QGenAda;
                      when Language_QGenC         => C_Set_Language_To_QGenC;
+                     when Language_MicroPython   =>
+                                             C_Set_Language_To_MicroPython;
                      when others                 => Exit_On_Error (True,
                          "Language is currently not supported: "
                          & Source_Language'Img);

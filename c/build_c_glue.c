@@ -62,6 +62,9 @@ void c_preamble(FV * fv)
     else if (rtds == fv->language) {
         fprintf(vm_if, "#include \"glue_%s.h\"\n\n", fv->name);
     }
+    else if (micropython == fv->language) {
+        fprintf(vm_if, "#include \"%s_mpy_bindings.h\"\n\n", fv->name);
+    }
 
     if (hasparam) {
         fprintf(vm_if,   "#include \"C_ASN1_Types.h\"\n\n");
@@ -714,7 +717,8 @@ void GLUE_C_Backend(FV * fv)
 
     if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
         || qgenada == fv->language || qgenc == fv->language
-        || rtds == fv->language || cpp == fv->language || opengeode == fv->language) {
+        || rtds == fv->language || cpp == fv->language || opengeode == fv->language
+        || micropython == fv->language) {
         Init_C_Glue_Backend(fv);
         FOREACH(i, Interface, fv->interfaces, {
                 GLUE_C_ProvidedInterface(i);
