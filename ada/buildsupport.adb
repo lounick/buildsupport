@@ -1053,13 +1053,12 @@ procedure BuildSupport is
 
                   Find_Connected_Bus (Tmp_CI, Accessed_Bus, Accessed_Port);
                   if Accessed_Bus /= No_Node and then
-                     Accessed_Port /= No_Node
+                     Accessed_Port /= No_Node and then
+                     Associated_Processor_Name /= No_Name
                   then
                      Accessed_Bus_Name := Name (Identifier (Accessed_Bus));
                      Accessed_Port_Name := Name (Identifier (Accessed_Port));
-                  end if;
 
-                  if Associated_Processor_Name /= No_Name then
                      C_New_Device
                         (Get_Name_String (Name (Identifier (Processes))),
                          Get_Name_String
@@ -1081,6 +1080,13 @@ procedure BuildSupport is
                          Get_Name_String (Device_ASN1_Module),
                          Device_ASN1_Module_Len);
                      C_End_Device;
+                  else
+                     Exit_On_Error (True,
+                     "[ERROR] In your deployment view, check the connection of"
+                     & " this driver: "
+                     & Get_Name_String (Name (Identifier (Processes)))
+                     & " - in processor "
+                     & Get_Name_String (Associated_Processor_Name));
                   end if;
                end;
             end if;

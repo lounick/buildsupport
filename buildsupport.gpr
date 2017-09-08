@@ -27,7 +27,8 @@ project BuildSupport is
          "-gnatwa",
          "-gnatoa",
          "-gnatg",
-         "-fstack-check");
+         "-fstack-check",
+         "-no-pie");
 
       for Default_Switches ("C") use
          ("-g",
@@ -53,7 +54,8 @@ project BuildSupport is
           "-Wno-error=old-style-cast",
           "-Wundef",
           "-std=c11",
-          "-pedantic");
+          "-pedantic",
+          "-no-pie");
    end Compiler;
 
 end BuildSupport;
