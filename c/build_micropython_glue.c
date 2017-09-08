@@ -103,7 +103,7 @@ void micropython_mpy_bind_preamble(FV * fv)
         "    mp_obj_t items[2];\n"
         "} mp_obj_tuple_wrap_t;\n\n");
 
-    fprintf(mpy_bind_c, "extern mp_obj_type_t mp_type_mutable_attrtuple;\n\n");
+    fprintf(mpy_bind_c, "extern const mp_obj_type_t mp_type_mutable_attrtuple;\n\n");
 
     fprintf(mpy_bind_c, "static qstr wrap_fields[1] = {MP_QSTR_val};\n\n");
 
