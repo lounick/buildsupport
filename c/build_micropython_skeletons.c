@@ -56,13 +56,13 @@ void import_RI_to_MicroPython_skel(Interface * i)
 
     FOREACH (p, Parameter, i->in, {
         fprintf(user_code_py, "%sIN_%s: asn1Scc%s",
-            comma ? "," : "", p->name, p->type);
+            comma ? ", " : "", p->name, p->type);
         comma = true;
     });
 
     FOREACH (p, Parameter, i->out, {
         fprintf(user_code_py,"%sOUT_%s: asn1Scc%s",
-            comma ? "," : "", p->name, p->type);
+            comma ? ", " : "", p->name, p->type);
         comma = true;
     });
 
@@ -85,7 +85,8 @@ void micropython_skel_preamble(FV * fv)
     if (NULL != user_code_py) {
         fprintf(user_code_py,
                 "# User code: This file will not be overwritten by TASTE.\n\n");
-        fprintf(user_code_py, "import micropython\n\n");
+        fprintf(user_code_py, "import micropython\n");
+        fprintf(user_code_py, "from taste import * # import all ASN types\n\n");
 
         FOREACH(i, Interface, fv->interfaces, {
             if (i->direction == RI && gen_this_ri(i)) {
@@ -111,8 +112,10 @@ void micropython_skel_preamble(FV * fv)
         fprintf(user_code_py,
                 "    # Write your initialization code here,\n"
                 "    # but do not make any call to a required interface.\n"
-                "    pass\n"
-                "\n\n");
+                "    # It's recommended to lock the heap once initialisation is done, but\n"
+                "    # note that without the heap some Python operations are not possible.\n"
+                "    micropython.heap_lock()\n"
+                "\n");
     }
 }
 
@@ -162,33 +165,32 @@ void add_PI_to_MicroPython_skel(Interface * i)
     char *signature_py = make_string("def %s_PI_%s(",
                                      i->parent_fv->name,
                                      i->name);
-    char *sep_py = make_string(",\n%*s", strlen(signature_py), "");
     bool comma = false;
 
     fprintf(user_code_py, "%s", signature_py);
 
-#if 0
-    // This code generates type hints for the parameters, but need to have the identifiers defined as globals first...
+#if 1
+    // This code generates type hints for the parameters
     FOREACH (p, Parameter, i->in, {
-        fprintf(user_code_py, "%sIN_%s : asn1Scc%s",
-            comma ? sep_py : "", p->name, p->type);
+        fprintf(user_code_py, "%sIN_%s: asn1Scc%s",
+            comma ? ", " : "", p->name, p->type);
         comma = true;
     });
 
     FOREACH (p, Parameter, i->out, {
-        fprintf(user_code_py, "%sOUT_%s : asn1Scc%s",
-            comma ? sep_py : "", p->name, p->type);
+        fprintf(user_code_py, "%sOUT_%s: asn1Scc%s",
+            comma ? ", " : "", p->name, p->type);
         comma = true;
     });
 #else
     // This code generates the parameter list without type hints.
     FOREACH (p, Parameter, i->in, {
-        fprintf(user_code_py, "%sIN_%s", comma ? sep_py : "", p->name);
+        fprintf(user_code_py, "%sIN_%s", comma ? ", " : "", p->name);
         comma = true;
     });
 
     FOREACH (p, Parameter, i->out, {
-        fprintf(user_code_py, "%sOUT_%s", comma ? sep_py : "", p->name);
+        fprintf(user_code_py, "%sOUT_%s", comma ? ", " : "", p->name);
         comma = true;
     });
 #endif
@@ -196,7 +198,6 @@ void add_PI_to_MicroPython_skel(Interface * i)
     fprintf(user_code_py, "):\n    # Write your code here!\n    pass\n\n");
 
     free(signature_py);
-    free(sep_py);
 }
 
 /* Add timer declarations to the C code skeletons */

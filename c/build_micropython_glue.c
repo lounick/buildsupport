@@ -65,7 +65,6 @@ void micropython_mpy_bind_preamble(FV * fv)
 
     if (hasparam) {
         fprintf(mpy_bind_h, "#include \"C_ASN1_Types.h\"\n\n");
-        fprintf(mpy_bind_c, "#include \"MicroPython_ASN1_Types.h\"\n\n");
     }
 
     fprintf(mpy_bind_h,
@@ -83,6 +82,10 @@ void micropython_mpy_bind_preamble(FV * fv)
     fprintf(mpy_bind_c, "#include \"%s_mpy_bindings.h\"\n", fv->name);
     fprintf(mpy_bind_c, "#include \"%s.mpy.h\"\n\n", fv->name);
 
+    if (hasparam) {
+        fprintf(mpy_bind_c, "#include \"MicroPython_ASN1_Types.h\"\n\n");
+    }
+
     if (has_context_param(fv)) {
         char *fv_no_underscore =
             underscore_to_dash(fv->name, strlen(fv->name));
@@ -92,6 +95,28 @@ void micropython_mpy_bind_preamble(FV * fv)
                 fv_no_underscore);
         free(fv_no_underscore);
     }
+
+    fprintf(mpy_bind_c,
+        "typedef struct {\n"
+        "    mp_obj_base_t base;\n"
+        "    size_t len;\n"
+        "    mp_obj_t items[2];\n"
+        "} mp_obj_tuple_wrap_t;\n\n");
+
+    fprintf(mpy_bind_c, "extern mp_obj_type_t mp_type_mutable_attrtuple;\n\n");
+
+    fprintf(mpy_bind_c, "static qstr wrap_fields[1] = {MP_QSTR_val};\n\n");
+
+    fprintf(mpy_bind_c,
+        "static mp_obj_t mp_obj_new_wrap(mp_obj_t arg) {\n"
+        "    mp_obj_tuple_wrap_t *o = m_new_obj(mp_obj_tuple_wrap_t);\n"
+        "    o->base.type = &mp_type_mutable_attrtuple;\n"
+        "    o->len = 1;\n"
+        "    o->items[0] = arg;\n"
+        "    o->items[1] = MP_OBJ_FROM_PTR(wrap_fields);\n"
+        "    return MP_OBJ_FROM_PTR(o);\n"
+        "}\n"
+        "MP_DEFINE_CONST_FUN_OBJ_1(mp_obj_new_wrap_obj, mp_obj_new_wrap);\n\n");
 
     fprintf(mpy_bind_c, "mp_state_ctx_t *mp_current_ctx;\n"); // TODO there should only be one of these per executable
     fprintf(mpy_bind_c, "static mp_state_ctx_t mp_ctx;\n");
@@ -114,6 +139,7 @@ void micropython_mpy_bind_preamble(FV * fv)
         "    gc_init(mp_heap, (uint8_t*)mp_heap + sizeof(mp_heap));\n"
         "    mp_pystack_init(mp_pystack, (uint8_t*)mp_pystack + sizeof(mp_pystack));\n"
         "    mp_init();\n"
+        "    mp_taste_types_init();\n"
         "    mp_exec_mpy(mpy_script_data, mpy_script_len);\n"
     );
 
@@ -149,7 +175,6 @@ void micropython_add_PI_to_glue(Interface * i)
 
     size_t sig_len = strlen(signature);
     char *sep = make_string(",\n%*s", sig_len, "");
-    char *sep_py = make_string(",\n%*s", strlen(signature_py), "");
     size_t n_args = 0;
 
     fprintf(mpy_bind_h, "%s", signature);
@@ -190,32 +215,73 @@ void micropython_add_PI_to_glue(Interface * i)
         "    if (nlr_push(&nlr) == 0) {\n"
     );
 
-    /* Convert the incoming IN parameters into MicroPython objects */
+    /* Encode the incoming IN data to MicroPython objects */
     n_args = 0;
     FOREACH (p, Parameter, i->in, {
         fprintf(mpy_bind_c,
-            "        args[%u] = mp_obj_new_asn1Scc%s(IN_%s);\n", n_args, p->type, p->name);
+            "        #ifdef MICROPY_TASTE_NEED_DATA_FOR_%s\n"
+            "        mp_obj_asn1Scc%s_t IN_%s_data;\n"
+            "        args[%u] = mp_obj_encode_asn1Scc%s(IN_%s, &IN_%s_data);\n"
+            "        #else\n"
+            "        args[%u] = mp_obj_encode_asn1Scc%s(IN_%s, NULL);\n"
+            "        #endif\n",
+            p->type,
+            p->type, p->name,
+            n_args, p->type, p->name, p->name,
+            n_args, p->type, p->name);
+        n_args += 1;
+    });
+    size_t n_in_args = n_args;
+
+    /* Encode the incoming OUT data to MicroPython objects */
+    FOREACH (p, Parameter, i->out, {
+        fprintf(mpy_bind_c,
+            "        mp_obj_tuple_wrap_t wrap%u = {{&mp_type_mutable_attrtuple}, 1, {MP_OBJ_NULL, MP_OBJ_FROM_PTR(wrap_fields)}};\n"
+            "        #ifdef MICROPY_TASTE_NEED_DATA_FOR_%s\n"
+            "        mp_obj_asn1Scc%s_t OUT_%s_data;\n"
+            "        wrap%u.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, &OUT_%s_data);\n"
+            "        #else\n"
+            "        wrap%u.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, NULL);\n"
+            "        #endif\n"
+            "        args[%u] = &wrap%u;\n",
+            n_args,
+            p->type,
+            p->type, p->name,
+            n_args, p->type, p->name, p->name,
+            n_args, p->type, p->name,
+            n_args, n_args
+        );
         n_args += 1;
     });
 
-    /* TODO deal with out parameters */
-
     /* Call the MicroPython function */
     fprintf(mpy_bind_c,
-        "        mp_call_function_n_kw(mp_global_%s_PI_%s, %u, 0, args);\n"
+        "        mp_call_function_n_kw(mp_global_%s_PI_%s, %u, 0, args);\n",
+        i->parent_fv->name, i->name, n_args
+    );
+
+    /* Decode the outgoing OUT MicroPython objects to data */
+    n_args = n_in_args;
+    FOREACH (p, Parameter, i->out, {
+        fprintf(mpy_bind_c,
+            "        mp_obj_decode_asn1Scc%s(wrap%u.items[0], OUT_%s);\n",
+            p->type, n_args, p->name);
+        n_args += 1;
+    });
+
+    /* Clean up the exception handling */
+    fprintf(mpy_bind_c,
         "        nlr_pop();\n"
         "    } else {\n"
         "        mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));\n"
         "    }\n"
         "}\n"
-        "\n",
-        i->parent_fv->name, i->name, n_args
+        "\n"
     );
 
     free(signature);
     free(signature_py);
     free(sep);
-    free(sep_py);
 }
 
 void micropython_add_RI_to_glue(Interface * i)
@@ -252,24 +318,32 @@ void micropython_add_RI_to_glue(Interface * i)
     free(sep);
 
     fprintf(mpy_bind_c,
-        "STATIC mp_obj_t %s_RI_%s_wrap(size_t n_args, const mp_obj_t *args)\n"
-        "{\n",
+        "STATIC mp_obj_t %s_RI_%s_wrap(size_t n_args, const mp_obj_t *args) {\n"
+        "    (void)n_args;\n",
         i->parent_fv->name, i->name
     );
+
+    /* Decode the incoming IN MicroPython objects to data */
     n_args = 0;
     FOREACH (p, Parameter, i->in, {
         fprintf(mpy_bind_c,
-            "    asn1Scc%s asn_IN_%s = mp_obj_get_int(args[%u]);\n",
-            p->type, p->name, n_args);
+            "    asn1Scc%s asn_IN_%s;\n"
+            "    mp_obj_decode_asn1Scc%s(args[%u], &asn_IN_%s);\n",
+            p->type, p->name,
+            p->type, n_args, p->name);
         n_args += 1;
     });
-    n_args = 0;
+    size_t n_in_args = n_args;
+
+    /* Create local state for the OUT data */
     FOREACH (p, Parameter, i->out, {
         fprintf(mpy_bind_c,
             "    asn1Scc%s asn_OUT_%s;\n",
             p->type, p->name);
         n_args += 1;
     });
+
+    /* Call the RI */
     fprintf(mpy_bind_c, "    %s_RI_%s(", i->parent_fv->name, i->name);
     n_args = 0;
     FOREACH (p, Parameter, i->in, {
@@ -281,6 +355,16 @@ void micropython_add_RI_to_glue(Interface * i)
         n_args += 1;
     });
     fprintf(mpy_bind_c, ");\n");
+
+    /* Encode the OUT data to MicroPython objects */
+    n_args = n_in_args;
+    FOREACH (p, Parameter, i->out, {
+        /* TODO verify that the argument objects are of the correct type */
+        fprintf(mpy_bind_c,
+            "    ((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%u]))->items[0] = mp_obj_encode_asn1Scc%s(&asn_OUT_%s, MP_OBJ_TO_PTR(((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%u]))->items[0]));\n",
+            n_args, p->type, p->name, n_args);
+        n_args += 1;
+    });
 
     fprintf(mpy_bind_c, 
         "    return mp_const_none;\n"
@@ -318,9 +402,12 @@ void End_MicroPython_Glue_Backend(FV *fv)
 {
     // Generate the taste module
 
+    fprintf(mpy_bind_c, "MICROPY_TASTE_ASN_CONSTRUCTORS\n");
+
     fprintf(mpy_bind_c,
         "STATIC const mp_rom_map_elem_t taste_module_globals_table[] = {\n"
         "    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_taste) },\n"
+        "    { MP_ROM_QSTR(MP_QSTR_Ref), MP_ROM_PTR(&mp_obj_new_wrap_obj) },\n"
     );
 
     FOREACH(i, Interface, fv->interfaces, {
@@ -332,6 +419,7 @@ void End_MicroPython_Glue_Backend(FV *fv)
             );
         }
     });
+    fprintf(mpy_bind_c, "MICROPY_TASTE_ASN_MAP_ENTRIES\n");
 
     fprintf(mpy_bind_c,
         "};\n"
