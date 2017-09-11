@@ -139,7 +139,7 @@ void Create_script()
     fprintf (script, "SKELS=\"%s\"\n\n", OUTPUT_PATH);
 
     fprintf (script, "# Check if Dataview references existing files \n"
-                     "taste-extract-asn-from-design.exe -i \"$INTERFACEVIEW\" -j /tmp/dv.asn\n\n");
+                     "mono $(which taste-extract-asn-from-design.exe) -i \"$INTERFACEVIEW\" -j /tmp/dv.asn\n\n");
                      //"taste-update-data-view\n\n");
 
     /* OpenGEODE-specific: call code generator on the fly */
