@@ -109,6 +109,8 @@ void micropython_skel_preamble(FV * fv)
         fprintf(user_code_py,
                 "    # Write your initialization code here,\n"
                 "    # but do not make any call to a required interface.\n"
+                "    # You can construct ASN.1 instances using the type name as a function call.\n"
+                "    # You can construct an object reference using Ref(...).\n"
                 "    # It's recommended to lock the heap once initialisation is done, but\n"
                 "    # note that without the heap some Python operations are not possible.\n"
                 "    micropython.heap_lock()\n"
@@ -192,7 +194,29 @@ void add_PI_to_MicroPython_skel(Interface * i)
     });
 #endif
 
-    fprintf(user_code_py, "):\n    # Write your code here!\n    pass\n\n");
+    fprintf(user_code_py,
+        "):\n"
+        "    # Write your code here!\n");
+
+    /* Add helpful comment for IN parameters */
+    if (i->in != NULL) {
+        fprintf(user_code_py,
+            "    # For IN parameters you can reference the value's members using . and [] notation\n");
+    }
+
+    /* Add helpful comment for OUT parameters */
+    if (i->out != NULL) {
+        fprintf(user_code_py,
+            "    # For OUT parameters you must use the .val member to access the value, ie: ");
+        comma = false;
+        FOREACH (p, Parameter, i->out, {
+            fprintf(user_code_py, "%sOUT_%s.val", comma ? ", " : "", p->name);
+            comma = true;
+        });
+        fprintf(user_code_py, "\n");
+    }
+
+    fprintf(user_code_py, "    pass\n\n");
 
     free(signature_py);
 }
