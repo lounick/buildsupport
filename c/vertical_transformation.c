@@ -816,6 +816,11 @@ void GenerateProcessImplementation(Process *p)
        fprintf(nodes, " coverage");
    }
    fprintf (nodes, "\n");
+
+   /* Env vars per target */
+   if ( (p->cpu != NULL) && (p->cpu->envvars != NULL) )
+       fprintf (nodes, "envvars %s\n", p->cpu->envvars);
+
    FOREACH(b, Aplc_binding, p->bindings, { 
       fprintf(nodes, "%s\n", b->fv->name);
    });

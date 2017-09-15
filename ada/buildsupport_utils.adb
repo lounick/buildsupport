@@ -224,6 +224,17 @@ package body Buildsupport_Utils is
       return Get_String_Property (D, Interface_Name);
    end Get_Interface_Name;
 
+   ------------------
+   -- Get_Env_Vars --
+   ------------------
+
+   function Get_Env_Vars (D : Node_Id) return Name_Id is
+      Interface_Name : constant Name_id :=
+         Get_String_Name ("envvars");
+   begin
+      return Get_String_Property (D, Interface_Name);
+   end Get_Env_Vars;
+
    ---------------------------
    -- Get ASN.1 Module name --
    ---------------------------

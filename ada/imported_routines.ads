@@ -44,7 +44,9 @@ package Imported_Routines is
                               Classifier     : String;
                               Classifier_Len : Integer;
                               Platform       : String;
-                              Platform_Len   : Integer);
+                              Platform_Len   : Integer;
+                              EnvVars        : String;
+                              EnvVars_Len    : Integer);
 
    procedure C_New_Bus (Name           : String;
                         Name_Len       : Integer;
