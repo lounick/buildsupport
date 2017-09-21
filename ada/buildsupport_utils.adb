@@ -229,10 +229,10 @@ package body Buildsupport_Utils is
    ------------------
 
    function Get_Env_Vars (D : Node_Id) return Name_Id is
-      Interface_Name : constant Name_id :=
+      Env_Vars : constant Name_id :=
          Get_String_Name ("envvars");
    begin
-      return Get_String_Property (D, Interface_Name);
+      return Get_String_Property (D, Env_Vars);
    end Get_Env_Vars;
 
    ---------------------------

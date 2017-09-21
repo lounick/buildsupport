@@ -83,7 +83,7 @@ package Buildsupport_Utils is
 
    function Get_Interface_Name (D : Node_Id) return Name_Id;
 
-   function Get_Env_Vars (D : Node_Id) return Name_Id;
+   function Get_Env_Vars     (D : Node_Id) return Name_Id;
 
    function Get_ASN1_Module_Name (D : Node_Id) return String;
 

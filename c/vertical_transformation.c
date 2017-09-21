@@ -818,8 +818,19 @@ void GenerateProcessImplementation(Process *p)
    fprintf (nodes, "\n");
 
    /* Env vars per target */
-   if ( (p->cpu != NULL) && (p->cpu->envvars != NULL) )
+   if ( (p->cpu != NULL) && (p->cpu->envvars != NULL) ) {
        fprintf (nodes, "envvars %s\n", p->cpu->envvars);
+   }
+
+   /* USER CFLAGS per target */
+   if ( (p->cpu != NULL) && (p->cpu->user_cflags != NULL) ) {
+       fprintf (nodes, "USER_CFLAGS %s\n", p->cpu->user_cflags);
+   }
+
+   /* USER LDFLAGS per target */
+   if ( (p->cpu != NULL) && (p->cpu->user_ldflags != NULL) ) {
+       fprintf (nodes, "USER_LDFLAGS %s\n", p->cpu->user_ldflags);
+   }
 
    FOREACH(b, Aplc_binding, p->bindings, { 
       fprintf(nodes, "%s\n", b->fv->name);

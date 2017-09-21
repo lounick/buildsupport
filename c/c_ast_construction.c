@@ -551,30 +551,37 @@ void New_Process(char *procname,
     }
 }
 
-void New_Processor (char *name, size_t name_length, 
+void New_Processor (char *name,       size_t name_length,
                     char *classifier, size_t classifier_length,
-                    char* platform, size_t platform_length,
-                    char *envvars, size_t envvars_length)
+                    char* platform,   size_t platform_length,
+                    char *envvars,    size_t envvars_length,
+                    char *cflags,     size_t cflags_length,
+                    char *ldflags,    size_t ldflags_length)
 {
     processor = malloc(sizeof(Processor));
     assert(NULL != processor);
 
-    processor->name = NULL;
-    processor->classifier = NULL;
+    processor->name          = NULL;
+    processor->classifier    = NULL;
     processor->platform_name = NULL;
-    processor->envvars = NULL;
+    processor->envvars       = NULL;
+    processor->user_cflags   = NULL;
+    processor->user_ldflags  = NULL;
+
     build_string(&(processor->name), name, name_length);
     build_string(&(processor->classifier), classifier,
                  classifier_length);
-    if (platform_length > 0)
-    {
-        build_string(&(processor->platform_name), platform,
-                 platform_length);
+    if (platform_length > 0) {
+        build_string(&(processor->platform_name), platform, platform_length);
     }
-    if (envvars_length > 0)
-    {
-        build_string(&(processor->envvars), envvars,
-                 envvars_length);
+    if (envvars_length > 0) {
+        build_string(&(processor->envvars), envvars, envvars_length);
+    }
+    if (cflags_length > 0) {
+        build_string(&(processor->user_cflags), cflags, cflags_length);
+    }
+    if (ldflags_length > 0) {
+        build_string(&(processor->user_ldflags), ldflags, ldflags_length);
     }
 }
 

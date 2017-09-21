@@ -1094,7 +1094,9 @@ procedure BuildSupport is
             if Get_Category_Of_Component (Tmp_CI) = CC_Process then
                declare
                   Node_Coverage : Boolean := False;
-                  Env_Vars : Name_Id := No_Name;
+                  Env_Vars     : Name_Id := No_Name;
+                  User_CFlags  : Name_Id := No_Name;
+                  User_LdFlags : Name_Id := No_Name;
                begin
                   if Is_Defined_Property (Tmp_CI,
                                         "taste_dv_properties::coverageenabled")
@@ -1110,7 +1112,9 @@ procedure BuildSupport is
                   end if;
 
                   CPU := Get_Bound_Processor (Tmp_CI);
-                  Env_Vars := Get_Env_Vars (CPU);
+                  Env_Vars     := Get_Env_Vars     (CPU);
+                  User_CFlags  := Get_User_CFlags  (CPU);
+                  User_LdFlags := Get_User_LdFlags (CPU);
                   Set_Str_To_Name_Buffer ("");
                   CPU_Name := Name (Identifier (Parent_Subcomponent (CPU)));
 
@@ -1145,10 +1149,22 @@ procedure BuildSupport is
                      Supported_Execution_Platform'Image (CPU_Platform),
                      Supported_Execution_Platform'Image (CPU_Platform)'Length,
                      (if Env_Vars /= No_Name then
-                      Get_Name_String (Env_Vars)
+                          Get_Name_String (Env_Vars)
                       else ""),
                      (if Env_Vars /= No_Name then
-                      Get_Name_String (Env_Vars)'Length
+                        Get_Name_String (Env_Vars)'Length
+                      else 0),
+                     (if User_CFlags /= No_Name then
+                         Get_Name_String (User_CFlags)
+                      else ""),
+                     (if User_CFlags /= No_Name then
+                         Get_Name_String (User_CFlags)'Length
+                      else 0),
+                     (if User_LdFlags /= No_Name then
+                          Get_Name_String (User_LdFlags)
+                      else ""),
+                     (if User_LdFlags /= No_Name then
+                        Get_Name_String (User_LdFlags)'Length
                       else 0));
 
                   C_New_Process

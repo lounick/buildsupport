@@ -266,6 +266,8 @@ typedef struct t_processor {
    char *classifier;
    char *platform_name;
    char *envvars;
+   char *user_cflags;
+   char *user_ldflags;
 } Processor;
 
 /*

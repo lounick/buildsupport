@@ -46,7 +46,11 @@ package Imported_Routines is
                               Platform       : String;
                               Platform_Len   : Integer;
                               EnvVars        : String;
-                              EnvVars_Len    : Integer);
+                              EnvVars_Len    : Integer;
+                              CFflags        : String;
+                              CFlags_Len     : Integer;
+                              LdFlags        : String;
+                              LdFlags_Len    : Integer);
 
    procedure C_New_Bus (Name           : String;
                         Name_Len       : Integer;
