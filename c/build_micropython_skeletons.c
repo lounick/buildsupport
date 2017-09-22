@@ -113,7 +113,7 @@ void micropython_skel_preamble(FV * fv)
                 "    # Write your initialization code here,\n"
                 "    # but do not make any call to a required interface.\n"
                 "    # You can construct ASN.1 instances using the type name as a function call.\n"
-                "    # You can construct an object reference using Ref(...).\n"
+                "    # You can construct an object reference using Access(...).\n"
                 "    # It's recommended to lock the heap once initialisation is done, but\n"
                 "    # note that without the heap some Python operations are not possible.\n"
                 "    micropython.heap_lock()\n"
@@ -210,10 +210,10 @@ void add_PI_to_MicroPython_skel(Interface * i)
     /* Add helpful comment for OUT parameters */
     if (i->out != NULL) {
         fprintf(user_code_py,
-            "    # For OUT parameters you must use the .val member to access the value, ie: ");
+            "    # For OUT parameters you must use the .all member to access the value, ie: ");
         comma = false;
         FOREACH (p, Parameter, i->out, {
-            fprintf(user_code_py, "%sOUT_%s.val", comma ? ", " : "", p->name);
+            fprintf(user_code_py, "%sOUT_%s.all", comma ? ", " : "", p->name);
             comma = true;
         });
         fprintf(user_code_py, "\n");
