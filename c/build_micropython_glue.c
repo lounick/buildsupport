@@ -96,28 +96,6 @@ void micropython_mpy_bind_preamble(FV * fv)
         free(fv_no_underscore);
     }
 
-    fprintf(mpy_bind_c,
-        "typedef struct {\n"
-        "    mp_obj_base_t base;\n"
-        "    size_t len;\n"
-        "    mp_obj_t items[2];\n"
-        "} mp_obj_tuple_wrap_t;\n\n");
-
-    fprintf(mpy_bind_c, "extern const mp_obj_type_t mp_type_mutable_attrtuple;\n\n");
-
-    fprintf(mpy_bind_c, "static qstr wrap_fields[1] = {MP_QSTR_val};\n\n");
-
-    fprintf(mpy_bind_c,
-        "static mp_obj_t mp_obj_new_wrap(mp_obj_t arg) {\n"
-        "    mp_obj_tuple_wrap_t *o = m_new_obj(mp_obj_tuple_wrap_t);\n"
-        "    o->base.type = &mp_type_mutable_attrtuple;\n"
-        "    o->len = 1;\n"
-        "    o->items[0] = arg;\n"
-        "    o->items[1] = MP_OBJ_FROM_PTR(wrap_fields);\n"
-        "    return MP_OBJ_FROM_PTR(o);\n"
-        "}\n"
-        "MP_DEFINE_CONST_FUN_OBJ_1(mp_obj_new_wrap_obj, mp_obj_new_wrap);\n\n");
-
     fprintf(mpy_bind_c, "mp_state_ctx_t *mp_current_ctx;\n"); // TODO there should only be one of these per executable
     fprintf(mpy_bind_c, "static mp_state_ctx_t mp_ctx;\n");
     fprintf(mpy_bind_c, "static uint64_t mp_heap[4096];\n");
@@ -143,19 +121,33 @@ void micropython_mpy_bind_preamble(FV * fv)
         "    mp_exec_mpy(mpy_script_data, mpy_script_len);\n"
     );
 
+    /* Start exception handling block to catch errors in startup code */
     fprintf(mpy_bind_c,
-        "    mp_obj_t global_startup = mp_load_global(MP_QSTR_%s_startup);\n", fv->name);
+        "    nlr_buf_t nlr;\n"
+        "    if (nlr_push(&nlr) == 0) {\n"
+    );
 
+    /* Load all of the PI functions */
     FOREACH(i, Interface, fv->interfaces, {
         if (i->direction == PI) {
             fprintf(mpy_bind_c,
-                "    mp_global_%s_PI_%s = mp_load_global(MP_QSTR_%s_PI_%s);\n",
+                "        mp_global_%s_PI_%s = mp_load_global(MP_QSTR_%s_PI_%s);\n",
                     i->parent_fv->name, i->name, i->parent_fv->name, i->name);
         }
     });
 
+    /* Load and execute the startup function */
     fprintf(mpy_bind_c,
-            "    mp_call_function_0(global_startup);\n"
+        "        mp_call_function_0(mp_load_global(MP_QSTR_%s_startup));\n",
+        fv->name
+    );
+
+    /* Clean up the exception handling */
+    fprintf(mpy_bind_c,
+        "        nlr_pop();\n"
+        "    } else {\n"
+        "        mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));\n"
+        "    }\n"
     );
 
     fprintf(mpy_bind_c, "}\n\n");
@@ -236,14 +228,14 @@ void micropython_add_PI_to_glue(Interface * i)
     /* Encode the incoming OUT data to MicroPython objects */
     FOREACH (p, Parameter, i->out, {
         fprintf(mpy_bind_c,
-            "        mp_obj_tuple_wrap_t wrap%zu = {{&mp_type_mutable_attrtuple}, 1, {MP_OBJ_NULL, MP_OBJ_FROM_PTR(wrap_fields)}};\n"
+            "        mp_obj_access_t access%zu = MP_OBJ_ACCESS_INIT(MP_OBJ_NULL);\n"
             "        #ifdef MICROPY_TASTE_NEED_DATA_FOR_%s\n"
             "        mp_obj_asn1Scc%s_t OUT_%s_data;\n"
-            "        wrap%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, &OUT_%s_data);\n"
+            "        access%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, &OUT_%s_data);\n"
             "        #else\n"
-            "        wrap%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, NULL);\n"
+            "        access%zu.items[0] = mp_obj_encode_asn1Scc%s(OUT_%s, NULL);\n"
             "        #endif\n"
-            "        args[%zu] = &wrap%zu;\n",
+            "        args[%zu] = &access%zu;\n",
             n_args,
             p->type,
             p->type, p->name,
@@ -264,7 +256,7 @@ void micropython_add_PI_to_glue(Interface * i)
     n_args = n_in_args;
     FOREACH (p, Parameter, i->out, {
         fprintf(mpy_bind_c,
-            "        mp_obj_decode_asn1Scc%s(wrap%zu.items[0], OUT_%s);\n",
+            "        mp_obj_decode_asn1Scc%s(access%zu.items[0], OUT_%s);\n",
             p->type, n_args, p->name);
         n_args += 1;
     });
@@ -356,13 +348,18 @@ void micropython_add_RI_to_glue(Interface * i)
     });
     fprintf(mpy_bind_c, ");\n");
 
+    if (i->out != NULL) {
+        fprintf(mpy_bind_c, "    mp_obj_t *access_items;\n");
+    }
+
     /* Encode the OUT data to MicroPython objects */
     n_args = n_in_args;
     FOREACH (p, Parameter, i->out, {
         /* TODO verify that the argument objects are of the correct type */
         fprintf(mpy_bind_c,
-            "    ((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%zu]))->items[0] = mp_obj_encode_asn1Scc%s(&asn_OUT_%s, MP_OBJ_TO_PTR(((mp_obj_tuple_t*)MP_OBJ_TO_PTR(args[%zu]))->items[0]));\n",
-            n_args, p->type, p->name, n_args);
+            "    access_items = mp_obj_access_get_items(args[%zu]);\n"
+            "    access_items[0] = mp_obj_encode_asn1Scc%s(&asn_OUT_%s, MP_OBJ_TO_PTR(access_items[0]));\n",
+            n_args, p->type, p->name);
         n_args += 1;
     });
 
@@ -407,7 +404,7 @@ void End_MicroPython_Glue_Backend(FV *fv)
     fprintf(mpy_bind_c,
         "STATIC const mp_rom_map_elem_t taste_module_globals_table[] = {\n"
         "    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_taste) },\n"
-        "    { MP_ROM_QSTR(MP_QSTR_Ref), MP_ROM_PTR(&mp_obj_new_wrap_obj) },\n"
+        "    { MP_ROM_QSTR(MP_QSTR_Access), MP_ROM_PTR(&mp_obj_new_access_obj) },\n"
     );
 
     FOREACH(i, Interface, fv->interfaces, {
