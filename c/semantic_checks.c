@@ -334,7 +334,7 @@ void Function_Semantic_Check(FV * fv)
     }
 
     if (NULL != fv->instance_of) {
-        FV *definition = FindFV (fv->instance_of);
+        FV *definition = FindFV (string_to_lower(fv->instance_of));
         if (definition == NULL) {
             ERROR
             ("[ERROR] Component type \"%s\" (for instance \"%s\") not found.\n",

@@ -121,7 +121,7 @@ void C_End()
                         );
             }
 
-            if (get_context()->gw && (false == fv->is_component_type) &&
+            if (get_context()->gw && //  (false == fv->is_component_type) &&
                 (NULL == fv->zipfile || get_context()->glue)) {
                     GW_SDL_Backend(fv);
                     GW_Simulink_Backend(fv);
