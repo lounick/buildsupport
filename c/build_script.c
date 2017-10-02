@@ -146,13 +146,20 @@ void Create_script()
     FOREACH (fv, FV, get_system_ast()->functions, {
         if (sdl == fv->language) {
             if (NULL != fv->instance_of) {
+                char *instance_of = string_to_lower (fv->instance_of);
                 fprintf(script,
                     "# Generate code for function %s (instance of OpenGEODE function %s)\n"
                     "cd \"$SKELS\"/%s && "
                     "opengeode --toAda system_structure.pr ../%s/%s.pr "
                     "&& rm -f %s.ad* "
                     "&& cd $OLDPWD\n\n",
-                    fv->name, fv->instance_of, fv->name, fv->instance_of, fv->instance_of, fv->instance_of);
+                    fv->name,
+                    instance_of,
+                    fv->name,
+                    instance_of,
+                    instance_of,
+                    instance_of);
+                free(instance_of);
             } else {
             fprintf(script,
                     "# Generate code for OpenGEODE function %s\n"
