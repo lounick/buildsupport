@@ -220,11 +220,11 @@ package body Buildsupport_Utils is
    function Get_Instance_Of (Device : Node_Id) return Name_Id is
       Instance_Of : Name_id := No_Name;
    begin
-      if Is_Defined_Property (Device, "taste_iv_properties::instance_of")
+      if Is_Defined_Property (Device, "taste_iv_properties::is_instance_of")
       then
          Instance_Of := Get_String_Property
              (Device, Get_String_Name
-               ("taste_iv_properties::instance_of"));
+               ("taste_iv_properties::is_instance_of"));
       end if;
       return Instance_Of;
    end Get_Instance_Of;

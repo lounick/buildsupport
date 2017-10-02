@@ -319,15 +319,15 @@ void Function_Semantic_Check(FV * fv)
             Interface_Semantic_Check(i);
             }
     );
-    
-    /* 
+
+    /*
      * SDL specific checks: is_component_type can only be true for SDL functions.
      * instance_of can only point to functions with is_component_type set to true.
      */
     if (fv->is_component_type) {
         if (sdl != fv->language) {
             ERROR
-            ("** Error: Is_Component_Type is True for \"%s\". This is allowed only for SDL functions.\n",
+            ("[ERROR] Is_Component_Type is True for \"%s\". This is allowed only for SDL functions.\n",
              fv->name);
             add_error();
         }
@@ -337,50 +337,52 @@ void Function_Semantic_Check(FV * fv)
         FV *definition = FindFV (fv->instance_of);
         if (definition == NULL) {
             ERROR
-            ("** Error: Defining function \"%s\" for \"%s\" not found.\n",
+            ("[ERROR] Component type \"%s\" (for instance \"%s\") not found.\n",
              fv->instance_of, fv->name);
             add_error();
+            return;
         }
-        if (false == definition->is_component_type) {
-            ERROR
-            ("** Error: Is_Component_Type is False for \"%s\". It should be True,\n",
-             definition->name);
-             ERROR
-            ("   because function \"%s\" claims that it is an instance of \"%s\".\n",
-             fv->name, definition->name);
-            add_error();
-        }
-        int fv_intf_cnt = 0;
-        int definition_intf_cnt = 0;
-        FOREACH(i, Interface, fv->interfaces, {
-            Interface *def_i = FindInterface (definition, i->name);
-                if (def_i == NULL) {
-                    ERROR
-                    ("** Error: Interface \"%s\" of instance \"%s\" not found from definition \"%s\".\n",
-                    i->name, fv->name, definition->name);
-                    add_error();
-                } else {
-                    if (!MultiInstance_SDL_Interface_Check (i, def_i)) {
+        else {
+            if (false == definition->is_component_type) {
+                ERROR
+                ("[ERROR] Is_Component_Type is False for \"%s\". It should be True,\n",
+                 definition->name);
+                 ERROR
+                ("   because function \"%s\" claims that it is an instance of \"%s\".\n",
+                 fv->name, definition->name);
+                add_error();
+            }
+            int fv_intf_cnt = 0;
+            int definition_intf_cnt = 0;
+            FOREACH(i, Interface, fv->interfaces, {
+                Interface *def_i = FindInterface (definition, i->name);
+                    if (def_i == NULL) {
                         ERROR
-                        ("** Error: Interface \"%s\" of instance \"%s\" not matching with definition \"%s\".\n",
+                        ("** Error: Interface \"%s\" of instance \"%s\" not found from definition \"%s\".\n",
                         i->name, fv->name, definition->name);
                         add_error();
+                    } else {
+                        if (!MultiInstance_SDL_Interface_Check (i, def_i)) {
+                            ERROR
+                            ("** Error: Interface \"%s\" of instance \"%s\" not matching with definition \"%s\".\n",
+                            i->name, fv->name, definition->name);
+                            add_error();
+                        }
                     }
-                }
 
-            fv_intf_cnt++;
-        });
-        FOREACH(i, Interface, definition->interfaces, {
-            UNUSED (i);
-            definition_intf_cnt++;
-        });
-        if (fv_intf_cnt != definition_intf_cnt) {
-            ERROR
-            ("** Error: Interface count mismatch between definition \"%s\" and instance \"%s\".\n",
-             definition->name, fv->name);
-            add_error();
+                fv_intf_cnt++;
+            });
+            FOREACH(i, Interface, definition->interfaces, {
+                UNUSED (i);
+                definition_intf_cnt++;
+            });
+            if (fv_intf_cnt != definition_intf_cnt) {
+                ERROR
+                ("** Error: Interface count mismatch between definition \"%s\" and instance \"%s\".\n",
+                 definition->name, fv->name);
+                add_error();
+            }
         }
-
     }
 }
 

@@ -258,7 +258,16 @@ void GW_SDL_Interface(Interface * i)
 void GW_SDL_Backend(FV * fv) 
 {
     if (fv->system_ast->context->onlycv) return;
-    if ((sdl == fv->language || opengeode == fv->language) && (false == fv->is_component_type)) {
+    if ((sdl == fv->language || opengeode == fv->language)) {
+       printf("FV %s is in SDL\n", fv->name);
+       if (NULL == fv->instance_of) {
+           printf("Its instance_of is NULL\n");
+       }
+       else {
+           printf("It IS AN INSTANCE OF %s\n", fv->instance_of);
+       }
+    }
+    if ((sdl == fv->language || opengeode == fv->language) && (NULL == fv->instance_of)) {
         Create_New_SDL_Structure(fv);
         FOREACH(i, Interface, fv->interfaces, {
             GW_SDL_Interface(i);
