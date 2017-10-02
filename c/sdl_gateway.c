@@ -73,9 +73,9 @@ void Create_New_SDL_Structure(FV * fv)
     if (!file_exists (path, filename) && (NULL == fv->instance_of)) {
         create_file (path, filename, &process);
         if (fv->is_component_type == false) {
-            fprintf (process, "PROCESS %s;\n", fv->name);
+            fprintf (process, "process %s;\n", fv->name);
         } else {
-            fprintf (process, "PROCESS type %s;\n", fv->name);
+            fprintf (process, "process type %s;\n", fv->name);
         }
 
         if (NULL != fv->timer_list) {
@@ -85,7 +85,7 @@ void Create_New_SDL_Structure(FV * fv)
                               "-- and RESET_TIMER (timer name) in a\n"
                               "-- PROCEDURE CALL symbol to use them\n\n");
             FOREACH (timer, String, fv->timer_list, {
-                    fprintf (process, "TIMER %s;\n", timer);
+                    fprintf (process, "timer %s;\n", timer);
             });
             fprintf (process, "/* CIF ENDTEXT */\n");
         }
@@ -96,9 +96,9 @@ void Create_New_SDL_Structure(FV * fv)
                           "STATE Wait;\n"
                           "ENDSTATE;\n");
         if (fv->is_component_type == false) {
-            fprintf (process, "ENDPROCESS;\n");
+            fprintf (process, "endprocess;\n");
         } else {
-            fprintf (process, "ENDPROCESS type;\n");
+            fprintf (process, "endprocess type;\n");
         }
         close_file(&process);
     }
@@ -217,7 +217,7 @@ void Build_SDL_Connections(FV * fv)
             fprintf(f, "\t\tPROCESS %s:%s;\n\n", fv->name, fv->instance_of);
         }
     } else {
-        fprintf(f, "\t\tPROCESS type %s;\n\n", fv->name);
+        fprintf(f, "\t\tPROCESS %s: %s;\n\n", fv->name, fv->name);
     }
 
     fprintf(f, "\tENDBLOCK;\n\nENDSYSTEM;");
