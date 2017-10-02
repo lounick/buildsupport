@@ -121,7 +121,7 @@ void C_End()
                         );
             }
 
-            if (get_context()->gw &&
+            if (get_context()->gw && (false == fv->is_component_type) &&
                 (NULL == fv->zipfile || get_context()->glue)) {
                     GW_SDL_Backend(fv);
                     GW_Simulink_Backend(fv);
@@ -136,7 +136,7 @@ void C_End()
             }
 
             /* Export to SMP2: generate glue code and Python AST */
-            if (true == get_context()->smp2) {
+            if (true == get_context()->smp2 && (false == fv->is_component_type)) {
                 GLUE_OG_Backend(fv);
                 GLUE_RTDS_Backend(fv);
                 GLUE_MiniCV_Backend(fv);
@@ -174,35 +174,37 @@ void C_End()
          * Execute various backends applicable to each FV
          */
         FOREACH(fv, FV, get_system_ast()->functions, {
-            /*
-             * Call 'asn2dataModel' if glue code is not required
-             * (to avoid slowing down the orchestrator, which is
-             * the only place where the glue code is requested
-             */
-            if (get_context()->gw && !get_context()->glue && NULL == fv->zipfile) {
-                Call_asn2dataModel(fv);
-            }
+            if (false == fv->is_component_type) {
+                /*
+                 * Call 'asn2dataModel' if glue code is not required
+                 * (to avoid slowing down the orchestrator, which is
+                 * the only place where the glue code is requested
+                 */
+                if (get_context()->gw && !get_context()->glue && NULL == fv->zipfile) {
+                    Call_asn2dataModel(fv);
+                }
 
-            /* Process all functional states declared in the interface view */
-            if (get_context()->gw && (NULL == fv->zipfile || get_context()->glue)) {
-                Process_Context_Parameters(fv);
-            }
+                /* Process all functional states declared in the interface view */
+                if (get_context()->gw && (NULL == fv->zipfile || get_context()->glue)) {
+                    Process_Context_Parameters(fv);
+                }
 
-            /* Process function directives */
-            if (get_context()->glue || get_context()->test) {
-                Process_Directives (fv);
-            }
+                /* Process function directives */
+                if (get_context()->glue || get_context()->test) {
+                    Process_Directives (fv);
+                }
 
-            if (get_context()->glue) {
-                GLUE_OG_Backend(fv);
-                GLUE_RTDS_Backend(fv);
-                GLUE_MiniCV_Backend(fv);
-                GLUE_C_Backend(fv);
-                GLUE_GUI_Backend(fv);
-                GLUE_Ada_Wrappers_Backend(fv);
-                GLUE_C_Wrappers_Backend(fv); 
-                GLUE_VT_Backend(fv);
-                GLUE_MicroPython_Backend(fv);
+                if (get_context()->glue) {
+                    GLUE_OG_Backend(fv);
+                    GLUE_RTDS_Backend(fv);
+                    GLUE_MiniCV_Backend(fv);
+                    GLUE_C_Backend(fv);
+                    GLUE_GUI_Backend(fv);
+                    GLUE_Ada_Wrappers_Backend(fv);
+                    GLUE_C_Wrappers_Backend(fv); 
+                    GLUE_VT_Backend(fv);
+                    GLUE_MicroPython_Backend(fv);
+                }
             }
         })
 

@@ -517,6 +517,17 @@ void Set_Stack(char *val, size_t len)
     build_string(&(system_ast->context->stacksize), val, len);
 }
 
+void Set_Instance_Of(char *component, size_t len)
+{
+    assert (0 < len && NULL != fv);
+    build_string (&(fv->instance_of), component, len);
+}
+
+void Set_Is_Component_Type()
+{
+    assert (NULL != fv);
+    fv->is_component_type = true;
+}
 
 /* End of context-related functions */
 
@@ -1133,6 +1144,40 @@ Interface *FindInterface(FV * function, char *interface_name)
     SetSearchName(interface_name);
     FOREACH(i, Interface, function->interfaces, {
             CompareIFname(i, &result);})
+        SetSearchName(NULL);
+
+    return result;
+}
+
+/* FindParameter of a given Interface */
+void CompareParName(Parameter * p, Parameter ** result)
+{
+    if (NULL == p->name || NULL == search_name)
+        return;
+
+    if (!strcmp(p->name, search_name)) {
+        *result = p;
+        SetSearchName(NULL);
+    }
+}
+
+Parameter *FindInParameter(Interface *i, char *param_name)
+{
+    Parameter *result = NULL;
+    SetSearchName(param_name);
+    FOREACH(p, Parameter, i->in, {
+            CompareParName(p, &result);})
+        SetSearchName(NULL);
+
+    return result;
+}
+
+Parameter *FindOutParameter(Interface * i, char *param_name)
+{
+    Parameter *result = NULL;
+    SetSearchName(param_name);
+    FOREACH(p, Parameter, i->out, {
+            CompareParName(p, &result);})
         SetSearchName(NULL);
 
     return result;

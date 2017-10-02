@@ -498,7 +498,7 @@ int Init_Process_Backend()
     * of all processes */
    FOREACH(p, Process, get_system_ast()->processes, {
        FOREACH(b, Aplc_binding, p->bindings, {
-           if (thread_runtime == b->fv->runtime_nature) {
+           if (thread_runtime == b->fv->runtime_nature && (false == b->fv->is_component_type)) {
                fprintf(process, "\twith %s_CV_Thread;\n", b->fv->name);
            }
        });
@@ -855,7 +855,7 @@ void GenerateProcessImplementation(Process *p)
            p->name, p->name);
    }
    FOREACH(b, Aplc_binding, p->bindings, {
-      if (thread_runtime == b->fv->runtime_nature) {
+      if (thread_runtime == b->fv->runtime_nature && (false == b->fv->is_component_type)) {
           DeclareProcessFeatures(b, &p, &ports);
       }
    });
@@ -870,12 +870,14 @@ void GenerateProcessImplementation(Process *p)
    fprintf(process,"subcomponents\n");
 
    FOREACH(b, Aplc_binding, p->bindings, {
-     SetThread(b);
+     if (false == b->fv->is_component_type) SetThread(b);
      if (get_context()->polyorb_hi_c) SetProtectedObject(b);
    });
 
    FOREACH(b, Aplc_binding, p->bindings, {
-    if (thread_runtime == b->fv->runtime_nature) ProcessMakeConnections(b, &p);
+    if (thread_runtime == b->fv->runtime_nature && (false == b->fv->is_component_type)) {
+        ProcessMakeConnections(b, &p);
+    }
    });
 
    if (get_context()->polyorb_hi_c) {
@@ -890,7 +892,7 @@ void GenerateProcessImplementation(Process *p)
         FOREACH(b, Aplc_binding, p->bindings, {
             Protected_Object_Name_list  *set_of_protected = NULL;
 
-            if (thread_runtime == b->fv->runtime_nature) {
+            if (thread_runtime == b->fv->runtime_nature && (false == b->fv->is_component_type)) {
                 if (get_context()->test) {
                     printf("\n[thread %s]\n", b->fv->name);
                 }

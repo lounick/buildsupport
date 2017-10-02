@@ -232,6 +232,25 @@ procedure BuildSupport is
                   end if;
                end;
 
+                  declare
+                     InstanceOf : constant Name_Id :=
+                       Get_Instance_Of (CI);
+                  begin
+                     if InstanceOf /= No_Name then
+                        C_Set_Instance_Of (Get_Name_String (InstanceOf),
+                           Get_Name_String (InstanceOf)'Length);
+                     end if;
+                  end;
+
+                  declare
+                     IsComponent : constant Boolean :=
+                       Get_Is_Component_Type (CI);
+                  begin
+                     if IsComponent then
+                        C_Set_Is_Component_Type;
+                     end if;
+                  end;
+
                --  Parse the functional states of this FV
                if not Is_Empty (Subcomponents (CI)) then
                   FV_Subco := First_Node (Subcomponents (CI));

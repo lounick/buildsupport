@@ -714,20 +714,21 @@ void GLUE_C_Backend(FV * fv)
         );
     }
 
-
-    if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
-        || qgenada == fv->language || qgenc == fv->language
-        || rtds == fv->language || cpp == fv->language || opengeode == fv->language
-        || micropython == fv->language) {
-        Init_C_Glue_Backend(fv);
-        FOREACH(i, Interface, fv->interfaces, {
-                GLUE_C_ProvidedInterface(i);
-                }
-        );
+    if (false == fv->is_component_type) {
+        if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
+            || qgenada == fv->language || qgenc == fv->language
+            || rtds == fv->language || cpp == fv->language || opengeode == fv->language
+            || micropython == fv->language) {
+            Init_C_Glue_Backend(fv);
+            FOREACH(i, Interface, fv->interfaces, {
+                    GLUE_C_ProvidedInterface(i);
+                    }
+            );
+        }
     }
 
     /* for all languages except ObjectGeode (sdl) and Blackbox devices, generate invoke_ri.c */
-    if (sdl != fv->language && blackbox_device != fv->language) {
+    if (sdl != fv->language && blackbox_device != fv->language && true != fv->is_component_type) {
         FOREACH(i, Interface, fv->interfaces, {
                 GLUE_C_InvokeRI(i);
                 }

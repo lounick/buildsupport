@@ -198,8 +198,14 @@ package Imported_Routines is
    procedure C_Set_Debug_Messages;
    procedure C_New_Drivers_Section;
    procedure C_End_Drivers_Section;
+   procedure C_Set_Instance_Of
+      (component : String;
+       len  : Integer);
+   procedure C_Set_Is_Component_Type;
 
 private
+   pragma Import (C, C_Set_Instance_Of, "Set_Instance_Of");
+   pragma Import (C, C_Set_Is_Component_Type, "Set_Is_Component_Type");
    pragma Import (C, C_New_Drivers_Section, "New_Drivers_Section");
    pragma Import (C, C_End_Drivers_Section, "End_Drivers_Section");
    pragma Import (C, C_Set_PolyORBHI_C, "Set_PolyorbHI_C");

@@ -145,12 +145,22 @@ void Create_script()
     /* OpenGEODE-specific: call code generator on the fly */
     FOREACH (fv, FV, get_system_ast()->functions, {
         if (sdl == fv->language) {
+            if (NULL != fv->instance_of) {
+                fprintf(script,
+                    "# Generate code for function %s (instance of OpenGEODE function %s)\n"
+                    "cd \"$SKELS\"/%s && "
+                    "opengeode --toAda system_structure.pr ../%s/%s.pr "
+                    "&& rm -f %s.ad* "
+                    "&& cd $OLDPWD\n\n",
+                    fv->name, fv->instance_of, fv->name, fv->instance_of, fv->instance_of, fv->instance_of);
+            } else {
             fprintf(script,
                     "# Generate code for OpenGEODE function %s\n"
                     "cd \"$SKELS\"/%s && "
                     "opengeode --toAda %s.pr system_structure.pr "
                     "&& cd $OLDPWD\n\n",
                     fv->name, fv->name, fv->name);
+        }
         }
     });
 
@@ -247,7 +257,8 @@ void Create_script()
                     fprintf (script, "--subCPP ");
                     break;
                 case sdl:
-                case ada: fprintf (script, "--subAda ");
+                case ada: if (fv->is_component_type == true) fprintf (script, "--with-extra-Ada-code ");
+                         else fprintf (script, "--subAda ");
                       break;
                 case vhdl: fprintf (script, "--subVHDL ");
                       break;
@@ -263,7 +274,8 @@ void Create_script()
                      break;
             }
 
-            fprintf (script, "%s", fv->name);
+            if (fv->is_component_type == true) fprintf (script, "%s", fv->name);
+            else fprintf (script, "%s", fv->name);
             /* ObjectGEODE systems are treated differently from all other languages,
                because it directly refers to .pr files, instead of zip files 
             if (sdl == fv->language) { UNCOMMENT WHEN OPENGEODE FULLY SUPPORTED
@@ -275,6 +287,9 @@ void Create_script()
             /*else*/
             if (rtds == fv->language && NULL == fv->zipfile) {
                 fprintf (script, ":\"$SKELS\"/%s/%s.zip", fv->name, fv->name);
+            }
+            else if (true == fv->is_component_type) {
+                fprintf (script, ":\"$SKELS\"/%s", fv->name);
             }
             else if (NULL != fv->zipfile) {
                 fprintf (script, ":%s", fv->zipfile);

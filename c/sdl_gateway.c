@@ -1,4 +1,4 @@
-/* Buildsupport is (c) 2008-2015 European Space Agency
+/* Buildsupport is (c) 2008-2017 European Space Agency
  * contact: maxime.perrotin@esa.int
  * License is LGPL, check LICENSE file */
 /*
@@ -68,10 +68,16 @@ void Create_New_SDL_Structure(FV * fv)
 
     char *filename = make_string("%s.pr", fv->name);
     /* If not already existing, also create an empty system_implementation.pr
-     * file - includes timer declarations, if any */
-    if (!file_exists (path, filename)) {
+     * file - includes timer declarations, if any. 
+     * Do not create in case the function is an instance of a generic function*/
+    if (!file_exists (path, filename) && (NULL == fv->instance_of)) {
         create_file (path, filename, &process);
-        fprintf (process, "PROCESS %s;\n", fv->name);
+        if (fv->is_component_type == false) {
+            fprintf (process, "PROCESS %s;\n", fv->name);
+        } else {
+            fprintf (process, "PROCESS type %s;\n", fv->name);
+        }
+
         if (NULL != fv->timer_list) {
             fprintf (process, "/* CIF TEXT (10, 10), (200, 250) */\n");
             fprintf (process, "-- Timers defined in the interface view\n"
@@ -88,8 +94,12 @@ void Create_New_SDL_Structure(FV * fv)
                           "NEXTSTATE Wait;\n"
                           "/* CIF STATE (450, 10), (70, 35) */\n"
                           "STATE Wait;\n"
-                          "ENDSTATE;\n"
-                          "ENDPROCESS;\n");
+                          "ENDSTATE;\n");
+        if (fv->is_component_type == false) {
+            fprintf (process, "ENDPROCESS;\n");
+        } else {
+            fprintf (process, "ENDPROCESS type;\n");
+        }
         close_file(&process);
     }
     free(dataview_uniq);
@@ -199,7 +209,17 @@ void Build_SDL_Connections(FV * fv)
     fprintf(f, "\t\t\tFROM %s TO ENV WITH %s;\n", fv->name,
          ri_string);
     fprintf(f, "\n\t\tCONNECT c and r;\n\n");
-    fprintf(f, "\t\tPROCESS %s REFERENCED;\n\n", fv->name);
+
+    if (fv->is_component_type == false) {
+        if (fv->instance_of == NULL) {
+            fprintf(f, "\t\tPROCESS %s REFERENCED;\n\n", fv->name);
+        } else {
+            fprintf(f, "\t\tPROCESS %s:%s;\n\n", fv->name, fv->instance_of);
+        }
+    } else {
+        fprintf(f, "\t\tPROCESS type %s;\n\n", fv->name);
+    }
+
     fprintf(f, "\tENDBLOCK;\n\nENDSYSTEM;");
 }
 
@@ -238,7 +258,7 @@ void GW_SDL_Interface(Interface * i)
 void GW_SDL_Backend(FV * fv) 
 {
     if (fv->system_ast->context->onlycv) return;
-    if (sdl == fv->language || opengeode == fv->language) {
+    if ((sdl == fv->language || opengeode == fv->language) && (false == fv->is_component_type)) {
         Create_New_SDL_Structure(fv);
         FOREACH(i, Interface, fv->interfaces, {
             GW_SDL_Interface(i);

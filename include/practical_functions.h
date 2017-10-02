@@ -7,6 +7,8 @@
 #include "my_types.h"
 #include "c_ast_construction.h"
 
+#define UNUSED(x) (void)(x)
+
 #define USE_PO_HI_ADA(fv) (fv->system_ast->context->polyorb_hi_c == 0)
 #define USE_PO_HI_C(fv) (fv->system_ast->context->polyorb_hi_c == 1)
 

@@ -927,6 +927,8 @@ void Create_FV(FV ** fv)
         /* is this function a timer manager? */
         (*fv)->timer = false;
         (*fv)->timer_list = NULL;
+        (*fv)->is_component_type = false;
+        (*fv)->instance_of = NULL;
     }
 
 }
@@ -962,6 +964,9 @@ void Clear_FV(FV * fv)
     }
     if (NULL != fv->process) {
         fv->process = NULL;
+    }
+    if (NULL != fv->instance_of) {
+        fv->instance_of = NULL;
     }
 }
 

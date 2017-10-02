@@ -245,6 +245,8 @@ typedef struct t_fv {
   char                   *original_name;
   bool                   timer;
   struct t_String_list   *timer_list;
+  bool                   is_component_type;
+  char                   *instance_of;
 } FV;
 
 DECLARE_LIST(FV)

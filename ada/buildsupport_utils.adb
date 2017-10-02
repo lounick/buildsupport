@@ -213,6 +213,38 @@ package body Buildsupport_Utils is
       return Get_String_Property (D, Ellidiss_Tool_Version);
    end Get_Ellidiss_Tool_Version;
 
+   -------------------------------
+   -- Get_Instance_Of --
+   -------------------------------
+
+   function Get_Instance_Of (Device : Node_Id) return Name_Id is
+      Instance_Of : Name_id := No_Name;
+   begin
+      if Is_Defined_Property (Device, "taste_iv_properties::instance_of")
+      then
+         Instance_Of := Get_String_Property
+             (Device, Get_String_Name
+               ("taste_iv_properties::instance_of"));
+      end if;
+      return Instance_Of;
+   end Get_Instance_Of;
+
+   -------------------------------
+   -- Get_Is_Component_Type --
+   -------------------------------
+
+   function Get_Is_Component_Type (Device : Node_Id) return Boolean is
+      Is_Component_Type  : Boolean := False;
+   begin
+      if Is_Defined_Property (Device, "taste_iv_properties::is_component_type")
+      then
+         Is_Component_Type := Get_Boolean_Property
+            (Device, Get_String_Name
+               ("taste_iv_properties::is_component_type"));
+      end if;
+      return Is_Component_Type;
+   end Get_Is_Component_Type;
+
    ------------------------
    -- Get_Interface_Name --
    ------------------------

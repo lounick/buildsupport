@@ -70,6 +70,84 @@ void Interface_Semantic_Check(Interface * i)
 
 }
 
+bool Equal_Params(Parameter * p1, Parameter * p2)
+{
+    bool result=true;
+
+    if (!Compare_String (p1->name, p2->name)) {
+        result=false;
+    }
+    if (!Compare_String (p1->type, p2->type)) {
+        result=false;
+    }
+    if (!Compare_ASN1_Filename (p1->asn1_filename, p2->asn1_filename)) {
+        result=false;
+    }
+    if (!Compare_ASN1_Module (p1->asn1_module, p2->asn1_module)) {
+        result=false;
+    }
+    if (p1->basic_type != p2->basic_type) {
+        result=false;
+    }
+    if (p1->encoding != p2->encoding) {
+        result=false;
+    }
+    if (p1->param_direction != p2->param_direction) {
+        result=false;
+    }
+
+    return result;
+}
+
+bool MultiInstance_SDL_Interface_Check(Interface * i, Interface * j)
+{
+    bool result=true;
+    int in_param_cnt_i = 0;
+    int in_param_cnt_j = 0;
+    int out_param_cnt_i = 0;
+    int out_param_cnt_j = 0;
+
+    if (!Compare_Interface (i, j)) {
+        result=false;
+    }
+
+    if (i->direction != j->direction) {
+        result=false;
+    }
+
+    FOREACH(p, Parameter, i->in, {
+        Parameter *inp = FindInParameter (i, p->name);
+        if (!Equal_Params (p, inp)){
+            result=false;
+        }
+        in_param_cnt_i++;
+    });
+    FOREACH(p, Parameter, j->in, {
+        UNUSED (p);
+        in_param_cnt_j++;
+    });
+
+    FOREACH(p, Parameter, i->out, {
+        Parameter *outp = FindOutParameter (i, p->name);
+        if (!Equal_Params (p, outp)){
+            result=false;
+        }
+        out_param_cnt_i++;
+    });
+    FOREACH(p, Parameter, j->out, {
+        UNUSED (p);
+        out_param_cnt_j++;
+    });
+
+    if (in_param_cnt_i != in_param_cnt_j) {
+        result=false;
+    }
+    if (out_param_cnt_i != out_param_cnt_j) {
+        result=false;
+    }
+
+    return result;
+}
 
 /* External interface (the one and unique) */
 void Function_Semantic_Check(FV * fv)
@@ -241,6 +319,69 @@ void Function_Semantic_Check(FV * fv)
             Interface_Semantic_Check(i);
             }
     );
+    
+    /* 
+     * SDL specific checks: is_component_type can only be true for SDL functions.
+     * instance_of can only point to functions with is_component_type set to true.
+     */
+    if (fv->is_component_type) {
+        if (sdl != fv->language) {
+            ERROR
+            ("** Error: Is_Component_Type is True for \"%s\". This is allowed only for SDL functions.\n",
+             fv->name);
+            add_error();
+        }
+    }
+
+    if (NULL != fv->instance_of) {
+        FV *definition = FindFV (fv->instance_of);
+        if (definition == NULL) {
+            ERROR
+            ("** Error: Defining function \"%s\" for \"%s\" not found.\n",
+             fv->instance_of, fv->name);
+            add_error();
+        }
+        if (false == definition->is_component_type) {
+            ERROR
+            ("** Error: Is_Component_Type is False for \"%s\". It should be True,\n",
+             definition->name);
+             ERROR
+            ("   because function \"%s\" claims that it is an instance of \"%s\".\n",
+             fv->name, definition->name);
+            add_error();
+        }
+        int fv_intf_cnt = 0;
+        int definition_intf_cnt = 0;
+        FOREACH(i, Interface, fv->interfaces, {
+            Interface *def_i = FindInterface (definition, i->name);
+                if (def_i == NULL) {
+                    ERROR
+                    ("** Error: Interface \"%s\" of instance \"%s\" not found from definition \"%s\".\n",
+                    i->name, fv->name, definition->name);
+                    add_error();
+                } else {
+                    if (!MultiInstance_SDL_Interface_Check (i, def_i)) {
+                        ERROR
+                        ("** Error: Interface \"%s\" of instance \"%s\" not matching with definition \"%s\".\n",
+                        i->name, fv->name, definition->name);
+                        add_error();
+                    }
+                }
+
+            fv_intf_cnt++;
+        });
+        FOREACH(i, Interface, definition->interfaces, {
+            UNUSED (i);
+            definition_intf_cnt++;
+        });
+        if (fv_intf_cnt != definition_intf_cnt) {
+            ERROR
+            ("** Error: Interface count mismatch between definition \"%s\" and instance \"%s\".\n",
+             definition->name, fv->name);
+            add_error();
+        }
+
+    }
 }
 
 /* External interface */

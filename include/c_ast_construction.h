@@ -5,6 +5,8 @@
 #define __C_AST_CONSTRUCTION_H__
 
 
+Parameter *FindInParameter(Interface *i, char *param_name);
+Parameter *FindOutParameter(Interface *i, char *param_name);
 Interface *FindInterface(FV *fv,char *interface_name);
 Interface *FindCorrespondingRI(FV *remote, Interface *pi);
 void CompareIFname(Interface *i,Interface **result);
@@ -97,6 +99,8 @@ void Set_Native_Encoding();
 void Set_Zipfile (char *file, size_t len);
 void Set_Root_Node(char *name,size_t len);
 void Set_PolyorbHI_C();
+void Set_Instance_Of(char *component, size_t len);
+void Set_Is_Component_Type();
 System *get_system_ast();
 void Delete_System_AST();
 void C_Init();

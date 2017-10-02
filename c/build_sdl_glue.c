@@ -409,7 +409,7 @@ void GLUE_OG_Backend(FV * fv)
 {
     if (fv->system_ast->context->onlycv)
 	return;
-    if (sdl == fv->language) {
+    if ((sdl == fv->language) && (false == fv->is_component_type)) {
 	Create_OG_files(fv);
 	FOREACH(i, Interface, fv->interfaces, {
 	    GLUE_OG_Interface(i);

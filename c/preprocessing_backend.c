@@ -157,7 +157,6 @@ FV *Add_timer_manager(Process *node, FV_list *fv_with_timer)
         // platforms (e.g. RTEMS) and (2) unnecessary since the PI is protected
         fprintf (code, "    if (timers[%s].state == active && "
                        "0 == --timers[%s].value) {\n"
-                       //"1 == __sync_fetch_and_sub(&timers[%s].value, 1)) {\n"
                        "        %s_RI_%s();\n"
                        "        timers[%s].state = inactive;\n"
                        "    }\n\n",
@@ -205,7 +204,6 @@ void Add_timers_to_function (FV *fv, FV *timer_manager)
                        "    assert (*val %% %d == 0);\n"
                        "    timers[%s_%s].state = active;\n"
                        "    timers[%s_%s].value = *val / %d;\n"
-                       //"    __sync_lock_test_and_set(&timers[%s_%s].value, *val / %d);\n"
                        "}\n\n",
                        timer_manager->name,
                        fv->name,
@@ -836,6 +834,7 @@ void Add_api(Process *node, FV_list *all_fv)
 
     /* Add a PI for each of the node's functions */
     FOREACH (function, FV, all_fv, {
+        if (false == function->is_component_type) {
         Interface *pi = NULL;
         Interface *ri = NULL;
         Create_Interface(&pi);
@@ -874,6 +873,7 @@ void Add_api(Process *node, FV_list *all_fv)
         free(ri->distant_fv);
         ri->distant_fv = make_string("%s", fv->name);
         APPEND_TO_LIST(Interface, function->interfaces, ri);
+        }
     });
 
     /* Set flag indicating that this function was created during VT */
@@ -933,6 +933,7 @@ void Add_api(Process *node, FV_list *all_fv)
                      "}\n\n", fv->name);
 
     FOREACH(function, FV, all_fv, {
+        if (false == function->is_component_type) {
         char *decl = NULL;
         char *task_id = NULL;
         char *port = NULL;
@@ -972,6 +973,7 @@ void Add_api(Process *node, FV_list *all_fv)
 
         fprintf(code, "}\n\n");
         free(decl);
+        }
     });
 
     fprintf (header, "#ifdef __cplusplus\n"
@@ -1169,7 +1171,9 @@ void Preprocessing_Backend (System *s)
     });
 
     FOREACH (fv, FV, s->functions, {
-        Preprocess_FV(fv);
+        if (true != fv->is_component_type) {
+            Preprocess_FV(fv);
+        }
     });
 
     /* Propagate calling thread to distant PI (recursively)
@@ -1177,7 +1181,7 @@ void Preprocessing_Backend (System *s)
      * then go through all their RIs recursively until reaching another thread,
      * and set that the function is a calling thread of the reached one */
     FOREACH(fv, FV, s->functions, {
-        if (thread_runtime == fv->runtime_nature) {
+        if ((thread_runtime == fv->runtime_nature) && (true != fv->is_component_type)) {
             FOREACH(i, Interface, fv->interfaces, {
                 if (RI == i->direction) Propagate_Calling_Thread (i, &fv);
             })
@@ -1186,7 +1190,7 @@ void Preprocessing_Backend (System *s)
 
     /* Add each RI of passive functions as RI of their calling threads */
     FOREACH(fv, FV, s->functions, {
-        if(passive_runtime==fv->runtime_nature) {
+        if((passive_runtime==fv->runtime_nature) && (true != fv->is_component_type)) {
             FOREACH(i, Interface, fv->interfaces, {
                 if (RI==i->direction && i->distant_qgen->language == other) {
                     /* Add to calling threads only of PIs that actually call
@@ -1240,7 +1244,7 @@ void Preprocessing_Backend (System *s)
 
         /* Find the FV of the caller */
         FOREACH (fv, FV, get_system_ast()->functions, {
-            if (!strcmp (fv->name, cnt->dst_system)) caller = fv;
+            if (!strcmp (fv->name, cnt->dst_system) && (true != fv->is_component_type)) caller = fv;
          });
         assert (NULL != caller);
 
@@ -1252,7 +1256,7 @@ void Preprocessing_Backend (System *s)
 
         /* Find the FV of the callee */
         FOREACH (fv, FV, get_system_ast()->functions, {
-            if (!strcmp (fv->name, ri->distant_fv)) callee = fv;
+            if (!strcmp (fv->name, ri->distant_fv) && (true != fv->is_component_type)) callee = fv;
         });
 
         /* If the caller is passive we must create one connection
