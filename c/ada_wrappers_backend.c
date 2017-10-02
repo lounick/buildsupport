@@ -791,7 +791,6 @@ void Generate_Ada_CallingStack(FV * fv)
         (void) ct;
         count ++;
     })
-    printf("FV: %s has %d calling threads\n", fv->name, count);
 
     if (2 > count)
         return;
@@ -896,7 +895,7 @@ void GLUE_Ada_Wrappers_Backend(FV * fv)
     });
     FOREACH (pi, Interface, fv->interfaces, {
         if (synch == pi->synchronism) {
-    	count_sync_pi ++;
+        count_sync_pi ++;
         }
     });
     if (1 < count_ct && 0 < count_sync_pi) {

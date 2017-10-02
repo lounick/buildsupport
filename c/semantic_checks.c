@@ -107,10 +107,6 @@ bool MultiInstance_SDL_Interface_Check(Interface * i, Interface * j)
     int out_param_cnt_i = 0;
     int out_param_cnt_j = 0;
 
-    if (!Compare_Interface (i, j)) {
-        result=false;
-    }
-
     if (i->direction != j->direction) {
         result=false;
     }
@@ -358,13 +354,13 @@ void Function_Semantic_Check(FV * fv)
                 Interface *def_i = FindInterface (definition, i->name);
                     if (def_i == NULL) {
                         ERROR
-                        ("** Error: Interface \"%s\" of instance \"%s\" not found from definition \"%s\".\n",
+                        ("[ERROR] Interface \"%s\" of instance \"%s\" not found from definition \"%s\".\n",
                         i->name, fv->name, definition->name);
                         add_error();
                     } else {
                         if (!MultiInstance_SDL_Interface_Check (i, def_i)) {
                             ERROR
-                            ("** Error: Interface \"%s\" of instance \"%s\" not matching with definition \"%s\".\n",
+                            ("[ERROR] Interface \"%s\" of instance \"%s\" not matching with definition \"%s\".\n",
                             i->name, fv->name, definition->name);
                             add_error();
                         }
@@ -378,7 +374,7 @@ void Function_Semantic_Check(FV * fv)
             });
             if (fv_intf_cnt != definition_intf_cnt) {
                 ERROR
-                ("** Error: Interface count mismatch between definition \"%s\" and instance \"%s\".\n",
+                ("[ERROR] Interface count mismatch between definition \"%s\" and instance \"%s\".\n",
                  definition->name, fv->name);
                 add_error();
             }
