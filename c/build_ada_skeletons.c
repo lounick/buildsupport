@@ -73,6 +73,9 @@ int ada_gw_preamble(FV * fv)
                 fprintf(ads, "with %s;\nuse %s;\n\n", m, m);}
         );
     }
+    if (NULL != fv->instance_of) {
+        fprintf(ads, "with %s;\n\n", fv->instance_of);
+    }
 
     if(has_context_param(fv)) {
         fprintf(ads,
@@ -325,6 +328,8 @@ void add_RI_to_Ada_gw(Interface * i)
 /* Add timer declarations to the Ada code skeletons */
 void Ada_Add_timers (FV *fv)
 {
+    if (NULL == ads) return;
+
     if (NULL != fv->timer_list) {
         fprintf (ads, 
                 "   --  ------------------------------------------------  --\n"
@@ -370,20 +375,56 @@ void Ada_Add_timers (FV *fv)
     });
 }
 
+
+/* Handle instanciation of generic packages */
+void Ada_Add_Instanciation(FV *fv) {
+    if (NULL == ads) return;
+
+    char *decl = make_string("package %s_Instance is new %s",
+                             fv->name,
+                             fv->instance_of);
+
+    /* Instantiate the generic with the required interfaces and timers */
+    bool comma = false;
+    char *params = NULL;
+    FOREACH(i, Interface, fv->interfaces, {
+        if (RI == i->direction) {
+            params = make_string ("%s%sRIÜ%s => %s",
+                                  NULL != params ? params: "",
+                                  comma ? ", " : "(",
+                                  i->name,
+                                  i->name);
+            comma = true;
+        }
+    });
+
+    FOREACH(timer, String, fv->timer_list, {
+        params = make_string ("%s%sSet_%s => Set_%s, Reset_%s => Reset_%s",
+                              NULL != params ? params : "",
+                              comma? ", " : "(",
+                              timer,
+                              timer,
+                              timer,
+                              timer);
+        comma = true;
+    });
+    if (NULL != params) {
+        decl = make_string ("%s%s);", decl, params);
+    }
+    else {
+        decl = make_string ("%s;", decl);
+    }
+
+    fprintf(ads, "%s\n", decl);
+    free(decl);
+}
+
+
 /* External interface */
 void GW_Ada_Backend(FV * fv)
 {
     if (fv->system_ast->context->onlycv)
         return;
-
-    /* For instance of components (SDL only), disable the overwriting of the
-     * ads file, as it is handled by OpenGEODE, and the content is different
-     * than for normal functions - it instantiates the generic package, etc.
-     */
-    if (NULL != fv->instance_of) {
-        return;
-    }
-
 
     if (ada == fv->language || qgenada == fv->language) {
 
@@ -411,6 +452,11 @@ void GW_Ada_Backend(FV * fv)
 
         // If any timers, add declarations in code skeleton
         Ada_Add_timers(fv);
+
+        // If the function is an instance, instantiate the generic package
+        if (NULL != fv->instance_of) {
+            Ada_Add_Instanciation(fv);
+        }
 
         /* Write footers and close files */
         close_ada_gw_files(fv);
