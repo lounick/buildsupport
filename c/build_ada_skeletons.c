@@ -376,6 +376,15 @@ void GW_Ada_Backend(FV * fv)
     if (fv->system_ast->context->onlycv)
         return;
 
+    /* For instance of components (SDL only), disable the overwriting of the
+     * ads file, as it is handled by OpenGEODE, and the content is different
+     * than for normal functions - it instantiates the generic package, etc.
+     */
+    if (NULL != fv->instance_of) {
+        return;
+    }
+
+
     if (ada == fv->language || qgenada == fv->language) {
 
         /* Create the files and add headers */
