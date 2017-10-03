@@ -1212,25 +1212,26 @@ FV_list *Find_All_Calling_FV(Interface * i)
 
     FOREACH (function, FV, system_ast->functions, {
         match = false;
-        FOREACH(iface, Interface, function->interfaces, {
-            if (false == match) {
-                if (RI == iface->direction) {
-                    if (iface->distant_name == NULL ||
-                       iface->distant_fv == NULL) {
-                        printf("[ERROR] Required Interface %s in function %s is not "
-                               "connected. Glue code cannot be generated.\n",
-                               iface->name, function->name);
-                        add_error();
+        if (false == function->is_component_type) {
+            FOREACH(iface, Interface, function->interfaces, {
+                if (false == match) {
+                    if (RI == iface->direction) {
+                        if (iface->distant_name == NULL || iface->distant_fv == NULL) {
+                            printf("[ERROR] Required Interface %s in function %s is not "
+                                   "connected. Glue code cannot be generated.\n",
+                                   iface->name, function->name);
+                            add_error();
+                        }
                     }
+                    if (NULL != iface->distant_name && NULL != i->name &&
+                        NULL != iface->distant_fv && NULL != i->parent_fv &&
+                        RI == iface->direction &&
+                        !strcmp (iface->distant_name, i->name) &&
+                        !strcmp (iface->distant_fv, i->parent_fv->name))
+                            match = true;
                 }
-                if (NULL != iface->distant_name && NULL != i->name &&
-                    NULL != iface->distant_fv && NULL != i->parent_fv &&
-                    RI == iface->direction &&
-                    !strcmp (iface->distant_name, i->name) &&
-                    !strcmp (iface->distant_fv, i->parent_fv->name))
-                        match = true;
-            }
-        })
+            })
+        }
         if (true == match) {
             APPEND_TO_LIST (FV, result, function);
         }

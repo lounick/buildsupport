@@ -148,7 +148,8 @@ bool MultiInstance_SDL_Interface_Check(Interface * i, Interface * j)
 /* External interface (the one and unique) */
 void Function_Semantic_Check(FV * fv)
 {
-    if (fv->system_ast->context->glue && NULL == fv->process) {
+    if (fv->system_ast->context->glue && NULL == fv->process
+                                      && false == fv->is_component_type) {
         ERROR
             ("[ERROR] Function \"%s\" is not bound to any partition.\n",
              fv->name);

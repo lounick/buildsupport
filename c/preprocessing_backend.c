@@ -453,7 +453,6 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
 
         callers = (FV_list *)Find_All_Calling_FV(i);
 
-
         /* For each caller of the interface, find its corresponding RI
          * and update its "distant_fv" field to point to the newly created FV
          */
@@ -764,8 +763,8 @@ void Preprocess_FV (FV *fv)
                              fv->runtime_nature = thread_runtime;
                         }
                         else {
-                            printf("unconnected interface %s %s\n", i->name, i->distant_name);
-                            }
+                            printf("Unconnected interface %s %s\n", i->name, i->distant_name);
+                        }
                         break;
                     default: break;
                  }
@@ -934,45 +933,45 @@ void Add_api(Process *node, FV_list *all_fv)
 
     FOREACH(function, FV, all_fv, {
         if (false == function->is_component_type) {
-        char *decl = NULL;
-        char *task_id = NULL;
-        char *port = NULL;
-        decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
-        fprintf(header, "%s;\n\n", decl);
-        fprintf(code, "%s {\n"
-                      "    /* Check all incoming queues (if any) for a pending message */\n", decl);
-        /* Naming of ports/task id is different if there is more than 1 active PI */
-        int active = CountActivePI(function->interfaces);
-        FOREACH(pi, Interface, function->interfaces, {
-            if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
-                if (1 == active) {
-                    task_id = make_string("%s_%s_k", node->name, function->name);
-                    port = make_string("%s_local_inport_%s", function->name, pi->name);
+            char *decl = NULL;
+            char *task_id = NULL;
+            char *port = NULL;
+            decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
+            fprintf(header, "%s;\n\n", decl);
+            fprintf(code, "%s {\n"
+                          "    /* Check all incoming queues (if any) for a pending message */\n", decl);
+            /* Naming of ports/task id is different if there is more than 1 active PI */
+            int active = CountActivePI(function->interfaces);
+            FOREACH(pi, Interface, function->interfaces, {
+                if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
+                    if (1 == active) {
+                        task_id = make_string("%s_%s_k", node->name, function->name);
+                        port = make_string("%s_local_inport_%s", function->name, pi->name);
+                    }
+                    else { /* More than one active PI */
+                        task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
+                        port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
+                    }
+                    fprintf(code, "    *res = 0;\n"
+                                  "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
+                                  "        *res = 1;\n"
+                                  "        #ifdef __unix__\n"
+                                  "            if (debugCheckQ) {\n"
+                                  "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
+                                  "            }\n"
+                                  "        #endif\n"
+                                  "    }\n",
+                                  string_to_lower(task_id),
+                                  string_to_lower(port),
+                                  pi->name,
+                                  function->name);
+                    free(task_id);
+                    free(port);
                 }
-                else { /* More than one active PI */
-                    task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
-                    port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
-                }
-                fprintf(code, "    *res = 0;\n"
-                              "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
-                              "        *res = 1;\n"
-                              "        #ifdef __unix__\n"
-                              "            if (debugCheckQ) {\n"
-                              "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
-                              "            }\n"
-                              "        #endif\n"
-                              "    }\n",
-                              string_to_lower(task_id),
-                              string_to_lower(port),
-                              pi->name,
-                              function->name);
-                free(task_id);
-                free(port);
-            }
-        });
+            });
 
-        fprintf(code, "}\n\n");
-        free(decl);
+            fprintf(code, "}\n\n");
+            free(decl);
         }
     });
 
@@ -1139,11 +1138,9 @@ void Set_Ignore_Params(FV *fv)
             FOREACH (remote, FV, Find_All_Calling_FV(i), {
                 if (strcmp(remote->process->name, fv->process->name)) {
                     i->ignore_params = false;
-                    //printf("set PI %s->ignore_params to FALSE", i->name);
                     distant_RI = FindCorrespondingRI(remote, i);
                     if (NULL != distant_RI) {
                         distant_RI->ignore_params = false;
-                    //printf("set RI %s->ignore_params to FALSE", i->name);
                     }
                 }
             });
@@ -1171,7 +1168,7 @@ void Preprocessing_Backend (System *s)
     });
 
     FOREACH (fv, FV, s->functions, {
-        if (true != fv->is_component_type) {
+        if (false == fv->is_component_type) {
             Preprocess_FV(fv);
         }
     });
@@ -1300,9 +1297,11 @@ void Preprocessing_Backend (System *s)
     connections_to_remove = NULL;
 
     /* Once all AST transformations are done, set the ignore_params flags
-     * in all interfaces, if needed 
+     * in all interfaces, if needed
      */
     FOREACH (fv, FV, s->functions, {
-        Set_Ignore_Params(fv);
+        if (false == fv->is_component_type){
+            Set_Ignore_Params(fv);
+        }
     });
 }

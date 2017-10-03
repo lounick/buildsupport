@@ -66,39 +66,41 @@ void AADL_CV_Unparser ()
         /* Declare all system-level connections */
         fprintf (aadl, "    connections\n");
         FOREACH (fv, FV, ast->functions, {
-            char *fv_name = NULL;
+            if (false == fv->is_component_type) {
+                char *fv_name = NULL;
 
-            fv_name = make_string ("%s%s",
-                    thread_runtime == fv->runtime_nature ? "THREAD_" : "PASSIVE_",
-                    fv->name);
+                fv_name = make_string ("%s%s",
+                        thread_runtime == fv->runtime_nature ? "THREAD_" : "PASSIVE_",
+                        fv->name);
 
-            FOREACH (interface, Interface, fv->interfaces, {
-                if (RI == interface->direction) {
-                    FV *distant_fv = NULL;
-                    char *distant_fv_name = NULL;
+                FOREACH (interface, Interface, fv->interfaces, {
+                    if (RI == interface->direction) {
+                        FV *distant_fv = NULL;
+                        char *distant_fv_name = NULL;
 
-                    FOREACH (function, FV, ast->functions, {
-                        if (!strcmp (function->name, interface->distant_fv))
-                                distant_fv = function;
-                    });
+                        FOREACH (function, FV, ast->functions, {
+                            if (!strcmp (function->name, interface->distant_fv))
+                                    distant_fv = function;
+                        });
 
-                    if (NULL != distant_fv) {
-                        distant_fv_name = make_string ("%s%s",
-                                thread_runtime == distant_fv->runtime_nature ? "THREAD_" : "PASSIVE_",
-                                distant_fv->name);
+                        if (NULL != distant_fv) {
+                            distant_fv_name = make_string ("%s%s",
+                                    thread_runtime == distant_fv->runtime_nature ? "THREAD_" : "PASSIVE_",
+                                    distant_fv->name);
 
-                        fprintf (aadl, "\t%s_%s : subprogram access %s.%s -> %s.%s;\n",
-                                RCM_KIND(interface),
-                                interface->distant_name,
-                                distant_fv_name,
-                                interface->distant_name,
-                                fv_name,
-                                interface->name);
-                        free (distant_fv_name);
+                            fprintf (aadl, "\t%s_%s : subprogram access %s.%s -> %s.%s;\n",
+                                    RCM_KIND(interface),
+                                    interface->distant_name,
+                                    distant_fv_name,
+                                    interface->distant_name,
+                                    fv_name,
+                                    interface->name);
+                            free (distant_fv_name);
+                        }
                     }
-                }
-            });
-            free (fv_name);
+                });
+                free (fv_name);
+            }
         })
 
         fprintf (aadl, "  end exportedComponent.others;\n\n");
