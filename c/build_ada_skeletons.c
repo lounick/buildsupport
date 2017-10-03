@@ -380,7 +380,7 @@ void Ada_Add_timers (FV *fv)
 void Ada_Add_Instanciation(FV *fv) {
     if (NULL == ads) return;
 
-    char *decl = make_string("package %s_Instance is new %s",
+    char *decl = make_string("   package %s_Instance is new %s",
                              fv->name,
                              fv->instance_of);
 
