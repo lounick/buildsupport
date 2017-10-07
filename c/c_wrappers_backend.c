@@ -349,6 +349,7 @@ void add_async_PI_to_c_wrappers(Interface * i)
     }
 
     fprintf(cfile, ")\n{\n");
+    fprintf(cfile, "    (void)e;\n");
 
     /* Then 2 options:
        1) either we are in a thread created by the VT, in which case the PI
