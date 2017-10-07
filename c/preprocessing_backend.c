@@ -939,7 +939,7 @@ void Add_api(Process *node, FV_list *all_fv)
             decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
             fprintf(header, "%s;\n\n", decl);
             fprintf(code, "%s {\n"
-                          "    /* Check all incoming queues (if any) for a pending message */\n", decl);
+                          "    /* Check all incoming queues (if any) for a pending message */\n    (void)res;\n", decl);
             /* Naming of ports/task id is different if there is more than 1 active PI */
             int active = CountActivePI(function->interfaces);
             FOREACH(pi, Interface, function->interfaces, {
