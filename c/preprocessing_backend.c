@@ -915,7 +915,7 @@ void Add_api(Process *node, FV_list *all_fv)
     fprintf (header, "#ifdef __unix__\n"
                      "    #include <stdbool.h>\n"
                      "    #include <stdlib.h>\n"
-                     "    static bool debugCheckQ = false;\n"
+//                    "    static bool debugCheckQ = false;\n"
                      "#endif\n\n");
 
     fprintf (code,   "#ifdef __unix__\n"
@@ -925,10 +925,10 @@ void Add_api(Process *node, FV_list *all_fv)
     fprintf (header, "void %s_startup();\n\n", fv->name);
     fprintf (code,   "void %s_startup()\n"
                      "{\n"
-                     "    /* TASTE API start up */\n"
-                     "    #ifdef __unix__\n"
-                     "        debugCheckQ = getenv(\"CHECKQ_DEBUG\");\n"
-                     "    #endif\n"
+                     "    /* TASTE API start up (nothing to do) */\n"
+//                    "    #ifdef __unix__\n"
+//                    "        debugCheckQ = getenv(\"CHECKQ_DEBUG\");\n"
+//                    "    #endif\n"
                      "}\n\n", fv->name);
 
     FOREACH(function, FV, all_fv, {
@@ -955,16 +955,16 @@ void Add_api(Process *node, FV_list *all_fv)
                     fprintf(code, "    *res = 0;\n"
                                   "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
                                   "        *res = 1;\n"
-                                  "        #ifdef __unix__\n"
-                                  "            if (debugCheckQ) {\n"
-                                  "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
-                                  "            }\n"
-                                  "        #endif\n"
+//                                 "        #ifdef __unix__\n"
+//                                 "            if (debugCheckQ) {\n"
+//                                 "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
+//                                 "            }\n"
+//                                 "        #endif\n"
                                   "    }\n",
                                   string_to_lower(task_id),
-                                  string_to_lower(port),
-                                  pi->name,
-                                  function->name);
+                                  string_to_lower(port));
+//                                 pi->name,
+//                                 function->name);
                     free(task_id);
                     free(port);
                 }
