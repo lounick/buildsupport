@@ -543,7 +543,7 @@ void add_RI_to_c_invoke_ri(Interface * i)
         }
         FOREACH(p, Parameter, i->in, {
             fprintf(invoke_ri,
-                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    int size_IN_buf_%s=0;\n",
+                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    size_t size_IN_buf_%s=0;\n",
                     p->name,
                     (native == p->encoding) ? "sizeof(" : "",
                     p->type,
@@ -559,7 +559,7 @@ void add_RI_to_c_invoke_ri(Interface * i)
         }
         FOREACH(p, Parameter, i->out, {
             fprintf(invoke_ri,
-                    "    static char OUT_buf_%s[%sasn1Scc%s%s];\n    int size_OUT_buf_%s=0;\n",
+                    "    static char OUT_buf_%s[%sasn1Scc%s%s];\n    size_t size_OUT_buf_%s=0;\n",
                     p->name,
                     (native == p->encoding) ? "sizeof(" : "",
                     p->type,
