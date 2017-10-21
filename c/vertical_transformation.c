@@ -215,7 +215,7 @@ void write_thread_implementation(FV *fv)
 
    /* Default source stack size per thread */
    // XXX the -s from the command line is ignored?
-   fprintf(thread,"\tSource_Stack_Size => 50 KByte;\n");
+   fprintf(thread,"\tStack_Size => 50 KByte;\n");
 
    /* Calculate the priority : temporary solution using the period */
    FOREACH(i, Interface, fv->interfaces, {
