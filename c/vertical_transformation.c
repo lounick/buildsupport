@@ -213,9 +213,12 @@ void write_thread_implementation(FV *fv)
         (unsigned long long) wcet_high);
    }
 
+   bool pohic = (get_context()->polyorb_hi_c);
    /* Default source stack size per thread */
    // XXX the -s from the command line is ignored?
-   fprintf(thread,"\tStack_Size => 50 KByte;\n");
+   /* POHI-Ada targets low-resource platforms (eg. STM32) - limit stack */
+   /* This is temporary - this should be an AADL property of the platform */
+   fprintf(thread,"\tStack_Size => %d KByte;\n", pohic ? 50 : 5);
 
    /* Calculate the priority : temporary solution using the period */
    FOREACH(i, Interface, fv->interfaces, {
@@ -225,14 +228,15 @@ void write_thread_implementation(FV *fv)
    /*
     * Higher period => higher priority.
     * Priority low > priority high (POHIC/Linux)
+    * With Ada, a big number indicates a higher priority
     */
-   if (highest_period < 100) priority = 1;
-   else if (highest_period >= 100 && highest_period < 250) priority = 5;
-   else if (highest_period >= 250 && highest_period < 500) priority = 6;
-   else if (highest_period >= 500 && highest_period < 750) priority = 7;
-   else if (highest_period >= 750 && highest_period < 1000) priority = 8;
-   else if (highest_period == 1000) priority = 9;
-   else if (highest_period > 1000) priority = 10;
+   if (highest_period < 100) priority = pohic ? 1 : 10;
+   else if (highest_period >= 100 && highest_period < 250) priority = pohic ? 5 : 6;
+   else if (highest_period >= 250 && highest_period < 500) priority = pohic ? 6 : 5;
+   else if (highest_period >= 500 && highest_period < 750) priority = pohic ? 7 : 4;
+   else if (highest_period >= 750 && highest_period < 1000) priority = pohic ? 8 : 3;
+   else if (highest_period == 1000) priority = pohic ? 9 : 2;
+   else if (highest_period > 1000) priority = pohic ? 10 : 1;
 
    fprintf(thread,"\tPriority => %lld;\n", priority);
    /* 
