@@ -67,6 +67,8 @@ void Create_script()
                      "fi\n\n"
                      "# Use PolyORB-HI-C runtime\n"
                      "USE_POHIC=1\n\n"
+                     "# Set Debug mode by default\n"
+                     "DEBUG_MODE=--debug\n\n"
                      "# Detect models from Ellidiss tools v2, and convert them to 1.3\n"
                      "INTERFACEVIEW=%s\n"
                      "grep \"version => \\\"2\" %s >/dev/null && {\n"
@@ -212,6 +214,10 @@ void Create_script()
                      "    echo -e \"${INFO} Executing user-defined post-init script\"\n"
                      "    source user_init_post.sh\n"
                      "fi\n\n"
+                     "if [ -f additionalCommands.sh ]\n"
+                     "then\n"
+                     "    source additionalCommands.sh\n"
+                     "fi\n\n"
                      "if [ ! -z \"$USE_POHIC\" ]\n"
                      "then\n"
                      "    OUTPUTDIR=binary.c\n"
@@ -224,7 +230,7 @@ void Create_script()
                      "fi\n\n"
                      "cd \"$CWD\" && assert-builder-ocarina.py \\\n"
                      "\t--fast \\\n"
-                     "\t--debug \\\n");
+                     "\t$DEBUG_MODE \\\n");
 
     if (get_context()->polyorb_hi_c)
         fprintf (script,"\t--with-polyorb-hi-c \\\n");
