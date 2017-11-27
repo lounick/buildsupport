@@ -15,7 +15,7 @@ project BuildSupport is
    end Builder;
 
    package binder is
-     for default_switches ("Ada") use ("-E", "-t", "-static");
+     for default_switches ("Ada") use ("-E", "-t");
    end binder;
 
    package Compiler is
