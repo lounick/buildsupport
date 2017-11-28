@@ -28,7 +28,8 @@ ifeq ($(UNAME), Linux)
 		fi ;                                    \
 	fi
 endif
-	@[ "$(DEBIAN)" != "" ] && [ $(ARCH) == 64 ] && EXTRAFLAG="--target=x86_64-linux" ; \
+	@#[ "$(DEBIAN)" != "" ] && [ $(ARCH) == 64 ] && EXTRAFLAG="--target=x86_64-linux" ; \
+
 	OCARINA_PATH=`ocarina-config --prefix` \
             $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG -j4
 
