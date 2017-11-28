@@ -29,8 +29,8 @@ ifeq ($(UNAME), Linux)
 	fi
 endif
 	@[ "$(DEBIAN)" != "" ] && [ $(ARCH) == 64 ] && EXTRAFLAG="--target=x86_64-linux" ; \
-	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH \
-            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG
+	OCARINA_PATH=`ocarina-config --prefix` \
+            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG -j4
 
 install:
 	$(MAKE)
