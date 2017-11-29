@@ -338,7 +338,7 @@ DECLARE_LIST(Package)
 */
 typedef struct t_system
 {
-    char              *name;
+    char              *name; // always "deploymentview"
     Context           *context;
     FV_list           *functions;
     Process_list      *processes;
