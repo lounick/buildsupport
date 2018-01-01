@@ -86,43 +86,41 @@ void Create_script()
     FOREACH (fv, FV, get_system_ast()->functions, {
 
         if (qgenada == fv->language) {
-
-        FOREACH(i, Interface, fv->interfaces, {
-            switch (i->direction) {
-                case PI: {
-                    fprintf (script, "\n");
-                    fprintf (script, "# Call QGen to generate Ada code\n");
-                    fprintf (script, "printf \"Calling QGen to generate Ada code from %s.mdl with the following command line:\\n\"\n", i->name);
-                    fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
-                    fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
-                    fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\n", i->name, i->name, fv->name);
-                    fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
-                    } break;
-                case RI: break;
-                default: break;
-            }
-        });
+            FOREACH(i, Interface, fv->interfaces, {
+                switch (i->direction) {
+                    case PI: {
+                        fprintf (script, "\n");
+                        fprintf (script, "# Call QGen to generate Ada code\n");
+                        fprintf (script, "printf \"Calling QGen to generate Ada code from %s.mdl with the following command line:\\n\"\n", i->name);
+                        fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
+                        fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
+                        fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\n", i->name, i->name, fv->name);
+                        fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
+                        } break;
+                    case RI: break;
+                    default: break;
+                }
+            });
         }
 
         else if (qgenc == fv->language) {
-
-        FOREACH(i, Interface, fv->interfaces, {
-            switch (i->direction) {
-                case PI: {
-                    fprintf (script, "\n");
-                    fprintf (script, "# Call QGen to generate C code\n");
-                    fprintf (script, "printf \"Calling QGen to generate C code from %s.mdl with the following command line:\\n\"\n", i->name);
-                    fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
-                    fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
-                    fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\n\n", i->name, i->name, fv->name);
-                    fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
-                    fprintf (script, "# Add QGen generated C code to C_INCLUDE_PATH\n");
-                    fprintf (script, "export C_INCLUDE_PATH=../../%s/%s/:$C_INCLUDE_PATH\n", fv->name, fv->name);
-                    } break;
-                case RI: break;
-                default: break;
-            }
-        });
+            FOREACH(i, Interface, fv->interfaces, {
+                switch (i->direction) {
+                    case PI: {
+                        fprintf (script, "\n");
+                        fprintf (script, "# Call QGen to generate C code\n");
+                        fprintf (script, "printf \"Calling QGen to generate C code from %s.mdl with the following command line:\\n\"\n", i->name);
+                        fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
+                        fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
+                        fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\n\n", i->name, i->name, fv->name);
+                        fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
+                        fprintf (script, "# Add QGen generated C code to C_INCLUDE_PATH\n");
+                        fprintf (script, "export C_INCLUDE_PATH=../../%s/%s/:$C_INCLUDE_PATH\n", fv->name, fv->name);
+                        } break;
+                    case RI: break;
+                    default: break;
+                }
+            });
         }
     });
 
