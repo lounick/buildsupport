@@ -39,7 +39,7 @@ void Create_New_SDL_Structure(FV * fv)
             dataview_uniq = make_string ("dataview-uniq.asn");
     }
 
-    char *command = make_string("mono $(which asn1.exe) -customStg $(taste-config --prefix)/share/asn1scc/python.stg:%s/DataView.py -customStgAstVerion 4 %s/%s", path, dataview_path, dataview_uniq);
+    char *command = make_string("mono $(which asn1.exe) -customStg $(taste-config --prefix)/share/asn1scc/python.stg:%s/DataView.py -customStgAstVersion 4 %s/%s", path, dataview_path, dataview_uniq);
     if (system(command)) {
         ERROR ("[ERROR] Command \"%s\" failed in generation of SDL skeleton\n", command);
     }
