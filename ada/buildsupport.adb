@@ -13,7 +13,6 @@ with Ada.Strings.Unbounded,
      Locations,
      Ocarina.Namet,
      Ocarina.Types,
-     System.Assertions,
      Ocarina.Analyzer,
      Ocarina.Backends.Properties,
      Ocarina.Configuration,
@@ -1224,7 +1223,7 @@ procedure BuildSupport is
                                        (ATN.Component_Type_Identifier
                                      (Corresponding_Declaration (Tmp_CI2)))));
                               exception
-                                 when System.Assertions.Assert_Failure =>
+                                 when others =>
                                     Put_Line
                                        ("Detected DV from TASTE version 1.2");
                                     Bound_APLC_Name := US
