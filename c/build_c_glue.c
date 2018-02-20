@@ -715,10 +715,16 @@ void GLUE_C_Backend(FV * fv)
     }
 
     if (false == fv->is_component_type) {
-        if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
-            || qgenada == fv->language || qgenc == fv->language
-            || rtds == fv->language || cpp == fv->language || opengeode == fv->language
-            || micropython == fv->language) {
+        if (c           == fv->language
+         || gui         == fv->language
+         || ada         == fv->language
+         || vdm         == fv->language
+         || qgenada     == fv->language
+         || qgenc       == fv->language
+         || rtds        == fv->language
+         || cpp         == fv->language
+         || opengeode   == fv->language
+         || micropython == fv->language) {
             Init_C_Glue_Backend(fv);
             FOREACH(i, Interface, fv->interfaces, {
                     GLUE_C_ProvidedInterface(i);
