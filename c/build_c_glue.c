@@ -727,13 +727,12 @@ void GLUE_C_Backend(FV * fv)
          || micropython == fv->language) {
             Init_C_Glue_Backend(fv);
             FOREACH(i, Interface, fv->interfaces, {
-                    GLUE_C_ProvidedInterface(i);
-                    }
-            );
+                GLUE_C_ProvidedInterface(i);
+            });
         }
     }
 
-    /* for all languages except ObjectGeode (sdl) and Blackbox devices, generate invoke_ri.c */
+   /* for all languages except ObjectGeode (sdl) and Blackbox devices, generate invoke_ri.c */
     if (sdl != fv->language && blackbox_device != fv->language && true != fv->is_component_type) {
         FOREACH(i, Interface, fv->interfaces, {
                 GLUE_C_InvokeRI(i);
