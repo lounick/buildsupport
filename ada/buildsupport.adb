@@ -410,6 +410,15 @@ procedure BuildSupport is
                         elsif Is_Subprogram_Access (If_I) and
                               not (Is_Provided (If_I))
                         then
+                           --  Get operation kind (sporadic, cyclc, etc) of
+                           --  the RI. If the RI is connected, it will be
+                           --  overwritten by the one of the remote PI. We
+                           --  dont check that they match - but we should.
+                           Operation_Kind := Get_RCM_Operation_Kind (If_I);
+                           --  If set to Any, default to Unprotected.
+                           if Operation_Kind = Any_Operation then
+                              Operation_Kind := Unprotected_Operation;
+                           end if;
 
                            --  the name of the feature (RI identifier) is:
                            --  Get_Name_String (Name (Identifier (If_I)));
