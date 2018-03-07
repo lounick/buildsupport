@@ -67,9 +67,11 @@ void Create_New_SDL_Structure(FV * fv)
     }
 
     char *filename = make_string("%s.pr", fv->name);
-    /* If not already existing, also create an empty system_implementation.pr
+    /* If not already existing, also create an empty <function>.pr
      * file - includes timer declarations, if any. 
-     * Do not create in case the function is an instance of a generic function*/
+     * Do not create in case the function is an instance of a generic function
+     * In that case (instance of), timers will be added to the list of signals
+     * to make them visible at code generation time */
     if (!file_exists (path, filename) && (NULL == fv->instance_of)) {
         create_file (path, filename, &process);
         if (fv->is_component_type == false) {
@@ -108,7 +110,7 @@ void Create_New_SDL_Structure(FV * fv)
     free(filename);
 }
 
-void Add_SDL_Signal(Interface * i) 
+void Add_SDL_Signal(Interface * i)
 {
     Parameter_list * p = NULL;
     if (NULL == f) {
@@ -137,6 +139,7 @@ void Add_SDL_Signal(Interface * i)
         }
         fprintf(f, ");\n\n");
     }
+
 }
 
 
@@ -144,7 +147,7 @@ void Add_SDL_Signal(Interface * i)
  * Create a string with the list of PI for the current functional view
  * This is later used to build the SDL connections (CHANNELs and ROUTEs)
 */
-void add_PI_to_string(char *if_name) 
+void add_PI_to_string(char *if_name)
 {
     pi_string = build_comma_string(&pi_string, if_name, strlen(if_name));
 } 
@@ -196,18 +199,25 @@ void Build_SDL_Connections(FV * fv)
     if (NULL == f)
     return;
     fprintf(f, "\tCHANNEL c\n");
-    if (NULL != pi_string)
-    fprintf(f, "\t\tFROM ENV TO %s WITH %s;\n", fv->name, pi_string);
-    if (NULL != ri_string)
-    fprintf(f, "\t\tFROM %s TO ENV WITH %s;\n", fv->name, ri_string);
+
+    if (NULL != pi_string) {
+        fprintf(f, "\t\tFROM ENV TO %s WITH %s;\n", fv->name, pi_string);
+    }
+    if (NULL != ri_string) {
+        fprintf(f, "\t\tFROM %s TO ENV WITH %s;\n", fv->name, ri_string);
+    }
+
     fprintf(f, "\tENDCHANNEL;\n\n");
     fprintf(f, "\tBLOCK %s;\n\n\t\tSIGNALROUTE r\n", fv->name);
-    if (NULL != pi_string)
-    fprintf(f, "\t\t\tFROM ENV TO %s WITH %s;\n", fv->name,
-         pi_string);
-    if (NULL != ri_string)
-    fprintf(f, "\t\t\tFROM %s TO ENV WITH %s;\n", fv->name,
-         ri_string);
+
+    if (NULL != pi_string) {
+        fprintf(f, "\t\t\tFROM ENV TO %s WITH %s;\n", fv->name, pi_string);
+    }
+
+    if (NULL != ri_string) {
+        fprintf(f, "\t\t\tFROM %s TO ENV WITH %s;\n", fv->name, ri_string);
+    }
+
     fprintf(f, "\n\t\tCONNECT c and r;\n\n");
 
     if (fv->is_component_type == false) {
@@ -229,7 +239,7 @@ void Close_SDL_Structure()
 } 
 
 /* Function to process one interface of the FV */ 
-void GW_SDL_Interface(Interface * i) 
+void GW_SDL_Interface(Interface * i)
 {
     switch (i->synchronism) {
         case asynch:
@@ -255,7 +265,7 @@ void GW_SDL_Interface(Interface * i)
 
 
 /* External interface */
-void GW_SDL_Backend(FV * fv) 
+void GW_SDL_Backend(FV * fv)
 {
     if (fv->system_ast->context->onlycv) return;
 
@@ -263,7 +273,20 @@ void GW_SDL_Backend(FV * fv)
         Create_New_SDL_Structure(fv);
         FOREACH(i, Interface, fv->interfaces, {
             GW_SDL_Interface(i);
-        })
+        });
+
+        if (NULL != fv->instance_of) {
+            /* component is an instance: declare the timers as signals so that
+             * opengeode generates code for them, otherwise it would have no
+             * visibility on them, since they are declared in the code of the
+             * function type only
+             */
+            FOREACH(timer, String, fv->timer_list, {
+                fprintf(f, "\tSIGNAL %s;\n", timer);
+                add_PI_to_string(timer);
+            });
+        }
+
         Build_SDL_Connections(fv);
         Close_SDL_Structure();
     }
