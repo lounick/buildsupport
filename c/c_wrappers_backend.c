@@ -107,7 +107,8 @@ void c_wrappers_preamble(FV * fv)
                     result = true;
                 }
             });
-            if (result) {
+            if (result && fv->process == ct->process) {
+                // include only if the functions are in the same node
                 fprintf(h,
                         "#include \"../../%s/%s_polyorb_interface.h\"\n",
                         ct->name, ct->name);

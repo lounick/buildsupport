@@ -139,7 +139,13 @@ void ada_wrappers_preamble(FV * fv)
      }
     if (passive_runtime == fv->runtime_nature || mix) {
         FOREACH(ct, FV, fv->calling_threads, {
+            // Only include calling threads that are on the same node
+            // (in principle it should even be more restrictive, it should
+            // be calling threads that can actually make the calls to the
+            // unprotected PIs)
+            if (fv->process == ct->process) {
                 Add_With_AsyncRI(ct, &ads);
+            }
         });
     }
 
