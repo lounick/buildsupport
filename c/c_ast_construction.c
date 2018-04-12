@@ -296,7 +296,7 @@ void Set_Sporadic_IF()
 void Set_Variator_IF()
 {
     if (NULL != interface)
-        interface->rcm = variator;
+        interface->rcm = sporadic;
 }
 
 void Set_Protected_IF()
@@ -1046,18 +1046,6 @@ void End_IF()
 
     interface->parent_fv = fv;
 
-    /* Check if this is the first interface of this FV
-     * If not, and if op_kind=sporadic, then change it to variator
-     * MP 20/04/10: variators are deprecated with the new VT rules
-     * that create a thread per PI as soon as there is more than
-     * one "active" (spo, var, cyc) PI in a function.
-     */
-    if (NULL != fv->interfaces) {
-        if (sporadic == interface->rcm && PI == interface->direction) {
-            interface->rcm = variator;
-        }
-    }
-
     /* Add new interface to the list contained in the Function definition */
     APPEND_TO_LIST (Interface, fv->interfaces, interface);
 }
@@ -1073,14 +1061,24 @@ void End_FV()
     fv->system_ast = system_ast;
 
     /* Determine if the function is a thread or a passive function
-     * (thread if at least 1 active PI) */
-    fv->runtime_nature = passive_runtime;
+     * (thread if only one single PI, and this PI is cyclic or sporadic) */
+    int count_pis = 0;
+    int count_async_pis = 0;
+
     FOREACH(i, Interface, fv->interfaces, {
-            if (PI == i->direction
-                && (sporadic == i->rcm || cyclic == i->rcm
-                    || variator == i->rcm)) fv->runtime_nature =
-            thread_runtime;}
-    )
+        if (PI == i->direction) {
+            count_pis ++;
+        }
+        if (sporadic == i->rcm || cyclic == i->rcm) {
+            count_async_pis ++;
+        }
+    });
+    if (1 == count_pis && 1 == count_async_pis) {
+        fv->runtime_nature = thread_runtime;
+    }
+    else {
+        fv->runtime_nature = passive_runtime;
+    }
 
     APPEND_TO_LIST(FV, system_ast->functions, fv);
 
