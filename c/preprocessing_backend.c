@@ -954,8 +954,8 @@ void Add_api(Process *node, FV_list *all_fv)
     }
     else { // Ada
         fprintf (header, "--  TASTE API (do not edit this code manually)\n"
-                         "with TASTE_BasicTypes;\n"
-                         "use  TASTE_BasicTypes;\n\n"
+                         "--  with TASTE_BasicTypes;\n"
+                         "--  use  TASTE_BasicTypes;\n\n"
                          "package %s is\n",
                          fv->name);
 
@@ -983,7 +983,7 @@ void Add_api(Process *node, FV_list *all_fv)
             }
             else { // Ada
                 decl = make_string ("procedure %s_Has_Pending_Msg"
-                                    " (OUT_Res : access Asn1SCCT_Boolean)",
+                                    " (OUT_Res : access Boolean)",
                                     function->name);
                 fprintf(header, "   %s\n"
                                 "      with Export, Convention => C, "
@@ -1012,6 +1012,7 @@ void Add_api(Process *node, FV_list *all_fv)
                 }
             });
             bool active = (count_thread + count_unpro + count_pro <= 1);
+            bool at_least_one = false;
 
             FOREACH(pi, Interface, function->interfaces, {
                 if(PI == pi->direction && asynch == pi->synchronism
@@ -1033,6 +1034,7 @@ void Add_api(Process *node, FV_list *all_fv)
                                       string_to_lower(port));
                     }
                     else { // Ada
+                        at_least_one = true;
                         fprintf(code, "      OUT_Res.all := False;\n");
                     }
                     free(task_id);
@@ -1044,6 +1046,9 @@ void Add_api(Process *node, FV_list *all_fv)
                 fprintf(code, "}\n\n");
             }
             else { // Ada
+                if (!at_least_one) {
+                    fprintf(code, "      null;\n");
+                }
                 fprintf(code, "   end %s_Has_Pending_Msg;\n\n", function->name);
             }
             free(decl);
