@@ -842,7 +842,12 @@ void Add_api(Process *node, FV_list *all_fv)
     fv = New_FV(name, strlen(name), name);
     assert (NULL != fv);
 
-    Set_Language_To_C();
+    if(get_context()->polyorb_hi_c) {
+        Set_Language_To_C();
+    }
+    else {
+        Set_Language_To_Ada();
+    }
 
     /* Add a PI for each of the node's functions */
     FOREACH (function, FV, all_fv, {
@@ -903,58 +908,93 @@ void Add_api(Process *node, FV_list *all_fv)
     close_file(&hook);
 
    /* Create files containing the implementation of the function */
-    create_file (path, make_string ("%s.h", fv->name), &header);
-    create_file (path, make_string ("%s.c", fv->name), &code);
+    if(get_context()->polyorb_hi_c) {
+        create_file (path, make_string ("%s.h", fv->name), &header);
+        create_file (path, make_string ("%s.c", fv->name), &code);
+    }
+    else {
+        create_file (path, make_string ("%s.ads", fv->name), &header);
+        create_file (path, make_string ("%s.adb", fv->name), &code);
+    }
 
-    fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
-    fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
+    if(get_context()->polyorb_hi_c) {
+        fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
+        fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
 
-    fprintf (code, "#include <deployment.h>\n\n"
-                   "#include \"%s.h\"\n\n"
-                   "extern int __po_hi_gqueue_get_count(int, int);\n\n",
-                   fv->name);
+        fprintf (code, "#include <deployment.h>\n\n"
+                       "#include \"%s.h\"\n\n"
+                       "extern int __po_hi_gqueue_get_count(int, int);\n\n",
+                       fv->name);
 
 
-    fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
-                     "#define __AUTO_CODE_H_%s__\n\n"
-                     "#include \"C_ASN1_Types.h\"\n"
-                     "#ifdef __cplusplus\n"
-                     "    extern \"C\" {\n"
-                     "#endif\n\n",
-                     fv->name,
-                     fv->name);
+        fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
+                         "#define __AUTO_CODE_H_%s__\n\n"
+                         "#include \"C_ASN1_Types.h\"\n"
+                         "#ifdef __cplusplus\n"
+                         "    extern \"C\" {\n"
+                         "#endif\n\n",
+                         fv->name,
+                         fv->name);
 
-    /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
-    fprintf (header, "#ifdef __unix__\n"
-                     "    #include <stdbool.h>\n"
-                     "    #include <stdlib.h>\n"
-//                    "    static bool debugCheckQ = false;\n"
-                     "#endif\n\n");
+        /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
+        fprintf (header, "#ifdef __unix__\n"
+                         "    #include <stdbool.h>\n"
+                         "    #include <stdlib.h>\n"
+                         "#endif\n\n");
 
-    fprintf (code,   "#ifdef __unix__\n"
-                     "    #include <stdio.h>\n"
-                     "#endif\n\n");
+        fprintf (code,   "#ifdef __unix__\n"
+                         "    #include <stdio.h>\n"
+                         "#endif\n\n");
 
-    fprintf (header, "void %s_startup();\n\n", fv->name);
-    fprintf (code,   "void %s_startup()\n"
-                     "{\n"
-                     "    /* TASTE API start up (nothing to do) */\n"
-//                    "    #ifdef __unix__\n"
-//                    "        debugCheckQ = getenv(\"CHECKQ_DEBUG\");\n"
-//                    "    #endif\n"
-                     "}\n\n", fv->name);
+        fprintf (header, "void %s_startup();\n\n", fv->name);
+        fprintf (code,   "void %s_startup()\n"
+                         "{\n"
+                         "    /* TASTE API start up (nothing to do) */\n"
+                         "}\n\n", fv->name);
+    }
+    else { // Ada
+        fprintf (header, "--  TASTE API (do not edit this code manually)\n"
+                         "with TASTE_BasicTypes;\n"
+                         "use  TASTE_BasicTypes;\n\n"
+                         "package %s is\n",
+                         fv->name);
 
+        fprintf (code,   "--  TASTE API (do not edit this code manually)\n"
+                         "with PolyORB_HI_Generated.Activity;\n"
+                         "use  PolyORB_HI_Generated.Activity;\n\n"
+                         "package body %s is\n",
+                         fv->name);
+    }
     FOREACH(function, FV, all_fv, {
         if (false == function->is_component_type) {
             char *decl = NULL;
             char *task_id = NULL;
             char *port = NULL;
-            decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
-            fprintf(header, "%s;\n\n", decl);
-            fprintf(code, "%s {\n"
-                          "    /* Check all incoming queues (if any) for a pending message */\n    (void)res;\n", decl);
-            /* Naming of ports/task id is different if there is more than 1 active PI */
-            //int active = CountActivePI(function->interfaces);
+            if (get_context()->polyorb_hi_c) {
+                decl = make_string("void %s_PI_%s_has_pending_msg"
+                                   "(asn1SccT_Boolean *res)",
+                                   fv->name,
+                                   function->name);
+                fprintf(header, "%s;\n\n", decl);
+                fprintf(code, "%s {\n"
+                              "    /* Check all incoming queues (if any)"
+                              " for a pending message */\n    (void)res;\n",
+                              decl);
+            }
+            else { // Ada
+                decl = make_string ("procedure %s_Has_Pending_Msg"
+                                    " (OUT_Res : access Asn1SCCT_Boolean)",
+                                    function->name);
+                fprintf(header, "   %s\n"
+                                "      with Export, Convention => C, "
+                                "Link_Name => \"%s_PI_%s_has_pending_msg\";",
+                                decl,
+                                fv->name,
+                                function->name);
+                fprintf(code,   "   %s is\n"
+                                "   begin\n",
+                                decl);
+            }
 
             /* Count active and passive PIs of the function */
             int count_thread = 0;
@@ -974,7 +1014,8 @@ void Add_api(Process *node, FV_list *all_fv)
             bool active = (count_thread + count_unpro + count_pro <= 1);
 
             FOREACH(pi, Interface, function->interfaces, {
-                if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
+                if(PI == pi->direction && asynch == pi->synchronism
+                   && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
                     if (active) {
                         task_id = make_string("%s_%s_k", node->name, function->name);
                         port = make_string("%s_local_inport_%s", function->name, pi->name);
@@ -983,33 +1024,42 @@ void Add_api(Process *node, FV_list *all_fv)
                         task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
                         port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
                     }
-                    fprintf(code, "    *res = 0;\n"
-                                  "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
-                                  "        *res = 1;\n"
-//                                 "        #ifdef __unix__\n"
-//                                 "            if (debugCheckQ) {\n"
-//                                 "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
-//                                 "            }\n"
-//                                 "        #endif\n"
-                                  "    }\n",
-                                  string_to_lower(task_id),
-                                  string_to_lower(port));
-//                                 pi->name,
-//                                 function->name);
+                    if (get_context()->polyorb_hi_c) {
+                        fprintf(code, "    *res = 0;\n"
+                                      "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
+                                      "        *res = 1;\n"
+                                      "    }\n",
+                                      string_to_lower(task_id),
+                                      string_to_lower(port));
+                    }
+                    else { // Ada
+                        fprintf(code, "      OUT_Res.all := False;\n");
+                    }
                     free(task_id);
                     free(port);
                 }
             });
 
-            fprintf(code, "}\n\n");
+            if (get_context()->polyorb_hi_c) {
+                fprintf(code, "}\n\n");
+            }
+            else { // Ada
+                fprintf(code, "   end %s_Has_Pending_Msg;\n\n", function->name);
+            }
             free(decl);
         }
     });
 
-    fprintf (header, "#ifdef __cplusplus\n"
-                     "}\n"
-                     "#endif\n\n"
-                     "#endif");
+    if (get_context()->polyorb_hi_c) {
+        fprintf (header, "#ifdef __cplusplus\n"
+                         "}\n"
+                         "#endif\n\n"
+                         "#endif");
+    }
+    else { // Ada
+        fprintf (header, "end %s;\n", fv->name);
+        fprintf (code,   "end %s;\n", fv->name);
+    }
     close_file(&header);
     close_file(&code);
     free(path);
@@ -1187,10 +1237,10 @@ void Preprocessing_Backend (System *s)
         /* Manage timers that may be declared as context parameters */
         Preprocess_timers(node);
         /* Create a TASTE API function with a set of unprotected PIs */
-        if(get_context()->polyorb_hi_c) {
-            /* Functionality requires POHIC API */
+        //if(get_context()->polyorb_hi_c) {
+            /* Functionality requires POHIC API (NOT ANYMORE)*/
             Preprocess_taste_api(node);
-        }
+        //}
     });
 
     /* Manage coverage flag for each node */
