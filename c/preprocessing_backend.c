@@ -960,8 +960,10 @@ void Add_api(Process *node, FV_list *all_fv)
                          fv->name);
 
         fprintf (code,   "--  TASTE API (do not edit this code manually)\n"
-                         "with PolyORB_HI_Generated.Activity;\n"
-                         "use  PolyORB_HI_Generated.Activity;\n\n"
+                         "with PolyORB_HI_Generated.Activity,\n"
+                         "     PolyORB_HI_Generated.Deployment;\n"
+                         "use  PolyORB_HI_Generated.Activity,\n"
+                         "     PolyORB_HI_Generated.Deployment;\n\n"
                          "package body %s is\n",
                          fv->name);
     }
@@ -992,7 +994,8 @@ void Add_api(Process *node, FV_list *all_fv)
                                 fv->name,
                                 function->name);
                 fprintf(code,   "   %s is\n"
-                                "   begin\n",
+                                "   begin\n"
+                                "      OUT_Res.all := False;\n",
                                 decl);
             }
 
@@ -1019,11 +1022,35 @@ void Add_api(Process *node, FV_list *all_fv)
                    && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
                     if (active) {
                         task_id = make_string("%s_%s_k", node->name, function->name);
-                        port = make_string("%s_local_inport_%s", function->name, pi->name);
+                        if (get_context()->polyorb_hi_c) {
+                            port = make_string("%s_local_inport_%s",
+                                               function->name,
+                                               pi->name);
+                        }
+                        else { // Ada
+                            port = make_string ("%s_CV_Thread_%s_%s_others_Port_Type",
+                                                function->name,
+                                                function->name,
+                                                function->name);
+                        }
                     }
                     else { /* More than one active PI */
                         task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
-                        port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
+                        if (get_context()->polyorb_hi_c) {
+                            port = make_string("vt_%s_%s_local_inport_artificial_%s",
+                                               function->name,
+                                               pi->name,
+                                               pi->name);
+                        }
+                        else { // Ada
+                            port = make_string("vt_%s_%s_CV_Thread_vt_%s_%s_vt_%s_%s_others_Port_Type",
+                                               function->name,
+                                               pi->name,
+                                               function->name,
+                                               pi->name,
+                                               function->name,
+                                               pi->name);
+                        }
                     }
                     if (get_context()->polyorb_hi_c) {
                         fprintf(code, "    *res = 0;\n"
@@ -1035,7 +1062,19 @@ void Add_api(Process *node, FV_list *all_fv)
                     }
                     else { // Ada
                         at_least_one = true;
-                        fprintf(code, "      OUT_Res.all := False;\n");
+                        // Call Get_Count (Entity, Port_Type).
+                        // Entity is the Task ID but it is not very relevant
+                        // as it is ignored. Function Get_Count is polymorphic
+                        // based on the type of Port_Type.
+                        fprintf(code, "      if Get_Count (%s,\n"
+                                      "                    %s'(INPORT_%s)) > 0\n"
+                                      "      then\n"
+                                      "         OUT_Res.all := True;\n"
+                                      "      end if;\n",
+                                      task_id,
+                                      port,
+                                      active ? pi->port_name : make_string ("artificial_%s", pi->port_name));
+
                     }
                     free(task_id);
                     free(port);
@@ -1047,7 +1086,7 @@ void Add_api(Process *node, FV_list *all_fv)
             }
             else { // Ada
                 if (!at_least_one) {
-                    fprintf(code, "      null;\n");
+                    fprintf(code, "      OUT_Res.all := False;\n");
                 }
                 fprintf(code, "   end %s_Has_Pending_Msg;\n\n", function->name);
             }
