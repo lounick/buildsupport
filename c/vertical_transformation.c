@@ -121,8 +121,8 @@ void write_thread_implementation(FV *fv)
        })
    }
 
-   //fprintf(thread, "\tInitialize_Entrypoint_Source_Text => ");
-   fprintf(thread, "\tActivate_Entrypoint_Source_Text => ");
+   fprintf(thread, "\tInitialize_Entrypoint_Source_Text => ");
+   //fprintf(thread, "\tActivate_Entrypoint_Source_Text => ");
 
    if (0 == fv->system_ast->context->polyorb_hi_c) { /* PolyORB-HI/Ada */
        fprintf(thread, "\"%s_wrappers.C_Init_%s\";\n",
