@@ -8,7 +8,8 @@ all: build
 
 build:
 ifeq ($(UNAME), Linux)
-	@echo "package Buildsupport_Version is" > ada/buildsupport_version.ads.new
+	@echo "package Buildsupport_Version  is" > ada/buildsupport_version.ads.new
+	@echo "   pragma Style_Checks (Off);" >> ada/buildsupport_version.ads.new
 	@echo "   Buildsupport_Release : constant String :=" >> ada/buildsupport_version.ads.new
 	@echo -n "      \"" >> ada/buildsupport_version.ads.new
 	@git log --oneline | head -1 | cut -f1 -d' ' | tr -d '\012' >> ada/buildsupport_version.ads.new
