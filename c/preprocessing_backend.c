@@ -403,98 +403,98 @@ void ProcessArtificial_FV_Creation (Interface *i, RCM rcm)
   char *artificial_pi_name = NULL;
   char *artificial_fv_name = NULL;
   Interface *distant_RI =NULL;
-  Interface *duplicate_if =  NULL; 
+  Interface *duplicate_if =  NULL;
 
-    artificial_pi_name = make_string ("%s", i->name);
-    artificial_fv_name = make_string ("vt_%s_%s",
-                                      i->parent_fv->name,
-                                      interface_name);
+  artificial_pi_name = make_string ("%s", i->name);
+  artificial_fv_name = make_string ("vt_%s_%s",
+                                    i->parent_fv->name,
+                                    interface_name);
 
-    duplicate_if = (Interface *) Duplicate_Interface (PI, i, i->parent_fv);
-    duplicate_if -> parent_fv = NULL;
+  duplicate_if = (Interface *) Duplicate_Interface (PI, i, i->parent_fv);
+  duplicate_if -> parent_fv = NULL;
 
-    free(duplicate_if->name);
-    duplicate_if->name = NULL;
-    duplicate_if->name = make_string ("artificial_%s", i->name);
+  free(duplicate_if->name);
+  duplicate_if->name = NULL;
+  duplicate_if->name = make_string ("artificial_%s", i->name);
 
-    // Set the "distant_name" field of the new PI to the name of the old PI
-    // so that if the thread happens to be in a different process from one
-    // of its caller, the interface name from TASTE-IV is respected.
-    // MP 19/04/10 this is not consistent with the fact that a PI can be
-    // connected to several RI we should add real pointers to connect the
-    // interfaces rather than strings with their names (or only pointers to
-    // distant fv - this does not cover the case of different names)
-    // MP 20/04/10 This will have to be checked again with AADL v2.
-    // In fact it is correct that the distant name is the original name of
-    // the PI because it is the exposed name that TASTE-IV generates in
-    // the deployment view. that's the port name seen from the environment.
-    // In that case there is only one name and nothing should be changed here.
-    // (except that "distant_name" should be renamed "port_name" maybe).
-    // MP 21/11/10: aadlv2 update : I added a "port_name"
+  // Set the "distant_name" field of the new PI to the name of the old PI
+  // so that if the thread happens to be in a different process from one
+  // of its caller, the interface name from TASTE-IV is respected.
+  // MP 19/04/10 this is not consistent with the fact that a PI can be
+  // connected to several RI we should add real pointers to connect the
+  // interfaces rather than strings with their names (or only pointers to
+  // distant fv - this does not cover the case of different names)
+  // MP 20/04/10 This will have to be checked again with AADL v2.
+  // In fact it is correct that the distant name is the original name of
+  // the PI because it is the exposed name that TASTE-IV generates in
+  // the deployment view. that's the port name seen from the environment.
+  // In that case there is only one name and nothing should be changed here.
+  // (except that "distant_name" should be renamed "port_name" maybe).
+  // MP 21/11/10: aadlv2 update : I added a "port_name"
 
-    if (NULL != duplicate_if->distant_name) {
-        free (duplicate_if->distant_name);
-        duplicate_if->distant_name=NULL;
-    }
-    build_string (&(duplicate_if->distant_name), i->name, strlen(i->name));
+  if (NULL != duplicate_if->distant_name) {
+      free (duplicate_if->distant_name);
+      duplicate_if->distant_name=NULL;
+  }
+  build_string (&(duplicate_if->distant_name), i->name, strlen(i->name));
 
-    Add_Artificial_Function (duplicate_if,
-                             (i->rcm==cyclic)?cyclic:sporadic,
-                             rcm,
-                             i->parent_fv,
-                             artificial_fv_name,
-                             artificial_pi_name,
-                             i->period,
-                             i->parent_fv->name); 
+  Add_Artificial_Function (duplicate_if,
+                           (i->rcm==cyclic)?cyclic:sporadic,
+                           rcm,
+                           i->parent_fv,
+                           artificial_fv_name,
+                           artificial_pi_name,
+                           i->period,
+                           i->parent_fv->name); 
 
-    // Update the distant_Fv of the distant RIs invoking the newly created FV
-    if (cyclic != i->rcm) {
-        FV_list *callers = NULL;
+  // Update the distant_Fv of the distant RIs invoking the newly created FV
+  if (cyclic != i->rcm) {
+      FV_list *callers = NULL;
 
-        callers = (FV_list *)Find_All_Calling_FV(i);
+      callers = (FV_list *)Find_All_Calling_FV(i);
 
-        /* For each caller of the interface, find its corresponding RI
-         * and update its "distant_fv" field to point to the newly created FV
-         */
-        FOREACH (caller, FV, callers, {
-            distant_RI = NULL;
+      /* For each caller of the interface, find its corresponding RI
+       * and update its "distant_fv" field to point to the newly created FV
+       */
+      FOREACH (caller, FV, callers, {
+          distant_RI = NULL;
 
-            /* Find the corresponding interface in the caller */
-            distant_RI = FindCorrespondingRI(caller, i);
+          /* Find the corresponding interface in the caller */
+          distant_RI = FindCorrespondingRI(caller, i);
 
-            if (NULL != distant_RI
-                && strcmp(artificial_fv_name, distant_RI->parent_fv->name)) {
-                if (NULL != distant_RI->distant_fv) {
-                    free(distant_RI->distant_fv);
-                    distant_RI->distant_fv = NULL;
-                }
-                build_string(&(distant_RI->distant_fv),
-                             artificial_fv_name, strlen(artificial_fv_name));
+          if (NULL != distant_RI
+              && strcmp(artificial_fv_name, distant_RI->parent_fv->name)) {
+              if (NULL != distant_RI->distant_fv) {
+                  free(distant_RI->distant_fv);
+                  distant_RI->distant_fv = NULL;
+              }
+              build_string(&(distant_RI->distant_fv),
+                           artificial_fv_name, strlen(artificial_fv_name));
 
-                if (NULL != distant_RI->distant_name) {
-                        free(distant_RI->distant_name);
-                        distant_RI->distant_name = NULL;
-                }
-                build_string(&(distant_RI->distant_name),
-                             "artificial_", strlen("artificial_"));
-                build_string(&(distant_RI->distant_name),
-                             i->name, strlen(i->name));
-            }
-        });
+              if (NULL != distant_RI->distant_name) {
+                      free(distant_RI->distant_name);
+                      distant_RI->distant_name = NULL;
+              }
+              build_string(&(distant_RI->distant_name),
+                           "artificial_", strlen("artificial_"));
+              build_string(&(distant_RI->distant_name),
+                           i->name, strlen(i->name));
+          }
+      });
 
-    }
+  }
 
-    // remove the old distant_fv
-    if (NULL != i->distant_fv) { 
-      free (i->distant_fv);
-      i->distant_fv = NULL;
-    }
+  // remove the old distant_fv
+  if (NULL != i->distant_fv) { 
+    free (i->distant_fv);
+    i->distant_fv = NULL;
+  }
 
-    build_string (&(i->distant_fv),
-                  artificial_fv_name, strlen(artificial_fv_name));
-    i->rcm = rcm;
-    i->synchronism = synch;
-    free (interface_name);
+  build_string (&(i->distant_fv),
+                artificial_fv_name, strlen(artificial_fv_name));
+  i->rcm = rcm;
+  i->synchronism = synch;
+  free (interface_name);
 }
 /*
  * 4th pre-processing:
@@ -690,7 +690,7 @@ void Preprocess_FV (FV *fv)
          }
       }
    }
-
+    printf("*** Preprocessing of function %s\n", fv->name);
 /*
      preprocessing: FV containing more than one
      'active' PI (cyclic/sporadic, protected)
@@ -702,15 +702,15 @@ void Preprocess_FV (FV *fv)
 */
         /* Count active and passive PIs of the function */
         FOREACH(i, Interface, fv->interfaces, {
-                if (PI == i->direction) 
-                        switch (i->rcm) {
-                                case cyclic:
-                                case sporadic:
-                                case variator:    count_thread ++;     break;
-                                case protected:   count_pro ++;        break;
-                                case unprotected: count_unpro ++;      break;
-                                default :                              break;
-                        }
+            if (PI == i->direction) {
+                switch (i->rcm) {
+                    case cyclic:
+                    case sporadic:    count_thread ++;     break;
+                    case protected:   count_pro ++;        break;
+                    case unprotected: count_unpro ++;      break;
+                    default :                              break;
+                }
+            }
         });
 
 /*
@@ -728,19 +728,23 @@ void Preprocess_FV (FV *fv)
         FOREACH(i, Interface, fv->interfaces, {
             RCM rcm = undefined;
             if (PI == i->direction && (cyclic == i->rcm ||
-                                       sporadic == i->rcm ||
-                                       variator == i->rcm)) {
+                                       sporadic == i->rcm)) {
                 /* Set the interface of the user block as protected
                  * if there is more than 1 active PI on the FV */
                 if (count_thread + count_pro > 1) {
-                        rcm = protected;
+                    rcm = protected;
                 }
                 /* Otherwise there is no need for mutual exclusion -
                  * define as unprotected */
                 else rcm = unprotected;
                 /* Create a new FV (thread) if there is more than
                  * one PI in the function (unprotected don't count) */
-                if (count_pro+count_thread>1) {
+                //if (count_pro+count_thread>1) {
+                // Update MP 2018/04/11 : actually unpro count
+                // otherwise there could be issues with
+                // selection of the vm_ function when calling an active RI
+                // from an unprotected PI of the function
+                if ((count_pro + count_unpro + count_thread) > 1) {
                     ProcessArtificial_FV_Creation (i, rcm);
                 }
             }
@@ -748,22 +752,27 @@ void Preprocess_FV (FV *fv)
 
 
   /*  preprocessing: determine if a FV is a thread or a passive function
-   *  (once all artificial threads have been created) */
-        fv->runtime_nature = passive_runtime;
+   *  (once all artificial threads have been created)
+   *  Threads are only functions that (1) only have one PI and (2) which single
+   *  PI is either cyclic or sporadic. */
+        int count_pis = 0;
+        int count_async_pis = 0;
 
         FOREACH (i, Interface, fv->interfaces, {
             if (PI==i->direction) {
+                count_pis ++;
                 switch (i->rcm) {
                     case cyclic:
-                        fv->runtime_nature = thread_runtime;
+                        count_async_pis ++;
                         break;
                     case sporadic:
                     case variator:
                         if (NULL != Find_All_Calling_FV(i)) {
-                             fv->runtime_nature = thread_runtime;
+                             count_async_pis ++;
                         }
                         else {
-                            printf("Unconnected interface %s %s\n", i->name, i->distant_name);
+                            printf("[WARNING] Unconnected interface %s %s\n",
+                                    i->name, i->distant_name);
                         }
                         break;
                     default: break;
@@ -771,9 +780,13 @@ void Preprocess_FV (FV *fv)
             }
         });
 
-        if(thread_runtime == fv->runtime_nature) {
+        if (1 == count_pis && 1 == count_async_pis) {
+            fv->runtime_nature = thread_runtime;
             /* Set the (unique) thread ID */
             fv->thread_id = ++thread_id;
+        }
+        else {
+            fv->runtime_nature = passive_runtime;
         }
 }
 
@@ -829,11 +842,16 @@ void Add_api(Process *node, FV_list *all_fv)
     fv = New_FV(name, strlen(name), name);
     assert (NULL != fv);
 
-    Set_Language_To_C();
+    if(get_context()->polyorb_hi_c) {
+        Set_Language_To_C();
+    }
+    else {
+        Set_Language_To_Ada();
+    }
 
     /* Add a PI for each of the node's functions */
     FOREACH (function, FV, all_fv, {
-        if (false == function->is_component_type) {
+       if (false == function->is_component_type) {
         Interface *pi = NULL;
         Interface *ri = NULL;
         Create_Interface(&pi);
@@ -872,7 +890,7 @@ void Add_api(Process *node, FV_list *all_fv)
         free(ri->distant_fv);
         ri->distant_fv = make_string("%s", fv->name);
         APPEND_TO_LIST(Interface, function->interfaces, ri);
-        }
+       }
     });
 
     /* Set flag indicating that this function was created during VT */
@@ -890,95 +908,202 @@ void Add_api(Process *node, FV_list *all_fv)
     close_file(&hook);
 
    /* Create files containing the implementation of the function */
-    create_file (path, make_string ("%s.h", fv->name), &header);
-    create_file (path, make_string ("%s.c", fv->name), &code);
+    if(get_context()->polyorb_hi_c) {
+        create_file (path, make_string ("%s.h", fv->name), &header);
+        create_file (path, make_string ("%s.c", fv->name), &code);
+    }
+    else {
+        create_file (path, make_string ("%s.ads", fv->name), &header);
+        create_file (path, make_string ("%s.adb", fv->name), &code);
+    }
 
-    fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
-    fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
+    if(get_context()->polyorb_hi_c) {
+        fprintf (header, "/* TASTE API */\n%s", do_not_modify_warning);
+        fprintf (code,   "/* TASTE API */\n%s", do_not_modify_warning);
 
-    fprintf (code, "#include <deployment.h>\n\n"
-                   "#include \"%s.h\"\n\n"
-                   "extern int __po_hi_gqueue_get_count(int, int);\n\n",
-                   fv->name);
+        fprintf (code, "#include <deployment.h>\n\n"
+                       "#include \"%s.h\"\n\n"
+                       "extern int __po_hi_gqueue_get_count(int, int);\n\n",
+                       fv->name);
 
 
-    fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
-                     "#define __AUTO_CODE_H_%s__\n\n"
-                     "#include \"C_ASN1_Types.h\"\n"
-                     "#ifdef __cplusplus\n"
-                     "    extern \"C\" {\n"
-                     "#endif\n\n",
-                     fv->name,
-                     fv->name);
+        fprintf (header, "#ifndef __AUTO_CODE_H_%s__\n"
+                         "#define __AUTO_CODE_H_%s__\n\n"
+                         "#include \"C_ASN1_Types.h\"\n"
+                         "#ifdef __cplusplus\n"
+                         "    extern \"C\" {\n"
+                         "#endif\n\n",
+                         fv->name,
+                         fv->name);
 
-    /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
-    fprintf (header, "#ifdef __unix__\n"
-                     "    #include <stdbool.h>\n"
-                     "    #include <stdlib.h>\n"
-//                    "    static bool debugCheckQ = false;\n"
-                     "#endif\n\n");
+        /* Debug mode - Unix platform, when env variable CHECKQ_DEBUG is set */
+        fprintf (header, "#ifdef __unix__\n"
+                         "    #include <stdbool.h>\n"
+                         "    #include <stdlib.h>\n"
+                         "#endif\n\n");
 
-    fprintf (code,   "#ifdef __unix__\n"
-                     "    #include <stdio.h>\n"
-                     "#endif\n\n");
+        fprintf (code,   "#ifdef __unix__\n"
+                         "    #include <stdio.h>\n"
+                         "#endif\n\n");
 
-    fprintf (header, "void %s_startup();\n\n", fv->name);
-    fprintf (code,   "void %s_startup()\n"
-                     "{\n"
-                     "    /* TASTE API start up (nothing to do) */\n"
-//                    "    #ifdef __unix__\n"
-//                    "        debugCheckQ = getenv(\"CHECKQ_DEBUG\");\n"
-//                    "    #endif\n"
-                     "}\n\n", fv->name);
+        fprintf (header, "void %s_startup();\n\n", fv->name);
+        fprintf (code,   "void %s_startup()\n"
+                         "{\n"
+                         "    /* TASTE API start up (nothing to do) */\n"
+                         "}\n\n", fv->name);
+    }
+    else { // Ada
+        fprintf (header, "--  TASTE API (do not edit this code manually)\n"
+                         "--  with TASTE_BasicTypes;\n"
+                         "--  use  TASTE_BasicTypes;\n\n"
+                         "package %s is\n",
+                         fv->name);
 
+        fprintf (code,   "--  TASTE API (do not edit this code manually)\n"
+                         "with PolyORB_HI_Generated.Activity,\n"
+                         "     PolyORB_HI_Generated.Deployment;\n"
+                         "use  PolyORB_HI_Generated.Activity,\n"
+                         "     PolyORB_HI_Generated.Deployment;\n\n"
+                         "package body %s is\n",
+                         fv->name);
+    }
     FOREACH(function, FV, all_fv, {
         if (false == function->is_component_type) {
             char *decl = NULL;
             char *task_id = NULL;
             char *port = NULL;
-            decl = make_string("void %s_PI_%s_has_pending_msg(asn1SccT_Boolean *res)", fv->name, function->name);
-            fprintf(header, "%s;\n\n", decl);
-            fprintf(code, "%s {\n"
-                          "    /* Check all incoming queues (if any) for a pending message */\n    (void)res;\n", decl);
-            /* Naming of ports/task id is different if there is more than 1 active PI */
-            int active = CountActivePI(function->interfaces);
+            if (get_context()->polyorb_hi_c) {
+                decl = make_string("void %s_PI_%s_has_pending_msg"
+                                   "(asn1SccT_Boolean *res)",
+                                   fv->name,
+                                   function->name);
+                fprintf(header, "%s;\n\n", decl);
+                fprintf(code, "%s {\n"
+                              "    /* Check all incoming queues (if any)"
+                              " for a pending message */\n    (void)res;\n",
+                              decl);
+            }
+            else { // Ada
+                decl = make_string ("procedure %s_Has_Pending_Msg"
+                                    " (OUT_Res : access Boolean)",
+                                    function->name);
+                fprintf(header, "   %s\n"
+                                "      with Export, Convention => C, "
+                                "Link_Name => \"%s_PI_%s_has_pending_msg\";",
+                                decl,
+                                fv->name,
+                                function->name);
+                fprintf(code,   "   %s is\n"
+                                "   begin\n"
+                                "      OUT_Res.all := False;\n",
+                                decl);
+            }
+
+            /* Count active and passive PIs of the function */
+            int count_thread = 0;
+            int count_pro = 0;
+            int count_unpro = 0;
+            FOREACH(i, Interface, function->interfaces, {
+                if (PI == i->direction) {
+                    switch (i->rcm) {
+                        case cyclic:
+                        case sporadic:    count_thread ++;     break;
+                        case protected:   count_pro ++;        break;
+                        case unprotected: count_unpro ++;      break;
+                        default :                              break;
+                    }
+                }
+            });
+            bool active = (count_thread + count_unpro + count_pro <= 1);
+            bool at_least_one = false;
+
             FOREACH(pi, Interface, function->interfaces, {
-                if(PI == pi->direction && asynch == pi->synchronism && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
-                    if (1 == active) {
+                if(PI == pi->direction && asynch == pi->synchronism
+                   && cyclic != pi->rcm && NULL != Find_All_Calling_FV(pi)) {
+                    if (active) {
                         task_id = make_string("%s_%s_k", node->name, function->name);
-                        port = make_string("%s_local_inport_%s", function->name, pi->name);
+                        if (get_context()->polyorb_hi_c) {
+                            port = make_string("%s_local_inport_%s",
+                                               function->name,
+                                               pi->name);
+                        }
+                        else { // Ada
+                            port = make_string ("%s_CV_Thread_%s_%s_others_Port_Type",
+                                                function->name,
+                                                function->name,
+                                                function->name);
+                        }
                     }
                     else { /* More than one active PI */
                         task_id = make_string("%s_vt_%s_%s_k", node->name, function->name, pi->name);
-                        port = make_string("vt_%s_%s_local_inport_artificial_%s", function->name, pi->name, pi->name);
+                        if (get_context()->polyorb_hi_c) {
+                            port = make_string("vt_%s_%s_local_inport_artificial_%s",
+                                               function->name,
+                                               pi->name,
+                                               pi->name);
+                        }
+                        else { // Ada
+                            port = make_string("vt_%s_%s_CV_Thread_vt_%s_%s_vt_%s_%s_others_Port_Type",
+                                               function->name,
+                                               pi->name,
+                                               function->name,
+                                               pi->name,
+                                               function->name,
+                                               pi->name);
+                        }
                     }
-                    fprintf(code, "    *res = 0;\n"
-                                  "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
-                                  "        *res = 1;\n"
-//                                 "        #ifdef __unix__\n"
-//                                 "            if (debugCheckQ) {\n"
-//                                 "                printf (\"[DEBUG] Pending message %s in function %s\\n\");\n"
-//                                 "            }\n"
-//                                 "        #endif\n"
-                                  "    }\n",
-                                  string_to_lower(task_id),
-                                  string_to_lower(port));
-//                                 pi->name,
-//                                 function->name);
+                    if (get_context()->polyorb_hi_c) {
+                        fprintf(code, "    *res = 0;\n"
+                                      "    if (__po_hi_gqueue_get_count(%s, %s)) {\n"
+                                      "        *res = 1;\n"
+                                      "    }\n",
+                                      string_to_lower(task_id),
+                                      string_to_lower(port));
+                    }
+                    else { // Ada
+                        at_least_one = true;
+                        // Call Get_Count (Entity, Port_Type).
+                        // Entity is the Task ID but it is not very relevant
+                        // as it is ignored. Function Get_Count is polymorphic
+                        // based on the type of Port_Type.
+                        fprintf(code, "      if Get_Count (%s,\n"
+                                      "                    %s'(INPORT_%s)) > 0\n"
+                                      "      then\n"
+                                      "         OUT_Res.all := True;\n"
+                                      "      end if;\n",
+                                      task_id,
+                                      port,
+                                      active ? pi->port_name : make_string ("artificial_%s", pi->port_name));
+
+                    }
                     free(task_id);
                     free(port);
                 }
             });
 
-            fprintf(code, "}\n\n");
+            if (get_context()->polyorb_hi_c) {
+                fprintf(code, "}\n\n");
+            }
+            else { // Ada
+                if (!at_least_one) {
+                    fprintf(code, "      OUT_Res.all := False;\n");
+                }
+                fprintf(code, "   end %s_Has_Pending_Msg;\n\n", function->name);
+            }
             free(decl);
         }
     });
 
-    fprintf (header, "#ifdef __cplusplus\n"
-                     "}\n"
-                     "#endif\n\n"
-                     "#endif");
+    if (get_context()->polyorb_hi_c) {
+        fprintf (header, "#ifdef __cplusplus\n"
+                         "}\n"
+                         "#endif\n\n"
+                         "#endif");
+    }
+    else { // Ada
+        fprintf (header, "end %s;\n", fv->name);
+        fprintf (code,   "end %s;\n", fv->name);
+    }
     close_file(&header);
     close_file(&code);
     free(path);
@@ -1156,10 +1281,10 @@ void Preprocessing_Backend (System *s)
         /* Manage timers that may be declared as context parameters */
         Preprocess_timers(node);
         /* Create a TASTE API function with a set of unprotected PIs */
-        if(get_context()->polyorb_hi_c) {
-            /* Functionality requires POHIC API */
+        //if(get_context()->polyorb_hi_c) {
+            /* Functionality requires POHIC API (NOT ANYMORE)*/
             Preprocess_taste_api(node);
-        }
+        //}
     });
 
     /* Manage coverage flag for each node */

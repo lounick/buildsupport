@@ -260,6 +260,7 @@ int create_file(char *fv_name, char *file, FILE ** f)
 
     filename = make_string ("%s/%s", fv_name, file);
     assert(NULL != filename);
+    INFO ("[INFO] Creating %s\n", filename);
 
     *f = fopen(filename, "w");
 

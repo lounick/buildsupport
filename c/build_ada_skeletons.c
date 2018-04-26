@@ -37,22 +37,22 @@ int ada_gw_preamble(FV * fv)
             "-- This file was generated automatically: DO NOT MODIFY IT !\n\n");
     fprintf(ads,
             "-- Declaration of the provided and required interfaces\n\n");
-    fprintf(ads, "pragma style_checks (off);\n");
-    fprintf(ads, "pragma warnings (off);\n");
+    fprintf(ads, "--  pragma style_checks (off);\n");
+    fprintf(ads, "--  pragma warnings (off);\n");
 
     /* Check if any interface needs Asn.1 types and if so, include asn1 modules */
 
     if (NULL != fv->timer_list || get_context()->polyorb_hi_c) {
-       fprintf(ads, "with taste_basictypes;\n"
-                    "use taste_basictypes;\n\n");
+       fprintf(ads, "with TASTE_Basictypes;\n"
+                    "use  TASTE_Basictypes;\n\n");
     }
 
     FOREACH(i, Interface, fv->interfaces, {
             CheckForAsn1Params(i, &hasparam);}
     );
     if (hasparam) {
-        fprintf(ads, "with adaasn1rtl;\n");
-        fprintf(ads, "use adaasn1rtl;\n\n");
+        fprintf(ads, "with AdaASN1RTL;\n");
+        fprintf(ads, "use AdaASN1RTL;\n\n");
 
         /* Build the list of Ada packages to include from the ASN.1 module list */
         FOREACH(i, Interface, fv->interfaces, {
@@ -93,7 +93,7 @@ int ada_gw_preamble(FV * fv)
             strcmp (cp->type.name, "Timer")) {
 
             fprintf(ads,
-                "   %s : asn1Scc%s := context_%s.%s_ctxt.%s;\n"
+                "   %s : asn1Scc%s := Context_%s.%s_Ctxt.%s;\n"
                 "   pragma Export(C, %s, \"%s_%s\");\n",
                 cp->name,
                 asn2underscore(cp->type.name, strlen(cp->type.name)),
@@ -110,19 +110,19 @@ int ada_gw_preamble(FV * fv)
 
     /* b. adb preamble (if applicable) */
     if (NULL != adb) {
-        fprintf(adb, "-- User implementation of the %s function\n",
+        fprintf(adb, "--  User implementation of the %s function\n",
                 fv->name);
         fprintf(adb,
-                "-- This file will never be overwritten once edited and modified\n");
+                "--  This file will never be overwritten once edited and modified\n");
         fprintf(adb,
-                "-- Only the interface of functions is regenerated (in the .ads file)\n\n");
+                "--  Only the interface of functions is regenerated (in the .ads file)\n\n");
 
-        fprintf(adb, "pragma style_checks (off);\n");
-        fprintf(adb, "pragma warnings (off);\n");
+        fprintf(adb, "--  pragma style_checks (off);\n");
+        fprintf(adb, "--  pragma warnings (off);\n");
 
         if (hasparam) {
-            fprintf(adb, "with adaasn1rtl;\n");
-            fprintf(adb, "use adaasn1rtl;\n\n");
+            fprintf(adb, "with AdaASN1RTL;\n");
+            fprintf(adb, "use AdaASN1RTL;\n\n");
             FOREACH(m, ASN1_Module, modules, {
                     fprintf(adb, "with %s;\nuse %s;\n\n", m, m);}
             );
@@ -202,7 +202,7 @@ void Create_Ada_Access_Param(Parameter * p, char **result)
         build_string(result, "; ", 2);
     }
     build_string(result, p->name, strlen(p->name));
-    build_string(result, ": access asn1scc", strlen(": access asn1scc"));
+    build_string(result, ": access Asn1Scc", strlen(": access asn1scc"));
     build_string(result, p->type, strlen(p->type));
 }
 

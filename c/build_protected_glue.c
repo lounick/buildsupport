@@ -27,23 +27,16 @@ void add_sync_PI(Interface * i)
     if (qgenc == i->parent_fv->language || qgenada == i->parent_fv->language) {
         return;
     }
-    /* Count the number of calling threads for this passive function */
-    int count = 0;
-
-    FOREACH(t, FV, i->parent_fv->calling_threads, {
-            (void) t;
-            count++;
-    });
 
     char *header = make_string(
             "   ------------------------------------------------------\n"
             "   --  %srotected Provided Interface \"%s\"\n"
             "   ------------------------------------------------------\n"
-            "   procedure %s (calling_thread: Integer%s",
+            "   procedure %s%s",
             (protected == i->rcm) ? "P" : "Unp",
             i->name,
             i->name,
-            (NULL != i->in || NULL != i->out) ? ";": "");
+            (NULL != i->in || NULL != i->out) ? "(": "");
 
     fprintf(sync_adb, "%s", header);
     fprintf(sync_ads, "%s", header);
@@ -59,10 +52,12 @@ void add_sync_PI(Interface * i)
         List_Ada_Param_Types_And_Names(p, &sync_ads);
         List_Ada_Param_Types_And_Names(p, &sync_adb);
     })
-    fprintf(sync_ads, ");\n");
-    fprintf(sync_adb, ")");
-
-    fprintf(sync_adb, " \n   is\n");
+    if (NULL != i->in || NULL != i->out) {
+        fprintf(sync_ads, ")\n");
+        fprintf(sync_adb, ")");
+    }
+    fprintf(sync_ads, ";\n");
+    fprintf(sync_adb, "\n   is\n");
 
     /* Declare the external C function in the body */
     fprintf(sync_adb, "      procedure C_%s", i->name);
@@ -87,9 +82,6 @@ void add_sync_PI(Interface * i)
             i->name, i->parent_fv->name, i->name);
 
     fprintf(sync_adb, "      begin\n");
-    if (count > 1) {
-        fprintf(sync_adb, "         callinglist.push(calling_thread);\n");     /* Put the calling thread in the stack */
-    }
 
     /* Call the C function in the body */
     fprintf(sync_adb, "         C_%s", i->name);
@@ -110,11 +102,6 @@ void add_sync_PI(Interface * i)
     }
 
     fprintf(sync_adb, ";\n");
-
-    /* Remove the calling thread from the stack before returning*/
-    if (count > 1) {
-        fprintf(sync_adb, "         callinglist.pop;\n");
-    }
 
     /* End of the procedure body */
     fprintf(sync_adb, "   end %s;\n\n", i->name);
