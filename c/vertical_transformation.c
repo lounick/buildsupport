@@ -981,10 +981,15 @@ void Generate_Full_ConcurrencyView(Process_list *processes, char *root_node)
        FOREACH(b, Bus, get_system_ast()->buses, {
            fprintf(process, "  %s_cv : bus %s;\n", b->name, b->classifier);
        });
+       //      FOREACH(p, Process, processes, {
+
+       //      });
 
       /* Add all drivers of all processes to the complete system */
       FOREACH (p, Process, processes, {
-        FOREACH(b, Device, p->drivers, {
+        GenerateProcessRefinement(p);
+
+	FOREACH(b, Device, p->drivers, {
                 char *driver_no_underscore =
                         underscore_to_dash (b->name, strlen (b->name));
                 fprintf(process,
@@ -1021,10 +1026,6 @@ void Generate_Full_ConcurrencyView(Process_list *processes, char *root_node)
                 free (driver_no_underscore);
         });
      });
-
-      FOREACH(p, Process, processes, {
-        GenerateProcessRefinement(p);
-      });
 
       FOREACH(p, Process, processes, {
           FOREACH(p2, Process, processes, {
