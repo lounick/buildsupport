@@ -149,9 +149,9 @@ void write_thread_implementation(FV *fv)
       }
    }
 
-   fprintf(thread, "\tDispatch_Protocol => %s;\n"
-                   "\tPeriod            => %lld ms;\n"
-                   "\tDispatch_Offset   => 0 ms;\n",
+   fprintf(thread, "\tDispatch_Protocol      => %s;\n"
+                   "\tPeriod                 => %lld ms;\n"
+                   "\tDispatch_Offset        => 0 ms;\n",
                     cyclic == op_kind ? "Periodic" : "Sporadic",
                     0 == period ? 1 : period);
 
@@ -215,11 +215,21 @@ void write_thread_implementation(FV *fv)
    }
 
    bool pohic = (get_context()->polyorb_hi_c);
-   /* Default source stack size per thread */
-   // XXX the -s from the command line is ignored?
-   /* POHI-Ada targets low-resource platforms (eg. STM32) - limit stack */
+   /* Default source stack size per thread is 5 kb to support low resources
+    * platforms. Set it to 100 kb on native platforms */
    /* This is temporary - this should be an AADL property of the platform */
-   fprintf(thread,"\tStack_Size => %d KByte;\n", pohic ? 50 : 5);
+   int stack_size = 5;
+
+   FOREACH(p, Process, get_system_ast()->processes, {
+       FOREACH(b, Aplc_binding, p->bindings, {
+           if (b->fv == fv &&
+                   !strcmp(p->cpu->platform_name, "PLATFORM_NATIVE")) {
+               stack_size = 100;
+           }
+       });
+   });
+
+   fprintf(thread,"\tStack_Size             => %d KByte;\n", stack_size);
 
    /* Calculate the priority : temporary solution using the period */
    FOREACH(i, Interface, fv->interfaces, {
@@ -239,7 +249,7 @@ void write_thread_implementation(FV *fv)
    else if (highest_period == 1000) priority = pohic ? 9 : 2;
    else if (highest_period > 1000) priority = pohic ? 10 : 1;
 
-   fprintf(thread,"\tPriority => %lld;\n", priority);
+   fprintf(thread,"\tPriority               => %lld;\n", priority);
    /* 
     MP: To be investigated
     JH: To be computed from a schedulability analysis of the system,
