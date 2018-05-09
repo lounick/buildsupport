@@ -261,8 +261,8 @@ int create_file(char *fv_name, char *file, FILE ** f)
     filename = make_string ("%s/%s", fv_name, file);
     assert(NULL != filename);
 
+    printf("Creating file: %s\n", filename);
     *f = fopen(filename, "w");
-
     assert(NULL != *f);
 
     free(filename);
@@ -1265,7 +1265,8 @@ void Dump_model(System * s)
                    fv->language ? "gui" : scade ==
                    fv->language ? "scade" : rtds ==
                    fv->language ? "rtds" : blackbox_device ==
-                   fv->language ? "blackbox_device" : "unknown");
+                   fv->language ? "blackbox_device" : ros_bridge ==
+                   fv->language ? "ros_bridge" : "unknown");
             printf(" - process : %s\n",
                    NULL != fv->process ? fv->process->name : "unknown");
             printf(" - calling threads:");

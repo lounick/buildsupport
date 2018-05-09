@@ -41,6 +41,7 @@ extern void  GLUE_Ada_Wrappers_Backend(FV *);
 extern void  GLUE_C_Wrappers_Backend(FV *);
 extern void  GLUE_VT_Backend(FV *);
 extern void  GLUE_MicroPython_Backend(FV *);
+extern void  GLUE_ROS_Bridge_Backend(FV *);
 extern void  Backdoor_backend(System *);
 extern void  Generate_Build_Script();
 extern void  Generate_Full_ConcurrencyView(Process_list *, char *);

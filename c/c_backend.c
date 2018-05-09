@@ -204,6 +204,7 @@ void C_End()
                     GLUE_C_Wrappers_Backend(fv); 
                     GLUE_VT_Backend(fv);
                     GLUE_MicroPython_Backend(fv);
+                    GLUE_ROS_Bridge_Backend(fv);
                 }
             }
         })

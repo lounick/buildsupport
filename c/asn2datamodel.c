@@ -35,7 +35,7 @@ void Call_asn2dataModel(FV * fv)
 
     /* There is no A mapper for VHDL/SystemC/GUI */
     if (vhdl == fv->language || system_c == fv->language
-        || gui == fv->language)
+        || gui == fv->language || ros_bridge == fv->language)
         return;
 
     /* check if there is at least one parameter in one interface */

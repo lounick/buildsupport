@@ -165,7 +165,7 @@ void Function_Semantic_Check(FV * fv)
      * (with the exception of blackbox devices which may be connected to
      * an interrupt in the future, and GUIs that may have only TCs)
      */
-    if (blackbox_device != fv->language && gui != fv->language) {
+    if (blackbox_device != fv->language && gui != fv->language && ros_bridge != fv->language) {
         int count_pi = 0;
         FOREACH(i, Interface, fv->interfaces, {
                 if (PI == i->direction) count_pi++;}

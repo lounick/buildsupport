@@ -691,6 +691,43 @@ void Preprocess_FV (FV *fv)
       }
    }
 
+//THIS IS NOT WORKING....
+   /* pre-processing: if a FV is a BlackBox Device, add a cyclic PI to the
+    * function, if the BlackBox Device has RIs (to poll for ROS subscribers) */
+   if (ros_bridge == fv->language) {
+      int count_ri=0;
+      FOREACH(i, Interface, fv->interfaces, {
+            if(RI==i->direction) count_ri++;
+      })
+
+      if (count_ri>0)  {
+         Interface *interface = NULL;
+         char *cyclic_pi_name=NULL;
+         build_string(&cyclic_pi_name, "ros_bridge_polling_", strlen("ros_bridge_polling_"));
+         build_string(&cyclic_pi_name, fv->name, strlen(fv->name));
+
+         Create_Interface (&interface);
+         if (NULL != interface) {
+            build_string (&(interface->name),
+                          cyclic_pi_name, strlen(cyclic_pi_name));
+            interface->distant_fv = NULL;
+            interface->direction=PI;
+            interface->synchronism=asynch;
+            interface->rcm=cyclic;
+            // Poll subscriber queue every 10 ms
+            interface->period = 10;
+            interface->parent_fv = fv;
+            interface->wcet_high = 1;
+            interface->wcet_low = 1;
+            build_string(&(interface->wcet_low_unit), "ms", 2);
+            build_string(&(interface->wcet_high_unit), "ms", 2);
+            APPEND_TO_LIST (Interface, fv->interfaces, interface);
+         } else {
+            printf("Could not create interface!!!\n");
+         }
+      }
+   }
+
 /*
      preprocessing: FV containing more than one
      'active' PI (cyclic/sporadic, protected)
@@ -1006,7 +1043,7 @@ void Preprocess_taste_api (Process *node)
                 is_async = true;
             }
         });
-        if (gui != binding->fv->language && true == is_async) {
+        if (gui != binding->fv->language && ros_bridge != binding->fv->language && true == is_async) {
             APPEND_TO_LIST(FV, all_fv, binding->fv);
         }
     });

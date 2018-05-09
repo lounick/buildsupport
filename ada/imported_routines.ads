@@ -169,6 +169,7 @@ package Imported_Routines is
    procedure C_Set_Language_To_VHDL;
    procedure C_Set_Language_To_System_C;
    procedure C_Set_Language_To_MicroPython;
+   procedure C_Set_Language_To_ROS_Bridge;
    procedure C_Set_Native_Encoding;
    procedure C_Set_UPER_Encoding;
    procedure C_Set_ACN_Encoding;
@@ -264,6 +265,8 @@ private
    pragma Import (C, C_Set_Language_To_System_C, "Set_Language_To_System_C");
    pragma Import (C, C_Set_Language_To_MicroPython,
      "Set_Language_To_MicroPython");
+   pragma Import (C, C_Set_Language_To_ROS_Bridge,
+     "Set_Language_To_ROS_Bridge");
    pragma Import (C, C_Set_UPER_Encoding, "Set_UPER_Encoding");
    pragma Import (C, C_Set_ACN_Encoding, "Set_ACN_Encoding");
    pragma Import (C, C_Set_Native_Encoding, "Set_Native_Encoding");

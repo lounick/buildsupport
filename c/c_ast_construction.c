@@ -257,6 +257,12 @@ void Set_Language_To_MicroPython()
         fv->language = micropython;
 }
 
+void Set_Language_To_ROS_Bridge()
+{
+    if (NULL != fv)
+        fv->language = ros_bridge;
+}
+
 void Set_Zipfile (char *file, size_t len)
 {
     assert (NULL != file && 0 < len && NULL != fv);

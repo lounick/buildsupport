@@ -82,6 +82,7 @@ void Set_Language_To_Other();
 void Set_Language_To_Simulink();
 void Set_Language_To_SDL();
 void Set_Language_To_MicroPython();
+void Set_Language_To_ROS_Bridge();
 void Set_ASN1_BasicType_Unknown();
 void Set_ASN1_BasicType_OctetString();
 void Set_ASN1_BasicType_Choice();

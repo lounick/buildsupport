@@ -74,6 +74,7 @@ typedef enum {
     blackbox_device,
     vdm,
     micropython,
+    ros_bridge,
     other
 } Language;
 
