@@ -396,12 +396,17 @@ void Semantic_Checks()
     FOREACH(process, Process, get_system_ast()->processes, {
             int count = 0;
             FOREACH(binding, Aplc_binding, process->bindings, {
-                    if (vhdl == binding->fv->language) count++;}
-            ); if (count > 1) {
-            ERROR
-            ("[ERROR] in a distributed system, a partition can contain only ONE\n");
-            ERROR("   VHDL component. Partition \"%s\" has %d.\n",
-                   process->name, count); add_error();}
+                    if (vhdl_brave == binding->fv->language
+                        || vhdl   == binding->fv->language) {
+                        count++;
+                    }
+            });
+            if (count > 1) {
+                ERROR
+                    ("[ERROR] in a distributed system, a partition can contain only ONE\n");
+                ERROR("   VHDL component. Partition \"%s\" has %d.\n",
+                   process->name, count); add_error();
+            }
 
     });
 }

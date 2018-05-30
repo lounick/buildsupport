@@ -58,7 +58,7 @@ void GW_VHDL_Backend(FV * fv)
 {
     if (get_context()->onlycv)
         return;
-    if (vhdl == fv->language) {
+    if (vhdl == fv->language || vhdl_brave == fv->language) {
         GLUE_MiniCV_Backend(fv);
         if (!get_context()->glue) {
             vhdl_skeletons(fv);

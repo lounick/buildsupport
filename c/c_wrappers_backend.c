@@ -140,15 +140,17 @@ void c_wrappers_preamble(FV * fv)
 
     /* Include the header files to get the function prototypes */
     if (!fv->artificial) {
-        if (blackbox_device != fv->language
-                && simulink != fv->language
-                && qgenc    != fv->language
-                && vhdl     !=  fv->language) {
+        if (blackbox_device   != fv->language
+                && simulink   != fv->language
+                && qgenc      != fv->language
+                && vhdl_brave !=  fv->language
+                && vhdl       !=  fv->language) {
             fprintf (cfile, "#include \"%s_vm_if.h\"\n\n", fv->name);
         }
-        else if(simulink != fv->language
-                && qgenc != fv->language
-                && vhdl  != fv->language) {
+        else if(simulink      != fv->language
+                && qgenc      != fv->language
+                && vhdl       != fv->language
+                && vhdl_brave != fv->language) {
             fprintf (cfile, "#include \"%s.h\"\n\n", fv->name);
         }
         else if (simulink == fv->language && NULL != fv->interfaces) {

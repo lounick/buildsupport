@@ -70,6 +70,7 @@ typedef enum {
     scade,
     rtds,
     vhdl,
+    vhdl_brave,
     system_c,
     blackbox_device,
     vdm,

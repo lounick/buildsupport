@@ -187,10 +187,11 @@ void Create_script()
     /* Remove old zip files and create fresh new ones from user code */
     FOREACH (fv, FV, get_system_ast()->functions, {
         //if (sdl != fv->language  PUT BACK WHEN OPENGEODE FULLY SUPPORTED
-        if (vhdl != fv->language
-            && gui != fv->language
-            && rtds != fv->language
-            && NULL == fv->zipfile) {
+        if (vhdl          != fv->language
+            && vhdl_brave != fv->language
+            && gui        != fv->language
+            && rtds       != fv->language
+            && NULL       == fv->zipfile) {
             fprintf (script,
                     "cd \"$SKELS\" && rm -f %s.zip && "
                     "zip %s %s/* && cd $OLDPWD\n\n",
@@ -271,7 +272,8 @@ void Create_script()
                 case ada: if (fv->is_component_type == true) fprintf (script, "--with-extra-Ada-code ");
                          else fprintf (script, "--subAda ");
                       break;
-                case vhdl: fprintf (script, "--subVHDL ");
+                case vhdl:
+                case vhdl_brave: fprintf (script, "--subVHDL ");
                       break;
                 case qgenada: fprintf (script, "--subQGenAda ");
                       break;

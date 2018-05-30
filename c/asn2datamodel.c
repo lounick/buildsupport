@@ -34,9 +34,12 @@ void Call_asn2dataModel(FV * fv)
     int ret = 0;
 
     /* There is no A mapper for VHDL/SystemC/GUI */
-    if (vhdl == fv->language || system_c == fv->language
-        || gui == fv->language)
+    if (vhdl          == fv->language
+        || vhdl_brave == fv->language
+        || system_c   == fv->language
+        || gui        == fv->language) {
         return;
+    }
 
     /* check if there is at least one parameter in one interface */
     // Removed - generate data types in any case so that user code

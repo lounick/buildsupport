@@ -245,6 +245,12 @@ void Set_Language_To_VHDL()
         fv->language = vhdl;
 }
 
+void Set_Language_To_VHDL_Brave()
+{
+    if (NULL != fv)
+        fv->language = vhdl_brave;
+}
+
 void Set_Language_To_System_C()
 {
     if (NULL != fv)

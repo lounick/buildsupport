@@ -35,6 +35,7 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
             (rtds==i->parent_fv->language)?"RTDS":\
             (scade==i->parent_fv->language)?"SCADE6":\
             (vhdl==i->parent_fv->language)?"VHDL":\
+            (vhdl_brave==i->parent_fv->language)?"VHDL_BRAVE":\
             (system_c==i->parent_fv->language)?"SYSTEM_C":\
             (gui==i->parent_fv->language && PI==i->direction)?"GUI_PI":\
             (gui==i->parent_fv->language && RI==i->direction)?"GUI_RI":\
