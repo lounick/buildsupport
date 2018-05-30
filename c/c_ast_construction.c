@@ -149,6 +149,18 @@ void Set_Debug_Messages()
         }
 }
 
+// Functions in AADL model may contain additional properties, set them in a list
+void Set_Property (char *name, size_t name_len, char *val, size_t val_len)
+{
+    AADL_Property *property;
+
+    property = (AADL_Property *) malloc (sizeof (AADL_Property));
+    assert (NULL != fv && NULL != property);
+
+    build_string (&(property->name), name, name_len);
+    build_string (&(property->value), val, val_len);
+    APPEND_TO_LIST (AADL_Property, fv->properties, property);
+}
 
 void Set_Language_To_SDL()
 {
@@ -367,7 +379,7 @@ void Set_Context_Variable (char *name, size_t len1, char *type, size_t len2,
 
  /* Convert '_' to '-' to be ASN.1-compliant */
  for (i=0; i<len4; i++) if ('_' == cp->type.module[i]) cp->type.module[i] = '-';
- 
+
  APPEND_TO_LIST (Context_Parameter, fv->context_parameters, cp);
 }
 

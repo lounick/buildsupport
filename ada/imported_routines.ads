@@ -25,6 +25,11 @@ package Imported_Routines is
                        DistName : String;
                        DistNameLen : Integer);
 
+   procedure C_Set_Property (Name    : String;
+                             Len     : Integer;
+                             Val     : String;
+                             Val_Len : Integer);
+
    procedure C_Set_Distant_APLC (Arg : String; Len : Integer);
    procedure C_End_IF;
    procedure C_End_FV;
@@ -231,6 +236,7 @@ private
    pragma Import (C, C_New_FV, "New_FV");
    pragma Import (C, C_Add_PI, "Add_PI");
    pragma Import (C, C_Add_RI, "Add_RI");
+   pragma Import (C, C_Set_Property, "Set_Property");
    pragma Import (C, C_Set_Distant_APLC, "Set_Distant_APLC");
    pragma Import (C, C_End_IF, "End_IF");
    pragma Import (C, C_End_FV, "End_FV");

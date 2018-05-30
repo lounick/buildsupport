@@ -209,6 +209,8 @@ procedure BuildSupport is
                      when Language_Rhapsody      => C_Set_Language_To_Rhapsody;
                      when Language_Gui           => C_Set_Language_To_GUI;
                      when Language_VHDL          => C_Set_Language_To_VHDL;
+                     when Language_VHDL_BRAVE    =>
+                                             C_Set_Language_To_VHDL_BRAVE;
                      when Language_System_C      => C_Set_Language_To_System_C;
                      when Language_Device        =>
                                              C_Set_Language_To_BlackBox_Device;
@@ -248,6 +250,17 @@ procedure BuildSupport is
                      if IsComponent then
                         C_Set_Is_Component_Type;
                      end if;
+                  end;
+                  declare
+                     --  Get the list of AADL properties
+                     Properties : constant Property_Maps.Map :=
+                                                     Get_Properties_Map (CI);
+                  begin
+                     --  Iterate on the Function properties
+                     for each in Properties.Iterate loop
+                        Put_Line (Property_Maps.Key (each) & " : " &
+                                  Property_Maps.Element (each));
+                     end loop;
                   end;
 
                --  Parse the functional states of this FV
