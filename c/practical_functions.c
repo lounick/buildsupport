@@ -921,6 +921,7 @@ void Create_FV(FV ** fv)
         (*fv)->thread_id = 0;
         (*fv)->process = NULL;
         (*fv)->context_parameters = NULL;
+        (*fv)->properties = NULL;
         /* artificial: for VT-created functions */
         (*fv)->artificial = false;
         /* original_name is set when artificial==true */

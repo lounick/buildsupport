@@ -66,6 +66,7 @@ void Set_Cyclic_IF();
 void Set_Unknown_IF();
 void Set_ASync_IF();
 void Set_Sync_IF();
+void Set_Property (char *name, size_t name_len, char *val, size_t val_len);
 void Set_Language_To_GUI();
 void Set_Language_To_CPP();
 void Set_Language_To_VDM();

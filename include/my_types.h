@@ -140,6 +140,14 @@ typedef struct t_asntype {
 
 DECLARE_LIST (ASN1_Type)
 
+/* Type used to store an AADL property */
+typedef struct t_property {
+    String *name;
+    String *value;
+} Property;
+
+DECLARE_LIST (Property)
+
 /* Type used to define a context parameter (functional state) */
 typedef struct t_contextparam {
   char          *name;
@@ -241,6 +249,7 @@ typedef struct t_fv {
   struct t_FV_list       *calling_threads;
   int                    thread_id;
   Context_Parameter_list *context_parameters;
+  Property_list          *properties;
   bool                   artificial;
   char                   *original_name;
   bool                   timer;
