@@ -258,8 +258,12 @@ procedure BuildSupport is
                   begin
                      --  Iterate on the Function properties
                      for each in Properties.Iterate loop
-                        Put_Line (Property_Maps.Key (each) & " : " &
-                                  Property_Maps.Element (each));
+                        C_Set_Property (Property_Maps.Key (each),
+                                        Property_Maps.Key (each)'Length,
+                                        Property_Maps.Element (each),
+                                        Property_Maps.Element (each)'Length);
+                        --  Put_Line (Property_Maps.Key (each) & " : " &
+                        --            Property_Maps.Element (each));
                      end loop;
                   end;
 

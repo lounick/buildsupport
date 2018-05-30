@@ -155,7 +155,9 @@ void Set_Property (char *name, size_t name_len, char *val, size_t val_len)
     AADL_Property *property;
 
     property = (AADL_Property *) malloc (sizeof (AADL_Property));
-    assert (NULL != fv && NULL != property);
+    assert (NULL != fv && NULL != property && 0 < name_len && 0 < val_len);
+    property->name = NULL;
+    property->value = NULL;
 
     build_string (&(property->name), name, name_len);
     build_string (&(property->value), val, val_len);
