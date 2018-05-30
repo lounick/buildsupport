@@ -100,8 +100,13 @@ void Add_Subprogram(Interface * i)
             i->name, ENCODING(i));
 
     fprintf(cv, "\tFV_Name => \"%s\";\n", i->parent_fv->name);
-    fprintf(cv, "\tSource_Language => %s;\nEND %s.%s;\n\n",
-            ENCODING(i), i->name, ENCODING(i));
+    fprintf(cv, "\tSource_Language => %s;\n", ENCODING(i));
+    //  Add all generic properties of the function to mini-cv
+    //  Initially added to support VHDL BRAVE properties
+    FOREACH (prop, AADL_Property, i->parent_fv->properties, {
+        fprintf (cv, "\t%s => \"%s\";\n", prop->name, prop->value);
+    });
+    fprintf(cv, "END %s.%s;\n\n", i->name, ENCODING(i));
 }
 
 /* Close the Concurrency view */
