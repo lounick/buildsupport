@@ -210,7 +210,7 @@ procedure BuildSupport is
                      when Language_Gui           => C_Set_Language_To_GUI;
                      when Language_VHDL          => C_Set_Language_To_VHDL;
                      when Language_VHDL_BRAVE    =>
-                                             C_Set_Language_To_VHDL_BRAVE;
+                        C_Set_Language_To_VHDL_BRAVE;
                      when Language_System_C      => C_Set_Language_To_System_C;
                      when Language_Device        =>
                                              C_Set_Language_To_BlackBox_Device;
@@ -218,9 +218,10 @@ procedure BuildSupport is
                      when Language_QGenC         => C_Set_Language_To_QGenC;
                      when Language_MicroPython   =>
                                              C_Set_Language_To_MicroPython;
-                     when others                 => Exit_On_Error (True,
-                         "Language is currently not supported: "
-                         & Source_Language'Img);
+                     when others                 =>
+                        Exit_On_Error (True,
+                                       "Language is currently not supported: "
+                                       & Source_Language'Img);
                   end case;
 
                   --  Retrieve the ZIP file (optionally set by the user)

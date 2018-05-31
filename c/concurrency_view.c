@@ -5,6 +5,8 @@
 
 (mini-)Concurrency view backend: Generates one AADL file per functional view
 in order to generate the glue code for each PI/RI using Semantix'AADL2GlueC tool
+o
+utput : mini-cv.aadl for each function
 
 1st version written by Maxime Perrotin/ESA 01/04/2008
 updated 8-8-8 with GUI language
@@ -15,8 +17,6 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
 
 */
 
-#define ID "$Id: concurrency_view.c 300 2009-07-15 12:47:25Z maxime1008 $"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,21 +25,23 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
 
 #include "practical_functions.h"
 
-#define ENCODING(i) (sdl==i->parent_fv->language)?"SDL":\
-            (simulink==i->parent_fv->language)?"Simulink":\
-            (micropython==i->parent_fv->language)?"MicroPython":\
-            (qgenc==i->parent_fv->language)?"QGenC":\
-            (ada==i->parent_fv->language)?"Ada":\
-            (vdm==i->parent_fv->language)?"Vdm":\
-            (qgenada==i->parent_fv->language)?"QGenAda":\
-            (rtds==i->parent_fv->language)?"RTDS":\
-            (scade==i->parent_fv->language)?"SCADE6":\
-            (vhdl==i->parent_fv->language)?"VHDL":\
-            (vhdl_brave==i->parent_fv->language)?"VHDL":\
-            (system_c==i->parent_fv->language)?"SYSTEM_C":\
-            (gui==i->parent_fv->language && PI==i->direction)?"GUI_PI":\
-            (gui==i->parent_fv->language && RI==i->direction)?"GUI_RI":\
-            (rhapsody==i->parent_fv->language)? "Rhapsody":"C"
+#define ENCODING(i) (sdl == i->parent_fv->language) ? "SDL":\
+            (simulink    == i->parent_fv->language) ? "Simulink":\
+            (micropython == i->parent_fv->language) ? "MicroPython":\
+            (qgenc       == i->parent_fv->language) ? "QGenC":\
+            (ada         == i->parent_fv->language) ? "Ada":\
+            (vdm         == i->parent_fv->language) ? "Vdm":\
+            (qgenada     == i->parent_fv->language) ? "QGenAda":\
+            (rtds        == i->parent_fv->language) ? "RTDS":\
+            (scade       == i->parent_fv->language) ? "SCADE6":\
+            (vhdl        == i->parent_fv->language) ? "VHDL":\
+            (vhdl_brave  == i->parent_fv->language) ? "VHDL":\
+            (system_c    == i->parent_fv->language) ? "SYSTEM_C":\
+            (gui         == i->parent_fv->language\
+                   && PI == i->direction)           ? "GUI_PI":\
+            (gui         == i->parent_fv->language\
+                   && RI == i->direction)           ?"GUI_RI":\
+            (rhapsody    == i->parent_fv->language) ? "Rhapsody":"C"
 
 static FILE *cv;
 
