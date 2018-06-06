@@ -72,13 +72,13 @@ void ada_wrappers_preamble(FV * fv)
     /*  wrappers.adb top header */
     fprintf(adb,
             "--  This file was generated automatically: DO NOT MODIFY IT !\n\n");
-//   fprintf(adb,
-//           "--  pragma Style_Checks (Off);\n"
-//           "--  pragma Warnings (Off);\n\n"
-//           "with PolyORB_HI_Generated.Activity,\n"
-//           "     PolyORB_HI.Utils;\n"
-//           "use  PolyORB_HI_Generated.Activity,\n"
-//           "     PolyORB_HI.Utils;\n\n");
+    fprintf(adb,
+            "--  pragma Style_Checks (Off);\n"
+            "--  pragma Warnings (Off);\n\n"
+            "with PolyORB_HI_Generated.Activity,\n"
+            "     PolyORB_HI.Utils;\n"
+            "use  PolyORB_HI_Generated.Activity,\n"
+            "     PolyORB_HI.Utils;\n\n");
 
 
     fprintf(ads, "with Interfaces.C;\n");
