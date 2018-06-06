@@ -46,6 +46,7 @@ void c_preamble(FV * fv)
                    "    #include <stdio.h>\n"
                    "#else\n"
                    "    typedef unsigned size_t;\n"
+                   "    typedef int ssize_t;\n"
                    "#endif\n\n");
 
     fprintf(vm_if_h, "#ifdef __cplusplus\n"
@@ -543,7 +544,7 @@ void add_RI_to_c_invoke_ri(Interface * i)
         }
         FOREACH(p, Parameter, i->in, {
             fprintf(invoke_ri,
-                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    size_t size_IN_buf_%s=0;\n",
+                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    ssize_t size_IN_buf_%s=0;\n",
                     p->name,
                     (native == p->encoding) ? "sizeof(" : "",
                     p->type,
@@ -685,12 +686,13 @@ void GLUE_C_InvokeRI(Interface * i)
         /* Discard duplicate RI (with different synchronism) - keep only the sync one */
         if (asynch == i->synchronism) {
             FOREACH(interface, Interface, i->parent_fv->interfaces, {
-                    if (RI == interface->direction &&
-                        !strcmp(interface->name, i->name) &&
-                        synch == interface->synchronism) {
-                    return;}
-                    }
-            );
+                if (RI == interface->direction &&
+                    !strcmp(interface->name, i->name) &&
+                    synch == interface->synchronism)
+                {
+                    return;
+                }
+            });
         }
         add_RI_to_c_invoke_ri(i);
     }

@@ -1244,7 +1244,7 @@ void List_C_Params_And_Size(Parameter * p, FILE ** file)
             comma ? ", " : "",
             (param_in == p->param_direction) ? "IN" : "OUT",
             p->name,
-            (param_in == p->param_direction) ? "size_IN" : "&size_OUT",
+            (param_in == p->param_direction) ? "(size_t)size_IN" : "&size_OUT",
             p->name);
 }
 

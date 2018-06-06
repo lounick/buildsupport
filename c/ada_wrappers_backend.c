@@ -72,13 +72,13 @@ void ada_wrappers_preamble(FV * fv)
     /*  wrappers.adb top header */
     fprintf(adb,
             "--  This file was generated automatically: DO NOT MODIFY IT !\n\n");
-    fprintf(adb,
-            "--  pragma Style_Checks (Off);\n"
-            "--  pragma Warnings (Off);\n\n"
-            "with PolyORB_HI_Generated.Activity,\n"
-            "     PolyORB_HI.Utils;\n"
-            "use  PolyORB_HI_Generated.Activity,\n"
-            "     PolyORB_HI.Utils;\n\n");
+//   fprintf(adb,
+//           "--  pragma Style_Checks (Off);\n"
+//           "--  pragma Warnings (Off);\n\n"
+//           "with PolyORB_HI_Generated.Activity,\n"
+//           "     PolyORB_HI.Utils;\n"
+//           "use  PolyORB_HI_Generated.Activity,\n"
+//           "     PolyORB_HI.Utils;\n\n");
 
 
     fprintf(ads, "with Interfaces.C;\n");
@@ -158,7 +158,7 @@ void ada_wrappers_preamble(FV * fv)
 
     fprintf(ads, "\npackage %s_Wrappers is\n\n", fv->name);
     // To debug backdoor-related misuse of the passive functions stack:
-     fprintf(adb, "with PolyORB_HI.Output;\n\n");
+//     fprintf(adb, "with PolyORB_HI.Output;\n\n");
 
     fprintf(adb, "package body %s_Wrappers is\n\n", fv->name);
 
@@ -308,7 +308,7 @@ void add_PI_to_ada_wrappers(Interface * i)
             "   ------------------------------------------------------\n"
             "   --  Provided Interface \"%s\"\n"
             "   ------------------------------------------------------\n"
-            "   procedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
+            "   procedure %s (dummy_Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
             i->name,
             i->name);
 
@@ -327,7 +327,7 @@ void add_PI_to_ada_wrappers(Interface * i)
             "   ------------------------------------------------------\n"
             "   --  Asynchronous Provided Interface \"%s\"\n"
             "   ------------------------------------------------------\n"
-            "   procedure %s (Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
+            "   procedure %s (dummy_Entity : PolyORB_HI_Generated.Deployment.Entity_Type",
             i->name,
             i->name);
 
