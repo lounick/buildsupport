@@ -546,7 +546,9 @@ void add_RI_to_c_wrappers(Interface * i)
             }
             else if (count > 1) {
                 /* Several possible callers: get current thread id */
-                fprintf(b, "   switch(__po_hi_get_task_id()) {\n");
+                fprintf(b,"   #pragma GCC diagnostic ignored \"-Wswitch-enum\"\n"
+                          "   #pragma GCC diagnostic push\n"
+                          "   switch(__po_hi_get_task_id()) {\n");
                 FOREACH(caller, FV, calltmp, {
                     fprintf(b, "      case %s_%s_k: vm_async_%s_%s_vt(",
                             caller->process->identifier,
@@ -561,8 +563,9 @@ void add_RI_to_c_wrappers(Interface * i)
                         }
                         fprintf(b, "); break;\n");
                 });
-                fprintf(b, "      default: break;\n");
-                fprintf(b, "   }\n");
+                fprintf(b, "      default: break;\n"
+                           "   }\n"
+                           "   #pragma GCC diagnostic pop\n");
             }
         }
     }
