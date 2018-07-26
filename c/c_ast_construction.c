@@ -253,6 +253,12 @@ void Set_Language_To_GUI()
         fv->language = gui;
 }
 
+void Set_Language_To_ROS_Bridge()
+{
+    if (NULL != fv)
+        fv->language = ros_bridge;
+}
+
 void Set_Language_To_VHDL()
 {
     if (NULL != fv)

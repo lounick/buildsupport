@@ -64,6 +64,8 @@ void c_preamble(FV * fv)
     }
     else if (micropython == fv->language) {
         fprintf(vm_if, "#include \"%s_mpy_bindings.h\"\n\n", fv->name);
+    } else if (ros_bridge == fv->language) {
+	printf(vm_if, "#include \"%s_ros_bridge_header.h\"\n\n", fv->name);
     }
 
     if (hasparam) {
@@ -725,7 +727,8 @@ void GLUE_C_Backend(FV * fv)
          || rtds        == fv->language
          || cpp         == fv->language
          || opengeode   == fv->language
-         || micropython == fv->language) {
+         || micropython == fv->language
+	 || ros_bridge  == fv->language) {
             Init_C_Glue_Backend(fv);
             FOREACH(i, Interface, fv->interfaces, {
                 GLUE_C_ProvidedInterface(i);

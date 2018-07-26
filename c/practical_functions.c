@@ -1264,7 +1264,8 @@ void Dump_model(System * s)
                    fv->language ? "c" : ada ==
                    fv->language ? "ada" : qgenada ==
                    fv->language ? "qgenada" : gui ==
-                   fv->language ? "gui" : scade ==
+                   fv->language ? "gui" : ros_bridge ==
+                   fv->language ? "ros_bridge" : scade ==
                    fv->language ? "scade" : rtds ==
                    fv->language ? "rtds" : blackbox_device ==
                    fv->language ? "blackbox_device" : "unknown");

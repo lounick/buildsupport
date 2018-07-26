@@ -67,6 +67,7 @@ typedef enum {
     ada,
     rhapsody,
     gui,
+    ros_bridge,
     scade,
     rtds,
     vhdl,

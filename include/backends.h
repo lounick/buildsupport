@@ -37,6 +37,7 @@ extern void  GLUE_RTDS_Backend(FV *);
 extern void  GLUE_MiniCV_Backend(FV *);
 extern void  GLUE_C_Backend(FV *);
 extern void  GLUE_GUI_Backend(FV *);
+extern void  GLUE_ROS_Bridge_Backend(FV *);
 extern void  GLUE_Ada_Wrappers_Backend(FV *);
 extern void  GLUE_C_Wrappers_Backend(FV *);
 extern void  GLUE_VT_Backend(FV *);

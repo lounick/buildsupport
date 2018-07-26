@@ -194,6 +194,7 @@ void Create_script()
             && vhdl_brave != fv->language
             && gui        != fv->language
             && rtds       != fv->language
+	    && ros_bridge != fv->language
             && NULL       == fv->zipfile) {
             fprintf (script,
                     "cd \"$SKELS\" && rm -f %s.zip && "
@@ -284,6 +285,8 @@ void Create_script()
                       break;
                 case micropython: fprintf (script, "--subMicroPython ");
                       break;
+		case ros_bridge: fprintf(script, "--subCPP ");
+		      break;
                 default:
                      ERROR ("[ERROR] Unsupported language (function %s)\n", fv->name);
                      ERROR ("  -> please manually check the build-script.sh file\n");

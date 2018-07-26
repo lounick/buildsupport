@@ -40,7 +40,8 @@ Copyright 2014-2015 IB Krates <info@krates.ee>
             (gui         == i->parent_fv->language\
                    && PI == i->direction)           ? "GUI_PI":\
             (gui         == i->parent_fv->language\
-                   && RI == i->direction)           ?"GUI_RI":\
+                   && RI == i->direction)           ? "GUI_RI":\
+            (ros_bridge  == i->parent_fv->language) ? "ROS_Bridge":\
             (rhapsody    == i->parent_fv->language) ? "Rhapsody":"C"
 
 static FILE *cv;
