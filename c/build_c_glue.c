@@ -65,7 +65,7 @@ void c_preamble(FV * fv)
     else if (micropython == fv->language) {
         fprintf(vm_if, "#include \"%s_mpy_bindings.h\"\n\n", fv->name);
     } else if (ros_bridge == fv->language) {
-	printf(vm_if, "#include \"%s_ros_bridge_header.h\"\n\n", fv->name);
+	fprintf(vm_if, "#include \"%s_ros_bridge_header.h\"\n\n", fv->name);
     }
 
     if (hasparam) {
