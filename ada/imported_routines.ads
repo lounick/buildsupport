@@ -268,7 +268,8 @@ private
    pragma Import (C, C_Set_Language_To_QGenC, "Set_Language_To_QGenC");
    pragma Import (C, C_Set_Language_To_Scade, "Set_Language_To_Scade");
    pragma Import (C, C_Set_Language_To_GUI, "Set_Language_To_GUI");
-   pragma Import (C, C_Set_Language_To_ROS_Bridge, "Set_Language_To_ROS_Bridge");
+   pragma Import (C, C_Set_Language_To_ROS_Bridge,
+      "Set_Language_To_ROS_Bridge");
    pragma Import (C, C_Set_Language_To_VHDL_BRAVE,
                   "Set_Language_To_VHDL_BRAVE");
    pragma Import (C, C_Set_Language_To_VHDL, "Set_Language_To_VHDL");

@@ -208,6 +208,8 @@ procedure BuildSupport is
                      when Language_Simulink      => C_Set_Language_To_Simulink;
                      when Language_Rhapsody      => C_Set_Language_To_Rhapsody;
                      when Language_Gui           => C_Set_Language_To_GUI;
+                     when Language_ROS_Bridge    =>
+                        C_Set_Language_To_ROS_Bridge;
                      when Language_VHDL          => C_Set_Language_To_VHDL;
                      when Language_VHDL_BRAVE    =>
                         C_Set_Language_To_VHDL_BRAVE;
