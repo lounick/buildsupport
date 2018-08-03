@@ -64,6 +64,8 @@ void c_preamble(FV * fv)
     }
     else if (micropython == fv->language) {
         fprintf(vm_if, "#include \"%s_mpy_bindings.h\"\n\n", fv->name);
+    } else if (ros_bridge == fv->language) {
+	fprintf(vm_if, "#include \"%s_ros_bridge_header.h\"\n\n", fv->name);
     }
 
     if (hasparam) {
@@ -543,7 +545,7 @@ void add_RI_to_c_invoke_ri(Interface * i)
         }
         FOREACH(p, Parameter, i->in, {
             fprintf(invoke_ri,
-                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    size_t size_IN_buf_%s=0;\n",
+                    "    static char IN_buf_%s[%sasn1Scc%s%s] = {0};\n    int size_IN_buf_%s=0;\n",
                     p->name,
                     (native == p->encoding) ? "sizeof(" : "",
                     p->type,
@@ -685,12 +687,13 @@ void GLUE_C_InvokeRI(Interface * i)
         /* Discard duplicate RI (with different synchronism) - keep only the sync one */
         if (asynch == i->synchronism) {
             FOREACH(interface, Interface, i->parent_fv->interfaces, {
-                    if (RI == interface->direction &&
-                        !strcmp(interface->name, i->name) &&
-                        synch == interface->synchronism) {
-                    return;}
-                    }
-            );
+                if (RI == interface->direction &&
+                    !strcmp(interface->name, i->name) &&
+                    synch == interface->synchronism)
+                {
+                    return;
+                }
+            });
         }
         add_RI_to_c_invoke_ri(i);
     }
@@ -715,19 +718,25 @@ void GLUE_C_Backend(FV * fv)
     }
 
     if (false == fv->is_component_type) {
-        if (c == fv->language || gui == fv->language || ada == fv->language || vdm == fv->language
-            || qgenada == fv->language || qgenc == fv->language
-            || rtds == fv->language || cpp == fv->language || opengeode == fv->language
-            || micropython == fv->language) {
+        if (c           == fv->language
+         || gui         == fv->language
+         || ada         == fv->language
+         || vdm         == fv->language
+         || qgenada     == fv->language
+         || qgenc       == fv->language
+         || rtds        == fv->language
+         || cpp         == fv->language
+         || opengeode   == fv->language
+         || micropython == fv->language
+	 || ros_bridge  == fv->language) {
             Init_C_Glue_Backend(fv);
             FOREACH(i, Interface, fv->interfaces, {
-                    GLUE_C_ProvidedInterface(i);
-                    }
-            );
+                GLUE_C_ProvidedInterface(i);
+            });
         }
     }
 
-    /* for all languages except ObjectGeode (sdl) and Blackbox devices, generate invoke_ri.c */
+   /* for all languages except ObjectGeode (sdl) and Blackbox devices, generate invoke_ri.c */
     if (sdl != fv->language && blackbox_device != fv->language && true != fv->is_component_type) {
         FOREACH(i, Interface, fv->interfaces, {
                 GLUE_C_InvokeRI(i);

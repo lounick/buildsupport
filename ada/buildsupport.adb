@@ -13,7 +13,6 @@ with Ada.Strings.Unbounded,
      Locations,
      Ocarina.Namet,
      Ocarina.Types,
-     System.Assertions,
      Ocarina.Analyzer,
      Ocarina.Backends.Properties,
      Ocarina.Configuration,
@@ -209,7 +208,11 @@ procedure BuildSupport is
                      when Language_Simulink      => C_Set_Language_To_Simulink;
                      when Language_Rhapsody      => C_Set_Language_To_Rhapsody;
                      when Language_Gui           => C_Set_Language_To_GUI;
+                     when Language_ROS_Bridge    =>
+                        C_Set_Language_To_ROS_Bridge;
                      when Language_VHDL          => C_Set_Language_To_VHDL;
+                     when Language_VHDL_BRAVE    =>
+                        C_Set_Language_To_VHDL_BRAVE;
                      when Language_System_C      => C_Set_Language_To_System_C;
                      when Language_Device        =>
                                              C_Set_Language_To_BlackBox_Device;
@@ -217,9 +220,10 @@ procedure BuildSupport is
                      when Language_QGenC         => C_Set_Language_To_QGenC;
                      when Language_MicroPython   =>
                                              C_Set_Language_To_MicroPython;
-                     when others                 => Exit_On_Error (True,
-                         "Language is currently not supported: "
-                         & Source_Language'Img);
+                     when others                 =>
+                        Exit_On_Error (True,
+                                       "Language is currently not supported: "
+                                       & Source_Language'Img);
                   end case;
 
                   --  Retrieve the ZIP file (optionally set by the user)
@@ -249,6 +253,21 @@ procedure BuildSupport is
                      if IsComponent then
                         C_Set_Is_Component_Type;
                      end if;
+                  end;
+                  declare
+                     --  Get the list of AADL properties
+                     Properties : constant Property_Maps.Map :=
+                                                     Get_Properties_Map (CI);
+                  begin
+                     --  Iterate on the Function properties
+                     for each in Properties.Iterate loop
+                        C_Set_Property (Property_Maps.Key (each),
+                                        Property_Maps.Key (each)'Length,
+                                        Property_Maps.Element (each),
+                                        Property_Maps.Element (each)'Length);
+                        --  Put_Line (Property_Maps.Key (each) & " : " &
+                        --            Property_Maps.Element (each));
+                     end loop;
                   end;
 
                --  Parse the functional states of this FV
@@ -411,6 +430,15 @@ procedure BuildSupport is
                         elsif Is_Subprogram_Access (If_I) and
                               not (Is_Provided (If_I))
                         then
+                           --  Get operation kind (sporadic, cyclc, etc) of
+                           --  the RI. If the RI is connected, it will be
+                           --  overwritten by the one of the remote PI. We
+                           --  dont check that they match - but we should.
+                           Operation_Kind := Get_RCM_Operation_Kind (If_I);
+                           --  If set to Any, default to Unprotected.
+                           if Operation_Kind = Any_Operation then
+                              Operation_Kind := Unprotected_Operation;
+                           end if;
 
                            --  the name of the feature (RI identifier) is:
                            --  Get_Name_String (Name (Identifier (If_I)));
@@ -1224,7 +1252,7 @@ procedure BuildSupport is
                                        (ATN.Component_Type_Identifier
                                      (Corresponding_Declaration (Tmp_CI2)))));
                               exception
-                                 when System.Assertions.Assert_Failure =>
+                                 when others =>
                                     Put_Line
                                        ("Detected DV from TASTE version 1.2");
                                     Bound_APLC_Name := US

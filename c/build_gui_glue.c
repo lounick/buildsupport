@@ -369,9 +369,7 @@ void create_queues_initialization_function(FV *fv)
     //
     fprintf(code_id, "void %s_startup(void)\n"
                      "{\n"
-                     "   int res_RI = 0;\n"
-                     "   int res_PI = 0;\n"
-                     "   int msgsize_max = 8192;\n"
+                     "   unsigned msgsize_max = 8192;\n"
                      "   FILE *f = fopen(\"/proc/sys/fs/mqueue/msgsize_max\", \"r\");\n"
                      "   fscanf(f, \"%%d\", &msgsize_max);\n\n",
                      fv->name);
@@ -430,7 +428,7 @@ int create_maxelement_queue_size_compute_function_on_IF(T_RI_PI_NAME_LIST *
         IF_TYPE_STRING);
     fprintf(code_id, "{\n");
     fprintf(code_id,
-        "   int MAX_SIZE = sizeof(int);   // The minimum size of a message (id + functional data) is the size of the id alone !\n\n");
+        "   size_t MAX_SIZE = sizeof(int);   // The minimum size of a message (id + functional data) is the size of the id alone !\n\n");
 
     //Initiate iterator on the linked list of IF provided
     iterator = IF_LIST;
@@ -506,11 +504,10 @@ void create_incomming_data_pooler(char *NODE_NAME)
     fprintf(code_id, "{\n");
 
     //Creates necessary local varaiables
-    fprintf(code_id, "   int msgsz = 0;\n");
-    fprintf(code_id, "   unsigned int sender = 0;\n");
+    //fprintf(code_id, "   int msgsz = 0;\n");
+    //fprintf(code_id, "   unsigned int sender = 0;\n");
     fprintf(code_id, "   struct mq_attr msgq_attr;\n");
     fprintf(code_id, "   char* msgcontent = NULL;\n");
-    fprintf(code_id, "   int msg_cnt = 0;\n");
     fprintf(code_id, "   T_%s_RI_list message_recieved_type;\n\n\n",
         NODE_NAME);
 

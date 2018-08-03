@@ -8,7 +8,8 @@ all: build
 
 build:
 ifeq ($(UNAME), Linux)
-	@echo "package Buildsupport_Version is" > ada/buildsupport_version.ads.new
+	@echo "package Buildsupport_Version  is" > ada/buildsupport_version.ads.new
+	@echo "   pragma Style_Checks (Off);" >> ada/buildsupport_version.ads.new
 	@echo "   Buildsupport_Release : constant String :=" >> ada/buildsupport_version.ads.new
 	@echo -n "      \"" >> ada/buildsupport_version.ads.new
 	@git log --oneline | head -1 | cut -f1 -d' ' | tr -d '\012' >> ada/buildsupport_version.ads.new
@@ -28,9 +29,10 @@ ifeq ($(UNAME), Linux)
 		fi ;                                    \
 	fi
 endif
-	@[ "$(DEBIAN)" != "" ] && [ $(ARCH) == 64 ] && EXTRAFLAG="--target=x86_64-linux" ; \
-	ADA_PROJECT_PATH=`ocarina-config --prefix`/lib/gnat:$$ADA_PROJECT_PATH \
-            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG
+	@#[ "$(DEBIAN)" != "" ] && [ $(ARCH) == 64 ] && EXTRAFLAG="--target=x86_64-linux" ; \
+
+	OCARINA_PATH=`ocarina-config --prefix` \
+            $(gnatpath)gprbuild -x -g $(exec) -p -P buildsupport.gpr -XBUILD="debug" $$EXTRAFLAG -j4
 
 install:
 	$(MAKE)

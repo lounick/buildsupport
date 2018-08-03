@@ -67,9 +67,11 @@ typedef enum {
     ada,
     rhapsody,
     gui,
+    ros_bridge,
     scade,
     rtds,
     vhdl,
+    vhdl_brave,
     system_c,
     blackbox_device,
     vdm,
@@ -139,6 +141,14 @@ typedef struct t_asntype {
 } ASN1_Type;
 
 DECLARE_LIST (ASN1_Type)
+
+/* Type used to store an AADL property */
+typedef struct t_property {
+    String *name;
+    String *value;
+} AADL_Property;
+
+DECLARE_LIST (AADL_Property)
 
 /* Type used to define a context parameter (functional state) */
 typedef struct t_contextparam {
@@ -241,6 +251,7 @@ typedef struct t_fv {
   struct t_FV_list       *calling_threads;
   int                    thread_id;
   Context_Parameter_list *context_parameters;
+  AADL_Property_list     *properties;
   bool                   artificial;
   char                   *original_name;
   bool                   timer;
@@ -338,7 +349,7 @@ DECLARE_LIST(Package)
 */
 typedef struct t_system
 {
-    char              *name;
+    char              *name; // always "deploymentview"
     Context           *context;
     FV_list           *functions;
     Process_list      *processes;

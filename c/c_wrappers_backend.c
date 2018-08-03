@@ -107,7 +107,8 @@ void c_wrappers_preamble(FV * fv)
                     result = true;
                 }
             });
-            if (result) {
+            if (result && fv->process == ct->process) {
+                // include only if the functions are in the same node
                 fprintf(h,
                         "#include \"../../%s/%s_polyorb_interface.h\"\n",
                         ct->name, ct->name);
@@ -139,15 +140,17 @@ void c_wrappers_preamble(FV * fv)
 
     /* Include the header files to get the function prototypes */
     if (!fv->artificial) {
-        if (blackbox_device != fv->language
-                && simulink != fv->language
-                && qgenc    != fv->language
-                && vhdl     !=  fv->language) {
+        if (blackbox_device   != fv->language
+                && simulink   != fv->language
+                && qgenc      != fv->language
+                && vhdl_brave !=  fv->language
+                && vhdl       !=  fv->language) {
             fprintf (cfile, "#include \"%s_vm_if.h\"\n\n", fv->name);
         }
-        else if(simulink != fv->language
-                && qgenc != fv->language
-                && vhdl  != fv->language) {
+        else if(simulink      != fv->language
+                && qgenc      != fv->language
+                && vhdl       != fv->language
+                && vhdl_brave != fv->language) {
             fprintf (cfile, "#include \"%s.h\"\n\n", fv->name);
         }
         else if (simulink == fv->language && NULL != fv->interfaces) {
@@ -543,7 +546,9 @@ void add_RI_to_c_wrappers(Interface * i)
             }
             else if (count > 1) {
                 /* Several possible callers: get current thread id */
-                fprintf(b, "   switch(__po_hi_get_task_id()) {\n");
+                fprintf(b,"   #pragma GCC diagnostic ignored \"-Wswitch-enum\"\n"
+                          "   #pragma GCC diagnostic push\n"
+                          "   switch(__po_hi_get_task_id()) {\n");
                 FOREACH(caller, FV, calltmp, {
                     fprintf(b, "      case %s_%s_k: vm_async_%s_%s_vt(",
                             caller->process->identifier,
@@ -558,8 +563,9 @@ void add_RI_to_c_wrappers(Interface * i)
                         }
                         fprintf(b, "); break;\n");
                 });
-                fprintf(b, "      default: break;\n");
-                fprintf(b, "   }\n");
+                fprintf(b, "      default: break;\n"
+                           "   }\n"
+                           "   #pragma GCC diagnostic pop\n");
             }
         }
     }

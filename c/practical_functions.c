@@ -260,6 +260,7 @@ int create_file(char *fv_name, char *file, FILE ** f)
 
     filename = make_string ("%s/%s", fv_name, file);
     assert(NULL != filename);
+    INFO ("[INFO] Creating %s\n", filename);
 
     *f = fopen(filename, "w");
 
@@ -920,6 +921,7 @@ void Create_FV(FV ** fv)
         (*fv)->thread_id = 0;
         (*fv)->process = NULL;
         (*fv)->context_parameters = NULL;
+        (*fv)->properties = NULL;
         /* artificial: for VT-created functions */
         (*fv)->artificial = false;
         /* original_name is set when artificial==true */
@@ -1242,7 +1244,7 @@ void List_C_Params_And_Size(Parameter * p, FILE ** file)
             comma ? ", " : "",
             (param_in == p->param_direction) ? "IN" : "OUT",
             p->name,
-            (param_in == p->param_direction) ? "size_IN" : "&size_OUT",
+            (param_in == p->param_direction) ? "(size_t)size_IN" : "&size_OUT",
             p->name);
 }
 
@@ -1262,7 +1264,8 @@ void Dump_model(System * s)
                    fv->language ? "c" : ada ==
                    fv->language ? "ada" : qgenada ==
                    fv->language ? "qgenada" : gui ==
-                   fv->language ? "gui" : scade ==
+                   fv->language ? "gui" : ros_bridge ==
+                   fv->language ? "ros_bridge" : scade ==
                    fv->language ? "scade" : rtds ==
                    fv->language ? "rtds" : blackbox_device ==
                    fv->language ? "blackbox_device" : "unknown");

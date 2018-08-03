@@ -122,6 +122,7 @@ void write_thread_implementation(FV *fv)
    }
 
    fprintf(thread, "\tInitialize_Entrypoint_Source_Text => ");
+   //fprintf(thread, "\tActivate_Entrypoint_Source_Text => ");
 
    if (0 == fv->system_ast->context->polyorb_hi_c) { /* PolyORB-HI/Ada */
        fprintf(thread, "\"%s_wrappers.C_Init_%s\";\n",
@@ -148,9 +149,9 @@ void write_thread_implementation(FV *fv)
       }
    }
 
-   fprintf(thread, "\tDispatch_Protocol => %s;\n"
-                   "\tPeriod            => %lld ms;\n"
-                   "\tDispatch_Offset   => 0 ms;\n",
+   fprintf(thread, "\tDispatch_Protocol      => %s;\n"
+                   "\tPeriod                 => %lld ms;\n"
+                   "\tDispatch_Offset        => 0 ms;\n",
                     cyclic == op_kind ? "Periodic" : "Sporadic",
                     0 == period ? 1 : period);
 
@@ -213,9 +214,22 @@ void write_thread_implementation(FV *fv)
         (unsigned long long) wcet_high);
    }
 
-   /* Default source stack size per thread */
-   // XXX the -s from the command line is ignored?
-   fprintf(thread,"\tSource_Stack_Size => 50 KByte;\n");
+   bool pohic = (get_context()->polyorb_hi_c);
+   /* Default source stack size per thread is 5 kb to support low resources
+    * platforms. Set it to 100 kb on native platforms */
+   /* This is temporary - this should be an AADL property of the platform */
+   int stack_size = 5;
+
+   FOREACH(p, Process, get_system_ast()->processes, {
+       FOREACH(b, Aplc_binding, p->bindings, {
+           if (b->fv == fv &&
+                   !strcmp(p->cpu->platform_name, "PLATFORM_NATIVE")) {
+               stack_size = 100;
+           }
+       });
+   });
+
+   fprintf(thread,"\tStack_Size             => %d KByte;\n", stack_size);
 
    /* Calculate the priority : temporary solution using the period */
    FOREACH(i, Interface, fv->interfaces, {
@@ -225,16 +239,17 @@ void write_thread_implementation(FV *fv)
    /*
     * Higher period => higher priority.
     * Priority low > priority high (POHIC/Linux)
+    * With Ada, a big number indicates a higher priority
     */
-   if (highest_period < 100) priority = 1;
-   else if (highest_period >= 100 && highest_period < 250) priority = 5;
-   else if (highest_period >= 250 && highest_period < 500) priority = 6;
-   else if (highest_period >= 500 && highest_period < 750) priority = 7;
-   else if (highest_period >= 750 && highest_period < 1000) priority = 8;
-   else if (highest_period == 1000) priority = 9;
-   else if (highest_period > 1000) priority = 10;
+   if (highest_period < 100) priority = pohic ? 1 : 10;
+   else if (highest_period >= 100 && highest_period < 250) priority = pohic ? 5 : 6;
+   else if (highest_period >= 250 && highest_period < 500) priority = pohic ? 6 : 5;
+   else if (highest_period >= 500 && highest_period < 750) priority = pohic ? 7 : 4;
+   else if (highest_period >= 750 && highest_period < 1000) priority = pohic ? 8 : 3;
+   else if (highest_period == 1000) priority = pohic ? 9 : 2;
+   else if (highest_period > 1000) priority = pohic ? 10 : 1;
 
-   fprintf(thread,"\tPriority => %lld;\n", priority);
+   fprintf(thread,"\tPriority               => %lld;\n", priority);
    /* 
     MP: To be investigated
     JH: To be computed from a schedulability analysis of the system,
@@ -977,10 +992,15 @@ void Generate_Full_ConcurrencyView(Process_list *processes, char *root_node)
        FOREACH(b, Bus, get_system_ast()->buses, {
            fprintf(process, "  %s_cv : bus %s;\n", b->name, b->classifier);
        });
+       //      FOREACH(p, Process, processes, {
+
+       //      });
 
       /* Add all drivers of all processes to the complete system */
       FOREACH (p, Process, processes, {
-        FOREACH(b, Device, p->drivers, {
+        GenerateProcessRefinement(p);
+
+	FOREACH(b, Device, p->drivers, {
                 char *driver_no_underscore =
                         underscore_to_dash (b->name, strlen (b->name));
                 fprintf(process,
@@ -1017,10 +1037,6 @@ void Generate_Full_ConcurrencyView(Process_list *processes, char *root_node)
                 free (driver_no_underscore);
         });
      });
-
-      FOREACH(p, Process, processes, {
-        GenerateProcessRefinement(p);
-      });
 
       FOREACH(p, Process, processes, {
           FOREACH(p2, Process, processes, {

@@ -25,6 +25,11 @@ package Imported_Routines is
                        DistName : String;
                        DistNameLen : Integer);
 
+   procedure C_Set_Property (Name    : String;
+                             Len     : Integer;
+                             Val     : String;
+                             Val_Len : Integer);
+
    procedure C_Set_Distant_APLC (Arg : String; Len : Integer);
    procedure C_End_IF;
    procedure C_End_FV;
@@ -166,6 +171,8 @@ package Imported_Routines is
    procedure C_Set_Language_To_Scade;
    procedure C_Set_Language_To_Ada;
    procedure C_Set_Language_To_GUI;
+   procedure C_Set_Language_To_ROS_Bridge;
+   procedure C_Set_Language_To_VHDL_BRAVE;
    procedure C_Set_Language_To_VHDL;
    procedure C_Set_Language_To_System_C;
    procedure C_Set_Language_To_MicroPython;
@@ -231,6 +238,7 @@ private
    pragma Import (C, C_New_FV, "New_FV");
    pragma Import (C, C_Add_PI, "Add_PI");
    pragma Import (C, C_Add_RI, "Add_RI");
+   pragma Import (C, C_Set_Property, "Set_Property");
    pragma Import (C, C_Set_Distant_APLC, "Set_Distant_APLC");
    pragma Import (C, C_End_IF, "End_IF");
    pragma Import (C, C_End_FV, "End_FV");
@@ -260,6 +268,10 @@ private
    pragma Import (C, C_Set_Language_To_QGenC, "Set_Language_To_QGenC");
    pragma Import (C, C_Set_Language_To_Scade, "Set_Language_To_Scade");
    pragma Import (C, C_Set_Language_To_GUI, "Set_Language_To_GUI");
+   pragma Import (C, C_Set_Language_To_ROS_Bridge,
+      "Set_Language_To_ROS_Bridge");
+   pragma Import (C, C_Set_Language_To_VHDL_BRAVE,
+                  "Set_Language_To_VHDL_BRAVE");
    pragma Import (C, C_Set_Language_To_VHDL, "Set_Language_To_VHDL");
    pragma Import (C, C_Set_Language_To_System_C, "Set_Language_To_System_C");
    pragma Import (C, C_Set_Language_To_MicroPython,

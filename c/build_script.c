@@ -65,8 +65,13 @@ void Create_script()
                      "    echo -e \"${INFO} Executing user-defined init script\"\n"
                      "    source user_init_pre.sh\n"
                      "fi\n\n"
+                     "# Set up the cache to limit the calls to ASN1SCC in DMT tools\n"
+                     "mkdir -p .cache\n"
+                     "export PROJECT_CACHE=$(pwd)/.cache\n\n"
                      "# Use PolyORB-HI-C runtime\n"
                      "USE_POHIC=1\n\n"
+                     "# Set Debug mode by default\n"
+                     "DEBUG_MODE=--debug\n\n"
                      "# Detect models from Ellidiss tools v2, and convert them to 1.3\n"
                      "INTERFACEVIEW=%s\n"
                      "grep \"version => \\\"2\" %s >/dev/null && {\n"
@@ -84,43 +89,41 @@ void Create_script()
     FOREACH (fv, FV, get_system_ast()->functions, {
 
         if (qgenada == fv->language) {
-
-        FOREACH(i, Interface, fv->interfaces, {
-            switch (i->direction) {
-                case PI: {
-                    fprintf (script, "\n");
-                    fprintf (script, "# Call QGen to generate Ada code\n");
-                    fprintf (script, "printf \"Calling QGen to generate Ada code from %s.mdl with the following command line:\\n\"\n", i->name);
-                    fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
-                    fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
-                    fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\n", i->name, i->name, fv->name);
-                    fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
-                    } break;
-                case RI: break;
-                default: break;
-            }
-        });
+            FOREACH(i, Interface, fv->interfaces, {
+                switch (i->direction) {
+                    case PI: {
+                        fprintf (script, "\n");
+                        fprintf (script, "# Call QGen to generate Ada code\n");
+                        fprintf (script, "printf \"Calling QGen to generate Ada code from %s.mdl with the following command line:\\n\"\n", i->name);
+                        fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
+                        fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
+                        fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language ada --output %s\n", i->name, i->name, fv->name);
+                        fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
+                        } break;
+                    case RI: break;
+                    default: break;
+                }
+            });
         }
 
         else if (qgenc == fv->language) {
-
-        FOREACH(i, Interface, fv->interfaces, {
-            switch (i->direction) {
-                case PI: {
-                    fprintf (script, "\n");
-                    fprintf (script, "# Call QGen to generate C code\n");
-                    fprintf (script, "printf \"Calling QGen to generate C code from %s.mdl with the following command line:\\n\"\n", i->name);
-                    fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
-                    fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
-                    fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\n\n", i->name, i->name, fv->name);
-                    fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
-                    fprintf (script, "# Add QGen generated C code to C_INCLUDE_PATH\n");
-                    fprintf (script, "export C_INCLUDE_PATH=../../%s/%s/:$C_INCLUDE_PATH\n", fv->name, fv->name);
-                    } break;
-                case RI: break;
-                default: break;
-            }
-        });
+            FOREACH(i, Interface, fv->interfaces, {
+                switch (i->direction) {
+                    case PI: {
+                        fprintf (script, "\n");
+                        fprintf (script, "# Call QGen to generate C code\n");
+                        fprintf (script, "printf \"Calling QGen to generate C code from %s.mdl with the following command line:\\n\"\n", i->name);
+                        fprintf (script, "printf \"qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\\n\"\n", i->name, i->name, i->distant_qgen->fv_name);
+                        fprintf (script, "printf \"Output from QGen\\n\\n\"\n");
+                        fprintf (script, "qgenc %s.mdl --typing %s_types.txt --incremental --no-misra --language c --output %s\n\n", i->name, i->name, fv->name);
+                        fprintf (script, "printf \"\\nEnd of output from QGen\\n\\n\"\n\n");
+                        fprintf (script, "# Add QGen generated C code to C_INCLUDE_PATH\n");
+                        fprintf (script, "export C_INCLUDE_PATH=../../%s/%s/:$C_INCLUDE_PATH\n", fv->name, fv->name);
+                        } break;
+                    case RI: break;
+                    default: break;
+                }
+            });
         }
     });
 
@@ -187,10 +190,12 @@ void Create_script()
     /* Remove old zip files and create fresh new ones from user code */
     FOREACH (fv, FV, get_system_ast()->functions, {
         //if (sdl != fv->language  PUT BACK WHEN OPENGEODE FULLY SUPPORTED
-        if (vhdl != fv->language
-            && gui != fv->language
-            && rtds != fv->language
-            && NULL == fv->zipfile) {
+        if (vhdl          != fv->language
+            && vhdl_brave != fv->language
+            && gui        != fv->language
+            && rtds       != fv->language
+	    && ros_bridge != fv->language
+            && NULL       == fv->zipfile) {
             fprintf (script,
                     "cd \"$SKELS\" && rm -f %s.zip && "
                     "zip %s %s/* && cd $OLDPWD\n\n",
@@ -212,6 +217,10 @@ void Create_script()
                      "    echo -e \"${INFO} Executing user-defined post-init script\"\n"
                      "    source user_init_post.sh\n"
                      "fi\n\n"
+                     "if [ -f additionalCommands.sh ]\n"
+                     "then\n"
+                     "    source additionalCommands.sh\n"
+                     "fi\n\n"
                      "if [ ! -z \"$USE_POHIC\" ]\n"
                      "then\n"
                      "    OUTPUTDIR=binary.c\n"
@@ -224,7 +233,7 @@ void Create_script()
                      "fi\n\n"
                      "cd \"$CWD\" && assert-builder-ocarina.py \\\n"
                      "\t--fast \\\n"
-                     "\t--debug \\\n");
+                     "\t$DEBUG_MODE \\\n");
 
     if (get_context()->polyorb_hi_c)
         fprintf (script,"\t--with-polyorb-hi-c \\\n");
@@ -267,7 +276,8 @@ void Create_script()
                 case ada: if (fv->is_component_type == true) fprintf (script, "--with-extra-Ada-code ");
                          else fprintf (script, "--subAda ");
                       break;
-                case vhdl: fprintf (script, "--subVHDL ");
+                case vhdl:
+                case vhdl_brave: fprintf (script, "--subVHDL ");
                       break;
                 case qgenada: fprintf (script, "--subQGenAda ");
                       break;
@@ -275,6 +285,8 @@ void Create_script()
                       break;
                 case micropython: fprintf (script, "--subMicroPython ");
                       break;
+		case ros_bridge: fprintf(script, "--subCPP ");
+		      break;
                 default:
                      ERROR ("[ERROR] Unsupported language (function %s)\n", fv->name);
                      ERROR ("  -> please manually check the build-script.sh file\n");

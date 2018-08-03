@@ -51,15 +51,15 @@ void rtds_glue_preamble(FV * fv)
             fv->name);
     fprintf(glue_h, "#include \"%s_p_decl.h\"\n\n", fv->name);
 
-    fprintf(glue_h, "static RTDS_Proc %s_instanceDescriptor;\n", fv->name);     /* Declare the SDL instance descriptor */
-    fprintf(glue_h, "static RTDS_GlobalProcessInfo %s_instanceContext;\n", fv->name);   /* Declare the SDL instance context */
-    fprintf(glue_h, "static RTDS_MessageHeader currentMessage;\n\n");   /* Declare the RTDS message header */
-
     /* b. glue_.c preamble */
 
     fprintf(glue_c,
             "/* This file was generated automatically: DO NOT MODIFY IT ! */\n\n");
     fprintf(glue_c, "#include \"glue_%s.h\"\n\n", fv->name);
+
+    fprintf(glue_c, "static RTDS_Proc %s_instanceDescriptor;\n", fv->name);     /* Declare the SDL instance descriptor */
+    fprintf(glue_c, "static RTDS_GlobalProcessInfo %s_instanceContext;\n", fv->name);   /* Declare the SDL instance context */
+    fprintf(glue_c, "static RTDS_MessageHeader currentMessage;\n\n");   /* Declare the RTDS message header */
 
     fprintf(glue_c,
             "RTDS_Proc* %s_instanceDescriptor_ptr = NULL;\n",

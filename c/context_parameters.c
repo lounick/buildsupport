@@ -37,10 +37,10 @@ void Process_Context_Parameters(FV *fv)
 
     ASN1_Filename *filename = NULL;
 
-    /* For the moment context parameters only apply to C, Ada and
-     * Blackbox_Device (= C ) languages 
+    /* For the moment context parameters only apply to C/C++, Ada and
+     * Blackbox_Device (= C) languages
      */
-    if (c != fv->language && ada != fv->language &&
+    if (c != fv->language && ada != fv->language && cpp != fv->language &&
             blackbox_device != fv->language && qgenada != fv->language) {
         return;
     }

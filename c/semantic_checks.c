@@ -165,7 +165,8 @@ void Function_Semantic_Check(FV * fv)
      * (with the exception of blackbox devices which may be connected to
      * an interrupt in the future, and GUIs that may have only TCs)
      */
-    if (blackbox_device != fv->language && gui != fv->language) {
+    if (blackbox_device != fv->language && ros_bridge != fv->language
+	    && gui != fv->language) {
         int count_pi = 0;
         FOREACH(i, Interface, fv->interfaces, {
                 if (PI == i->direction) count_pi++;}
@@ -396,12 +397,17 @@ void Semantic_Checks()
     FOREACH(process, Process, get_system_ast()->processes, {
             int count = 0;
             FOREACH(binding, Aplc_binding, process->bindings, {
-                    if (vhdl == binding->fv->language) count++;}
-            ); if (count > 1) {
-            ERROR
-            ("[ERROR] in a distributed system, a partition can contain only ONE\n");
-            ERROR("   VHDL component. Partition \"%s\" has %d.\n",
-                   process->name, count); add_error();}
+                    if (vhdl_brave == binding->fv->language
+                        || vhdl   == binding->fv->language) {
+                        count++;
+                    }
+            });
+            if (count > 1) {
+                ERROR
+                    ("[ERROR] in a distributed system, a partition can contain only ONE\n");
+                ERROR("   VHDL component. Partition \"%s\" has %d.\n",
+                   process->name, count); add_error();
+            }
 
     });
 }
