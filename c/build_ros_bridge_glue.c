@@ -8,7 +8,7 @@
   author: Kevin De Martelaere (kevin@intermodalics.eu)
  */
 
-#define ID "$Id: build_gui_glue.c 437 2010-01-06 09:19:17Z maxime1008 $"
+#define ID "$Id: build_ros_bridge_glue.c 437 2018-07-26 09:19:17Z lounick $"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -55,7 +55,7 @@ static char *cyclic_name = NULL;
 //Where :
 // %s1 = parameter_type         (eg. asn1Scctype_du_param_1)
 // %s2 = parameter_name         (eg. nom_du_param_1)
-void build_function_parameter_list(char **generated_code,
+/*void build_function_parameter_list(char **generated_code,
                    char *parameter_type,
                    char *parameter_name)
 {
@@ -68,7 +68,7 @@ void build_function_parameter_list(char **generated_code,
     build_string(generated_code, "* ", strlen("* "));
     build_string(generated_code, parameter_name, strlen(parameter_name));
     build_string(generated_code, "_val", strlen("_val"));
-}
+}*/
 
 //Adds to an existing string a string of the form : "   %s1.fromASN1(%s1_val);\n"
 //Where :
@@ -82,9 +82,33 @@ void build_assignation_code_from_asn(char **generated_code, char *parameter_name
     build_string(generated_code, "_val);\n", strlen("_val);\n"));
 }
 
+int create_ros_enum_type_from_list(char *type_name,
+                   T_RI_PI_NAME_LIST * items_list,
+                   char **type_definition)
+{
+    T_RI_PI_NAME_LIST *iterator = NULL;
+
+    build_string(type_definition, "typedef enum {\n",
+         strlen("typedef enum {\n"));
+
+    iterator = items_list;
+    while (iterator != NULL) {
+    build_string(type_definition, "  i_", strlen("  i_"));
+    build_string(type_definition, iterator->name,
+             strlen(iterator->name));
+    build_string(type_definition, ",\n", strlen("_enum,\n"));
+    iterator = iterator->next;
+    }
+    build_string(type_definition, "} ", strlen("} "));
+    build_string(type_definition, type_name, strlen(type_name));
+    build_string(type_definition, ";\n\n", strlen(";\n\n"));
+
+    return 0;
+}
+
 void add_PI_to_ros_bridge_glue(Interface * i)
 {
-    Parameter_list *tmp;
+    //Parameter_list *tmp;
     T_RI_PI_NAME_LIST *new_elt;
 
     // Check if the current PI is the "cyclic" one. If so, discard this PI
@@ -105,17 +129,17 @@ void add_PI_to_ros_bridge_glue(Interface * i)
         // There should be one input param.
         
         // Indlude the header of the data type
-        fprintf(header_id, "#include \"%s/%c%s.h\"\n",
-                i->in->value->ASN1_Module, toupper(i->in->value->type[0]),
+        fprintf(code_id, "#include \"%s/%c%s.h\"\n",
+                i->in->value->asn1_module, toupper(i->in->value->type[0]),
                 &i->in->value->type[1]);
 
         // Declare a global variable to be used as a ROS message
-        fprintf(code_id, "%s::%c%s %s;\n", i->in->value->ASN1_Module,
+        fprintf(code_id, "%s::%c%s %s;\n", i->in->value->asn1_module,
                 toupper(i->in->value->type[0]), &i->in->value->type[1],
                 i->in->value->name);
 
         // Generate the publisher
-        fprintf(code_id, "ros::Publisher %sPub("%s", &%s);\n",
+        fprintf(code_id, "ros::Publisher %sPub(\"%s\", &%s);\n",
                 i->name, i->in->value->name, i->in->value->name);
 
         //Generate the header for the case where parameters
@@ -134,7 +158,7 @@ void add_PI_to_ros_bridge_glue(Interface * i)
                 i->in->value->name, i->in->value->name);
         //Call the publisher
         fprintf(code_id, "    %sPub.publish(&%s);\n}\n\n",
-                i->name, i->value->in->name);
+                i->name, i->in->value->name);
     }
 }
 
@@ -248,7 +272,7 @@ void add_PI_to_ros_bridge_glue(Interface * i)
 
 void add_RI_to_ros_bridge_glue(Interface * i)
 {
-    Parameter_list *tmp;
+    //Parameter_list *tmp;
     T_RI_PI_NAME_LIST *new_elt;
 
     //
@@ -261,8 +285,8 @@ void add_RI_to_ros_bridge_glue(Interface * i)
     RI_LIST = new_elt;
 
     // Indlude the header of the data type
-    fprintf(header_id, "#include \"%s/%c%s.h\"\n",
-            i->in->value->ASN1_Module, toupper(i->in->value->type[0]),
+    fprintf(code_id, "#include \"%s/%c%s.h\"\n",
+            i->in->value->asn1_module, toupper(i->in->value->type[0]),
             &i->in->value->type[1]);
 
     // Generate RI function prototype
@@ -271,12 +295,13 @@ void add_RI_to_ros_bridge_glue(Interface * i)
 
     // Generate callback definition
     fprintf(code_id, "void %sCb(const %s::%c%s &msg)\n", 
-            i->name, i->in->value->ASN1_Module,
+            i->name, i->in->value->asn1_module,
             toupper(i->in->value->type[0]), &i->in->value->type[1]);
     fprintf(code_id, "{\n");
     fprintf(code_id, "    asn1Scc%s *val;\n", i->in->value->type);
-    fprintf(code_id, "    if((val = (asn1Scc%s *)malloc(sizeof(asn1Scc%s)) == "
-            "NULL)\n", i->in->value->type, i->in->value->type);
+    fprintf(code_id, "    val = (asn1Scc%s *)malloc(sizeof(asn1Scc%s));\n",
+		    i->in->value->type, i->in->value->type);
+    fprintf(code_id, "    if(val == NULL)\n");
     fprintf(code_id, "    {\n");
     fprintf(code_id, "        perror(\"Error while allocating memory in %sCb\");\n",
             i->name);
@@ -287,8 +312,8 @@ void add_RI_to_ros_bridge_glue(Interface * i)
     fprintf(code_id, "}\n\n");
 
     // Generate subscriber
-    fprintf(code_id, "ros::Subscriber <%s::%c%s> %sSub("%s", &%sCb);\n",
-            i->in->value->ASN1_Module, toupper(i->in->value->type[0]),
+    fprintf(code_id, "ros::Subscriber <%s::%c%s> %sSub(\"%s\", &%sCb);\n",
+            i->in->value->asn1_module, toupper(i->in->value->type[0]),
             &i->in->value->type[1], i->name, i->in->value->name, i->name);
 }
 
@@ -360,7 +385,7 @@ void create_startup_funcion(FV *fv)
                 fprintf(code_id, "    nh.subscribe(%sSub);\n", i->name);
             }
         }
-    }
+    })
     fprintf(code_id, "}\n\n");
 }
                 
@@ -387,7 +412,7 @@ void Init_ROS_Bridge_Backend(FV *fv)
 
     code_id = NULL;
     build_string(&code_name, fv->name, strlen(fv->name));
-    build_string(&code_name, "_ros_bridge_code.c", strlen("_ros_bridge_code.c"));
+    build_string(&code_name, "_ros_bridge_code.cpp", strlen("_ros_bridge_code.cpp"));
     create_file(path, code_name, &code_id);
 
     enums_header_id = NULL;
@@ -428,7 +453,7 @@ void End_ROS_Bridge_Glue_Backend(FV *fv)
 
     sprintf(RI_list_enum_name, "T_%s_RI_list", fv->name);
     if (RI_LIST != NULL) {
-    create_enum_type_from_list(RI_list_enum_name, RI_LIST,
+    create_ros_enum_type_from_list(RI_list_enum_name, RI_LIST,
                    &ri_list_enum);
     fprintf(enums_header_id, "%s", ri_list_enum);
     }
@@ -441,7 +466,7 @@ void End_ROS_Bridge_Glue_Backend(FV *fv)
 
     sprintf(PI_list_enum_name, "T_%s_PI_list", fv->name);
     if (PI_LIST != NULL) {
-    create_enum_type_from_list(PI_list_enum_name, PI_LIST,
+    create_ros_enum_type_from_list(PI_list_enum_name, PI_LIST,
                    &pi_list_enum);
     fprintf(enums_header_id, "%s", pi_list_enum);
     }
@@ -464,9 +489,12 @@ void End_ROS_Bridge_Glue_Backend(FV *fv)
 void GLUE_ROS_Bridge_Backend(FV * fv)
 {
 
-
+    printf("ROS Bridge is generated!\n");
     if (fv->system_ast->context->onlycv)
+    {
+	printf("Building only CV!\n");
         return;
+    }
 
     if (ros_bridge == fv->language) {
         create_enum_file(fv);
@@ -492,5 +520,7 @@ void GLUE_ROS_Bridge_Backend(FV * fv)
             free(cyclic_name);
             cyclic_name = NULL;
         }
+    } else {
+	printf("Language is: %d\n",fv->language);
     }
 }
