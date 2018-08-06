@@ -290,7 +290,7 @@ void add_RI_to_ros_bridge_glue(Interface * i)
             &i->in->value->type[1]);
 
     // Generate RI function prototype
-    fprintf(header_id, "void %s_RI_%s(const asn1Scc%s *);\n\n",
+    fprintf(header_id, "extern void %s_RI_%s(const asn1Scc%s *);\n\n",
             i->parent_fv->name, i->name, i->in->value->type);
 
     // Generate callback definition
@@ -341,6 +341,10 @@ void ros_bridge_preamble(FV * fv)
     fprintf(header_id,
         "#include <stdlib.h>\n#include <stdio.h>\n\n#include \"C_ASN1_Types.h\"\n\n");
     fprintf(header_id, "#include \"%s_enums_def.h\"\n\n\n", fv->name);
+
+    fprintf(header_id, "#ifdef __cplusplus\n");
+    fprintf(header_id, "extern \"C\" {\n");
+    fprintf(header_id, "#endif\n\n");
 
     //Create initialization function prototype
     fprintf(header_id, "void %s_startup();\n\n", fv->name);
@@ -476,6 +480,10 @@ void End_ROS_Bridge_Glue_Backend(FV *fv)
     fclose(enums_header_id);
     
     create_cyclic_interface(fv->name);
+
+    fprintf(header_id, "#ifdef __cplusplus\n");
+    fprintf(header_id, "}\n");
+    fprintf(header_id, "#endif");
 
     //Finalize header code file
     fprintf(header_id, "\n\n#endif\n");
