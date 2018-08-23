@@ -252,7 +252,7 @@ void Create_script()
 
     FOREACH (fv, FV, get_system_ast()->functions, {
 
-        if (gui != fv->language) {
+        if (gui != fv->language && ros_bridge != fv->language) {
             fprintf (script, " \\\n\t");
 
             switch (fv->language) {
@@ -285,8 +285,8 @@ void Create_script()
                       break;
                 case micropython: fprintf (script, "--subMicroPython ");
                       break;
-		case ros_bridge: fprintf(script, "--subCPP ");
-		      break;
+		//case ros_bridge: fprintf(script, "--subCPP ");
+		//      break;
                 default:
                      ERROR ("[ERROR] Unsupported language (function %s)\n", fv->name);
                      ERROR ("  -> please manually check the build-script.sh file\n");
