@@ -692,34 +692,27 @@ void Preprocess_FV (FV *fv)
    }
 
    if (ros_bridge == fv->language) {
-      int count_ri=0;
-      FOREACH(i, Interface, fv->interfaces, {
-            if(RI==i->direction) count_ri++;
-      })
+      Interface *interface = NULL;
+      char *cyclic_pi_name=NULL;
+      build_string(&cyclic_pi_name, "ros_bridge_polling_", strlen("ros_bridge_polling_"));
+      build_string(&cyclic_pi_name, fv->name, strlen(fv->name));
 
-      if (count_ri>0)  {
-         Interface *interface = NULL;
-         char *cyclic_pi_name=NULL;
-         build_string(&cyclic_pi_name, "ros_bridge_polling_", strlen("ros_bridge_polling_"));
-         build_string(&cyclic_pi_name, fv->name, strlen(fv->name));
-
-         Create_Interface (&interface);
-         if (NULL != interface) {
-            build_string (&(interface->name),
-                          cyclic_pi_name, strlen(cyclic_pi_name));
-            interface->distant_fv = NULL;
-            interface->direction=PI;
-            interface->synchronism=asynch;
-            interface->rcm=cyclic;
-            /* Poll GUI queue every 40 ms */
-            interface->period = 40;
-            interface->parent_fv = fv;
-            interface->wcet_high = 1;
-            interface->wcet_low = 1;
-            build_string(&(interface->wcet_low_unit), "ms", 2);
-            build_string(&(interface->wcet_high_unit), "ms", 2);
-            APPEND_TO_LIST (Interface, fv->interfaces, interface);
-         }
+      Create_Interface (&interface);
+      if (NULL != interface) {
+         build_string (&(interface->name),
+         cyclic_pi_name, strlen(cyclic_pi_name));
+         interface->distant_fv = NULL;
+         interface->direction=PI;
+         interface->synchronism=asynch;
+         interface->rcm=cyclic;
+         /* Poll GUI queue every 40 ms */
+         interface->period = 40;
+         interface->parent_fv = fv;
+         interface->wcet_high = 1;
+         interface->wcet_low = 1;
+         build_string(&(interface->wcet_low_unit), "ms", 2);
+         build_string(&(interface->wcet_high_unit), "ms", 2);
+         APPEND_TO_LIST (Interface, fv->interfaces, interface);
       }
    }
 
